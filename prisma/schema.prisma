@@ -1,0 +1,101 @@
+// Prisma Schema for Final Year Project Marketplace
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id                String   @id @default(cuid())
+  title             String
+  slug              String   @unique
+  shortDescription  String
+  fullDescription   String
+  category          String
+  technologies      String   // Stored as JSON string array e.g. ["Python", "PyTorch"]
+  difficulty        String   // Beginner, Intermediate, Advanced
+  projectType       String   // Major, Minor, Mini, Research
+  problemStatement  String?
+  proposedSolution  String?
+  features          String?  // JSON string array of features
+  modules           String?  // JSON string array of module descriptions
+  expectedOutput    String?
+  requirements      String?
+  workflow          String?
+  mainImage         String
+  gallery           String?  // JSON string array of image URLs
+  architectureImage String?
+  demoVideo         String?
+  includedMaterials String?  // JSON string array e.g. ["Source Code", "Documentation", "PPT"]
+  available         Boolean  @default(true)
+  featured          Boolean  @default(false)
+  salesType         String   @default("fixed") // "fixed" or "call"
+  price             Float    @default(0.0)    // Ignored/hidden when salesType == "call"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Enquiry {
+  id                    String   @id @default(cuid())
+  leadId                String   @unique
+  studentName           String
+  college               String
+  department            String
+  year                  String?
+  phone                 String
+  whatsapp              String?
+  email                 String
+  projectId             String?
+  projectName           String?
+  domain                String?
+  technology            String?
+  projectType           String?
+  deadline              String?
+  requirements          String
+  callbackTime          String?
+  status                String   @default("NEW") // NEW, CONTACTED, DISCUSSING, FOLLOW_UP, CONFIRMED, COMPLETED, NOT_INTERESTED
+  adminNotes            String?
+  googleSheetSyncStatus String   @default("PENDING") // PENDING, SYNCED, FAILED
+  googleSheetSyncError  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Order {
+  id                String   @id @default(cuid())
+  orderId           String   @unique
+  studentName       String
+  email             String
+  phone             String
+  projectId         String
+  projectName       String
+  amount            Float
+  currency          String   @default("INR")
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  paymentStatus     String   @default("CREATED") // CREATED, PAID, FAILED, CANCELLED, REFUNDED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
