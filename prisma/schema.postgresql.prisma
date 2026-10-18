@@ -1,0 +1,175 @@
+// Prisma Schema for Zivo AI — PostgreSQL Architecture (Neon / Production)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/postgresql"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String         @id @default(cuid())
+  name        String
+  email       String         @unique
+  password    String?        // Nullable for OAuth-only users
+  googleId    String?        @unique
+  avatarUrl   String?
+  role        String         @default("CUSTOMER") // ADMIN or CUSTOMER
+  phone       String?
+  college     String?
+  department  String?
+  year        String?
+  orders      Order[]
+  enquiries   Enquiry[]
+  wishlist    WishlistItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Project {
+  id                String         @id @default(cuid())
+  title             String
+  slug              String         @unique
+  shortDescription  String
+  fullDescription   String
+  category          String
+  technologies      String         // Stored as JSON string array e.g. ["Python", "PyTorch"]
+  difficulty        String         // Beginner, Intermediate, Advanced
+  projectType       String         // Major, Minor, Mini, Research
+  problemStatement  String?
+  proposedSolution  String?
+  features          String?        // JSON string array of features
+  modules           String?        // JSON string array of module descriptions
+  expectedOutput    String?
+  requirements      String?
+  workflow          String?
+  prerequisites     String?
+  setupInstructions String?
+  documentation     String?
+  mainImage         String
+  gallery           String?        // JSON string array of image URLs
+  architectureImage String?
+  demoVideo         String?
+  includedMaterials String?        // JSON string array e.g. ["Source Code", "Documentation", "PPT"]
+  available         Boolean        @default(true)
+  published         Boolean        @default(true)
+  featured          Boolean        @default(false)
+  salesType         String         @default("fixed") // "fixed" or "call"
+  price             Float          @default(0.0)    // Ignored/hidden when salesType == "call"
+  stockLimit        Int?           // Optional purchase limit
+  downloadFileName  String?
+  downloadFileUrl   String?        // Internal private storage path or R2 object key
+  wishlistItems     WishlistItem[]
+  orders            Order[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model Enquiry {
+  id                      String                  @id @default(cuid())
+  leadId                  String                  @unique
+  studentName             String
+  college                 String?                 @default("")
+  department              String?                 @default("")
+  year                    String?
+  phone                   String
+  whatsapp                String?
+  email                   String
+  projectId               String?
+  projectName             String?
+  domain                  String?
+  technology              String?
+  projectType             String?
+  deadline                String?
+  requirements            String
+  callbackTime            String?
+  status                  String                  @default("NEW") // NEW, CONTACTED, DISCUSSING, FOLLOW_UP, CONFIRMED, COMPLETED, NOT_INTERESTED
+  currentStage            String                  @default("Request Received") // 1. Request Received, 2. Planning, 3. Requirement Analysis, 4. Building, 5. Testing, 6. Final Review, 7. Ready for Delivery, 8. Delivered, or On Hold, Cancelled
+  customerProgressMessage String?                 @default("Your custom project request has been received. Our team will review your requirements and update your project progress here.")
+  estimatedCompletionDate String?
+  adminNotes              String?
+  googleSheetSyncStatus   String                  @default("PENDING") // PENDING, SYNCED, FAILED
+  googleSheetSyncError    String?
+  userId                  String?
+  user                    User?                   @relation(fields: [userId], references: [id])
+  timeline                CustomProjectTimeline[]
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+}
+
+model CustomProjectTimeline {
+  id             String    @id @default(cuid())
+  enquiryId      String
+  enquiry        Enquiry   @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  stage          String    // Stage title e.g. "Request Received", "Planning", "Building", etc.
+  statusMessage  String?   // Public message visible to customer
+  adminNote      String?   // Private internal admin note (NEVER exposed to customer)
+  estimatedDate  String?   // Optional target date
+  createdAt      DateTime  @default(now())
+}
+
+model Order {
+  id                  String    @id @default(cuid())
+  orderId             String    @unique
+  studentName         String
+  email               String
+  phone               String
+  college             String?
+  department          String?
+  year                String?
+  projectId           String
+  project             Project   @relation(fields: [projectId], references: [id])
+  projectName         String
+  amount              Float
+  currency            String    @default("INR")
+  razorpayOrderId     String?
+  razorpayPaymentId   String?
+  razorpaySignature   String?
+  paymentStatus       String    @default("CREATED") // CREATED, PAID, FAILED, CANCELLED, REFUNDED
+  deliveryStatus      String    @default("PENDING") // PENDING, PROCESSING, DELIVERED, FAILED
+  paidAt              DateTime?
+  deliveredAt         DateTime?
+  adminNotes          String?
+  userId              String?
+  user                User?     @relation(fields: [userId], references: [id])
+  downloadToken       String?
+  downloadTokenExpiry DateTime?
+  downloadCount       Int       @default(0)
+  downloadLimit       Int       @default(5)
+  notificationSent    Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, projectId])
+}
+
+model NotificationLog {
+  id             String   @id @default(cuid())
+  recipientEmail String
+  subject        String
+  type           String   // ORDER_CONFIRMATION, DOWNLOAD_READY, LEAD_RECEIVED
+  status         String   // SENT, FAILED
+  error          String?
+  orderId        String?
+  createdAt      DateTime @default(now())
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

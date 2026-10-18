@@ -1,26 +1,219 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-hover: #f1f5f9;
+    --border: #e2e8f0;
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --accent: #10b981;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    overflow-x: hidden;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Premium Light Theme Cards & Surfaces */
+.zivo-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.zivo-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.08), 0 8px 10px -6px rgba(79, 70, 229, 0.04);
+  transform: translateY(-2px);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}
+
+.glass-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 30px -4px rgba(79, 70, 229, 0.1), 0 4px 12px -2px rgba(79, 70, 229, 0.06);
+}
+
+/* Refined Electric Indigo Brand Gradient */
+.glow-gradient {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+}
+
+.glow-gradient-accent {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4338ca 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glow-emerald {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.glow-indigo {
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
+}
+
+/* Accessible reduced-motion rules */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Spotlight Follow Background (bga-02) - Light Glassmorphism Adaptation */
+@property --bga-02-mx {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+@property --bga-02-my {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 44%;
+}
+
+.bga-02 {
+  --bga-02-bg: #f8fafc;
+  --bga-02-acc: #4f46e5;
+  --bga-02-acc2: #7c3aed;
+  --bga-02-r: clamp(260px, 34vw, 500px);
+  --bga-02-mx: 50%;
+  --bga-02-my: 44%;
+  background: var(--bga-02-bg);
+  transition: --bga-02-mx 0.45s cubic-bezier(0.16, 1, 0.3, 1), --bga-02-my 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bga-02.is-idle {
+  animation: bga-02-orbit 16s ease-in-out infinite;
+}
+
+@keyframes bga-02-orbit {
+  0% {
+    --bga-02-mx: 26%;
+    --bga-02-my: 32%;
+  }
+  25% {
+    --bga-02-mx: 74%;
+    --bga-02-my: 26%;
+  }
+  50% {
+    --bga-02-mx: 80%;
+    --bga-02-my: 74%;
+  }
+  75% {
+    --bga-02-mx: 22%;
+    --bga-02-my: 70%;
+  }
+  100% {
+    --bga-02-mx: 26%;
+    --bga-02-my: 32%;
+  }
+}
+
+.bga-02__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.6;
+  background-image: linear-gradient(rgba(99, 102, 241, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.12) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+}
+
+.bga-02__reveal {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.25), rgba(124, 58, 237, 0.22)), linear-gradient(rgba(79, 70, 229, 0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(79, 70, 229, 0.25) 1px, transparent 1px);
+  background-size: 100% 100%, 56px 56px, 56px 56px;
+  -webkit-mask-image: radial-gradient(circle var(--bga-02-r) at var(--bga-02-mx) var(--bga-02-my), rgba(0, 0, 0, 1) 0 38%, transparent 74%);
+  mask-image: radial-gradient(circle var(--bga-02-r) at var(--bga-02-mx) var(--bga-02-my), rgba(0, 0, 0, 1) 0 38%, transparent 74%);
+  pointer-events: none;
+}
+
+.bga-02__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.bga-02__beam {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  background: radial-gradient(circle var(--bga-02-r) at var(--bga-02-mx) var(--bga-02-my), rgba(99, 102, 241, 0.25) 0%, rgba(124, 58, 237, 0.12) 42%, transparent 70%);
+  pointer-events: none;
+}
+
+.bga-02__vig {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(130% 110% at 50% 40%, transparent 40%, rgba(248, 250, 252, 0.85) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .bga-02 {
+    transition: none !important;
+  }
+  .bga-02.is-idle {
+    animation: none !important;
+  }
+}
+
+
+
+

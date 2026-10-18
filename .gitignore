@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/src/generated
 /.pnp
 .pnp.*
 .yarn/*
@@ -39,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local databases and uploads
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+prisma/*.db
+prisma/backups/
+storage/
+public/uploads/
