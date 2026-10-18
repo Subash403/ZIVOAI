@@ -18,8 +18,8 @@ import { SiteSettings } from '@/types';
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>({
     businessName: 'Zivo AI',
-    logoUrl: '/logo.svg',
-    faviconUrl: '/favicon.ico',
+    logoUrl: '/images/zivoai-logo.png',
+    faviconUrl: '/images/zivoai-logo.png',
     themeColor: '#4f46e5',
     fontFamily: 'Inter',
     phoneNumber: '+91 8220303164',

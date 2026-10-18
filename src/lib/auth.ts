@@ -124,11 +124,21 @@ export function setSessionCookie(response: NextResponse, payload: AuthPayload): 
 }
 
 export function clearSessionCookie(response: NextResponse, role: 'ADMIN' | 'CUSTOMER' | 'ALL' = 'ALL'): void {
+  const cookieOptions = {
+    value: '',
+    expires: new Date(0),
+    maxAge: 0,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+  };
+
   if (role === 'ADMIN' || role === 'ALL') {
-    response.cookies.delete(ADMIN_TOKEN_COOKIE_NAME);
+    response.cookies.set({ name: ADMIN_TOKEN_COOKIE_NAME, ...cookieOptions });
   }
   if (role === 'CUSTOMER' || role === 'ALL') {
-    response.cookies.delete(CUSTOMER_TOKEN_COOKIE_NAME);
+    response.cookies.set({ name: CUSTOMER_TOKEN_COOKIE_NAME, ...cookieOptions });
   }
 }
 

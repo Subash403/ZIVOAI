@@ -23,14 +23,28 @@ export const metadata: Metadata = {
     'instant digital delivery',
   ],
   icons: {
-    icon: '/logo.svg',
-    shortcut: '/logo.svg',
-    apple: '/logo.svg',
+    icon: '/images/zivoai-logo.png',
+    shortcut: '/images/zivoai-logo.png',
+    apple: '/images/zivoai-logo.png',
   },
   openGraph: {
     title: 'Zivo AI — Modern AI & Full-Stack Projects Platform',
     description: 'Explore verified fixed-price codebases and bespoke custom architectures built for software engineers, startups, researchers, and technical builders.',
     type: 'website',
+    images: [
+      {
+        url: '/images/zivoai-logo.png',
+        width: 1774,
+        height: 887,
+        alt: 'Zivo AI Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Zivo AI — Modern AI & Full-Stack Projects Platform',
+    description: 'Explore verified fixed-price codebases and bespoke custom architectures built for software engineers, startups, researchers, and technical builders.',
+    images: ['/images/zivoai-logo.png'],
   },
 };
 

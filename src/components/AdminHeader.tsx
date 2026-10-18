@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, User, Menu } from 'lucide-react';
+import { notifyAuthStateChanged } from '@/lib/auth-client';
 
 interface AdminHeaderProps {
   onToggleMobileSidebar?: () => void;
@@ -27,8 +28,11 @@ export default function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps)
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/admin/login');
+      const response = await fetch('/api/auth/logout', { method: 'POST', cache: 'no-store' });
+      if (!response.ok) throw new Error('Logout failed');
+      setAdminUser(null);
+      notifyAuthStateChanged();
+      router.replace('/admin/login');
       router.refresh();
     } catch {
       setLoggingOut(false);
@@ -75,4 +79,3 @@ export default function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps)
     </header>
   );
 }
-

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { signAdminToken, verifyAdminToken, getJwtSecret } from '../src/lib/auth';
+import { NextResponse } from 'next/server';
+import { signAdminToken, verifyAdminToken, getJwtSecret, clearSessionCookie, ADMIN_TOKEN_COOKIE_NAME, CUSTOMER_TOKEN_COOKIE_NAME } from '../src/lib/auth';
 
 test('JWT Authentication & Secret Enforcement', async (t) => {
   await t.test('signAdminToken creates a valid verifiable token for admin', () => {
@@ -76,5 +77,13 @@ test('JWT Authentication & Secret Enforcement', async (t) => {
         delete process.env.JWT_SECRET;
       }
     }
+  });
+
+  await t.test('clearSessionCookie expires both authentication cookies', () => {
+    const response = NextResponse.json({ success: true });
+    clearSessionCookie(response, 'ALL');
+
+    assert.equal(response.cookies.get(ADMIN_TOKEN_COOKIE_NAME)?.value, '');
+    assert.equal(response.cookies.get(CUSTOMER_TOKEN_COOKIE_NAME)?.value, '');
   });
 });

@@ -31,7 +31,7 @@ async function main() {
   // 2. Seed Default Site Settings with updated WhatsApp & Google Sheet ID
   const defaultSettings = [
     { key: 'businessName', value: 'Zivo AI' },
-    { key: 'logoUrl', value: '/logo.svg' },
+    { key: 'logoUrl', value: '/images/zivoai-logo.png' },
     { key: 'phoneNumber', value: '+91 8220303164' },
     { key: 'whatsappNumber', value: '918220303164' },
     { key: 'supportEmail', value: 'support@zivo.ai' },

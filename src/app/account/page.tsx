@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { notifyAuthStateChanged } from '@/lib/auth-client';
 
 interface CustomerOrder {
   id: string;
@@ -137,8 +138,13 @@ export default function AccountPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/');
+      const response = await fetch('/api/auth/logout', { method: 'POST', cache: 'no-store' });
+      if (!response.ok) throw new Error('Logout failed');
+      setUser(null);
+      setOrders([]);
+      setCustomProjects([]);
+      notifyAuthStateChanged();
+      router.replace('/');
       router.refresh();
     } catch (err) {
       console.error('Logout error:', err);

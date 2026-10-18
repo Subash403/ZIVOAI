@@ -89,10 +89,19 @@ export interface AdminSettings extends PublicSettings {
 }
 
 export function filterPublicSettings(settingsObj: Record<string, string>): PublicSettings {
+  const configuredLogoUrl = settingsObj.logoUrl;
+  const configuredFaviconUrl = settingsObj.faviconUrl;
+
   return {
     businessName: settingsObj.businessName || 'Zivo AI',
-    logoUrl: settingsObj.logoUrl || '/logo.svg',
-    faviconUrl: settingsObj.faviconUrl || '/favicon.ico',
+    logoUrl:
+      configuredLogoUrl && configuredLogoUrl !== '/logo.svg'
+        ? configuredLogoUrl
+        : '/images/zivoai-logo.png',
+    faviconUrl:
+      configuredFaviconUrl && configuredFaviconUrl !== '/favicon.ico'
+        ? configuredFaviconUrl
+        : '/images/zivoai-logo.png',
     themeColor: settingsObj.themeColor || '#4f46e5',
     fontFamily: settingsObj.fontFamily || 'Inter',
     phoneNumber: settingsObj.phoneNumber || '+91 8220303164',

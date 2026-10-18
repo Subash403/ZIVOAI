@@ -15,6 +15,7 @@ import {
   Search,
 } from 'lucide-react';
 import { SiteSettings } from '@/types';
+import { AUTH_STATE_CHANGED_EVENT } from '@/lib/auth-client';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -29,7 +30,18 @@ export default function Navbar() {
   });
 
   useEffect(() => {
-    fetch('/api/settings')
+    const loadUser = () => fetch('/api/auth/me', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.authenticated && data.user) {
+          setUser({ name: data.user.name, role: data.user.role });
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => setUser(null));
+
+    fetch('/api/settings', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.settings) {
@@ -38,20 +50,22 @@ export default function Navbar() {
       })
       .catch(() => {});
 
-    fetch('/api/auth/me')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.authenticated && data.user) {
-          setUser({ name: data.user.name, role: data.user.role });
-        }
-      })
-      .catch(() => {});
+    loadUser();
+
+    const handleAuthStateChanged = () => {
+      setUser(null);
+      loadUser();
+    };
+    window.addEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
+    };
   }, []);
 
   const navLinks = [
@@ -89,14 +103,15 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform overflow-hidden">
+            <div className="h-11 sm:h-12 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="Zivo AI Logo" className="w-full h-full object-contain" />
+              <img
+                src="/images/zivoai-logo.png"
+                alt="Zivo AI Logo"
+                className="h-full w-auto object-contain"
+              />
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 flex items-center gap-1.5">
-                Zivo <span className="text-indigo-600">AI</span>
-              </span>
+            <div className="hidden sm:flex flex-col">
               <span className="text-[10px] text-slate-500 tracking-wider uppercase font-semibold">
                 AI & Engineering Platform
               </span>
