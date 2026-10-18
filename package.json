@@ -11,8 +11,10 @@
     "test": "tsx --test tests/**/*.test.ts",
     "db:backup": "tsx scripts/backup-db.ts",
     "db:restore": "tsx scripts/restore-db.ts",
+    "db:push:sqlite": "prisma db push --schema prisma/schema.prisma",
     "db:push:postgres": "prisma db push --schema prisma/schema.postgresql.prisma",
-    "db:migrate:postgres": "prisma migrate deploy --schema prisma/schema.postgresql.prisma"
+    "db:migrate:postgres": "prisma migrate deploy --schema prisma/schema.postgresql.prisma",
+    "db:migrate:postgres:predeploy": "node scripts/predeploy-postgres.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",
