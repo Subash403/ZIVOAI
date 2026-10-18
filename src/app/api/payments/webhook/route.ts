@@ -1,107 +1,151 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import crypto from 'crypto';
-import { createReceiptToken } from '@/lib/auth';
-import { sendOrderConfirmationNotification } from '@/lib/notifications';
+import {
+  fetchAndValidateCapturedPaymentForOrder,
+  fetchAndValidateRazorpayPayment,
+  verifyRazorpayWebhookSignature,
+} from '@/lib/razorpay';
+import { fulfillVerifiedOrder } from '@/lib/payment-fulfillment';
+
+interface RazorpayWebhookEvent {
+  id?: string;
+  event?: string;
+  payload?: {
+    payment?: { entity?: { id?: string; order_id?: string } };
+    order?: { entity?: { id?: string } };
+  };
+}
+
+export function getWebhookPaymentReference(event: RazorpayWebhookEvent): {
+  orderId?: string;
+  paymentId?: string;
+} {
+  const paymentEntity = event.payload?.payment?.entity;
+  const orderEntity = event.payload?.order?.entity;
+  return { orderId: paymentEntity?.order_id || orderEntity?.id, paymentId: paymentEntity?.id };
+}
+
+export async function recordFailedPayment(razorpayOrderId: string, razorpayPaymentId?: string) {
+  return prisma.order.updateMany({
+    where: { razorpayOrderId, paymentStatus: 'CREATED' },
+    data: { paymentStatus: 'FAILED', ...(razorpayPaymentId ? { razorpayPaymentId } : {}) },
+  });
+}
+
+async function claimWebhookEvent(eventKey: string, eventType: string, reference: ReturnType<typeof getWebhookPaymentReference>, payloadHash: string) {
+  const now = new Date();
+  const stale = new Date(now.getTime() - 5 * 60 * 1000);
+  try {
+    await prisma.paymentWebhookEvent.create({
+      data: {
+        eventKey,
+        eventType,
+        razorpayOrderId: reference.orderId,
+        razorpayPaymentId: reference.paymentId,
+        payloadHash,
+        status: 'PROCESSING',
+        attemptCount: 1,
+        lockedAt: now,
+      },
+    });
+    return true;
+  } catch {
+    const existing = await prisma.paymentWebhookEvent.findUnique({ where: { eventKey } });
+    if (!existing || existing.status === 'PROCESSED' || existing.status === 'UNMATCHED') return false;
+    if (existing.status === 'PROCESSING' && existing.lockedAt && existing.lockedAt > stale) return false;
+    const claimed = await prisma.paymentWebhookEvent.updateMany({
+      where: { eventKey, status: { in: ['FAILED', 'PROCESSING'] }, OR: [{ status: 'FAILED' }, { lockedAt: { lt: stale } }] },
+      data: { status: 'PROCESSING', lockedAt: now, attemptCount: { increment: 1 }, lastError: null },
+    });
+    return claimed.count === 1;
+  }
+}
+
+async function finishWebhookEvent(eventKey: string, status: 'PROCESSED' | 'UNMATCHED' | 'FAILED', error?: string) {
+  await prisma.paymentWebhookEvent.updateMany({
+    where: { eventKey, status: 'PROCESSING' },
+    data: { status, lockedAt: null, processedAt: status === 'PROCESSED' ? new Date() : null, lastError: error?.slice(0, 500) },
+  });
+}
 
 export async function POST(request: Request) {
+  let eventKey = '';
   try {
     const rawBody = await request.text();
-    const signature = request.headers.get('x-razorpay-signature');
-
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
-
-    if (!webhookSecret) {
-      console.warn('Razorpay webhook secret not configured. Skipping webhook execution.');
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
-    }
-
-    if (!signature) {
-      return NextResponse.json({ error: 'Missing x-razorpay-signature header' }, { status: 400 });
-    }
-
-    // Verify cryptographic signature
-    const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(rawBody)
-      .digest('hex');
-
-    if (expectedSignature !== signature) {
-      console.error('Invalid Razorpay webhook signature');
+    const signature = request.headers.get('x-razorpay-signature') || '';
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!webhookSecret) return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    if (!verifyRazorpayWebhookSignature(rawBody, signature, webhookSecret)) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
-    const event = JSON.parse(rawBody);
-    const eventType = event.event;
-
-    // Handle payment.captured or order.paid
-    if (eventType === 'payment.captured' || eventType === 'order.paid') {
-      const paymentEntity = event.payload?.payment?.entity;
-      const razorpayOrderId = paymentEntity?.order_id;
-      const razorpayPaymentId = paymentEntity?.id;
-
-      if (!razorpayOrderId) {
-        return NextResponse.json({ message: 'No order ID in payment payload' }, { status: 200 });
-      }
-
-      const order = await prisma.order.findFirst({
-        where: { razorpayOrderId },
-        include: { project: true },
-      });
-
-      if (!order) {
-        console.warn(`Webhook received for unknown Razorpay Order ID: ${razorpayOrderId}`);
-        return NextResponse.json({ message: 'Order not found in database' }, { status: 200 });
-      }
-
-      // Idempotency: If already fulfilled, return 200 immediately
-      if (order.paymentStatus === 'PAID') {
-        return NextResponse.json({ message: 'Order already fulfilled (idempotent)' }, { status: 200 });
-      }
-
-      const receiptToken = createReceiptToken(order.orderId);
-      const isFixed = order.project.salesType === 'fixed';
-      const downloadTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-      const updatedOrder = await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          razorpayPaymentId: razorpayPaymentId || order.razorpayPaymentId,
-          paymentStatus: 'PAID',
-          deliveryStatus: isFixed ? 'DELIVERED' : 'PENDING',
-          paidAt: new Date(),
-          deliveredAt: isFixed ? new Date() : null,
-          downloadToken: receiptToken,
-          downloadTokenExpiry,
-        },
-      });
-
-      // Stock adjustment
-      if (order.project.stockLimit && order.project.stockLimit > 0) {
-        await prisma.project.update({
-          where: { id: order.projectId },
-          data: { stockLimit: { decrement: 1 } },
-        }).catch(() => {});
-      }
-
-      // Send customer delivery email
-      const origin = process.env.NEXTAUTH_URL || 'https://zivo.ai';
-      sendOrderConfirmationNotification({
-        orderId: updatedOrder.orderId,
-        studentName: updatedOrder.studentName,
-        email: updatedOrder.email,
-        projectName: updatedOrder.projectName,
-        amount: updatedOrder.amount,
-        downloadUrl: isFixed ? `${origin}/api/orders/download/${updatedOrder.orderId}?token=${receiptToken}` : undefined,
-        receiptUrl: `${origin}/orders/confirmation/${updatedOrder.orderId}?token=${receiptToken}`,
-      }).catch((err) => console.error('Webhook notification dispatch error:', err));
-
-      return NextResponse.json({ success: true, message: 'Order fulfilled via webhook' });
+    let event: RazorpayWebhookEvent;
+    try {
+      event = JSON.parse(rawBody) as RazorpayWebhookEvent;
+    } catch {
+      return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
     }
 
-    return NextResponse.json({ message: `Unhandled event type: ${eventType}` }, { status: 200 });
-  } catch (err: unknown) {
-    console.error('Webhook processing error:', err);
+    const eventType = event.event || 'unknown';
+    const reference = getWebhookPaymentReference(event);
+    const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
+    eventKey = event.id || payloadHash;
+    if (!(await claimWebhookEvent(eventKey, eventType, reference, payloadHash))) {
+      return NextResponse.json({ success: true, message: 'Webhook already being processed or completed' });
+    }
+
+    if (eventType === 'payment.failed') {
+      if (!reference.orderId) {
+        await finishWebhookEvent(eventKey, 'UNMATCHED', 'Payment failure did not contain a Razorpay order ID');
+        return NextResponse.json({ success: true, message: 'Unmatched payment failure recorded' });
+      }
+      const result = await recordFailedPayment(reference.orderId, reference.paymentId);
+      if (result.count === 0) {
+        const order = await prisma.order.findFirst({ where: { razorpayOrderId: reference.orderId } });
+        if (!order) {
+          await finishWebhookEvent(eventKey, 'UNMATCHED', 'Razorpay order was not found');
+          return NextResponse.json({ success: true, message: 'Unmatched payment failure recorded' });
+        }
+      }
+      await finishWebhookEvent(eventKey, 'PROCESSED');
+      return NextResponse.json({ success: true, message: 'Payment failure recorded' });
+    }
+
+    if (eventType !== 'payment.captured' && eventType !== 'order.paid') {
+      await finishWebhookEvent(eventKey, 'UNMATCHED', 'Unsupported webhook event type');
+      return NextResponse.json({ success: true, message: 'Webhook recorded as unsupported' });
+    }
+
+    if (!reference.orderId) {
+      await finishWebhookEvent(eventKey, 'UNMATCHED', 'Payment event did not contain a Razorpay order ID');
+      return NextResponse.json({ success: true, message: 'Unmatched payment event recorded' });
+    }
+
+    const order = await prisma.order.findFirst({ where: { razorpayOrderId: reference.orderId }, include: { project: true } });
+    if (!order) {
+      await finishWebhookEvent(eventKey, 'UNMATCHED', 'Razorpay order was not found');
+      return NextResponse.json({ success: true, message: 'Unmatched payment event recorded' });
+    }
+
+    const payment = reference.paymentId
+      ? await fetchAndValidateRazorpayPayment({ paymentId: reference.paymentId, expectedOrderId: order.razorpayOrderId!, expectedAmount: order.amount, expectedCurrency: order.currency })
+      : await fetchAndValidateCapturedPaymentForOrder({ orderId: order.razorpayOrderId!, expectedAmount: order.amount, expectedCurrency: order.currency });
+    if (!payment?.id) {
+      await finishWebhookEvent(eventKey, 'FAILED', 'Provider payment could not be validated as captured');
+      return NextResponse.json({ error: 'Captured payment could not be verified' }, { status: 502 });
+    }
+
+    const updatedOrder = await fulfillVerifiedOrder({
+      internalOrderId: order.orderId,
+      razorpayPaymentId: payment.id,
+      origin: process.env.NEXTAUTH_URL || new URL(request.url).origin,
+    });
+    await finishWebhookEvent(eventKey, 'PROCESSED');
+    return NextResponse.json({ success: true, message: updatedOrder.paymentStatus === 'PAID' ? 'Order fulfilled via webhook' : 'Webhook processed' });
+  } catch (error: unknown) {
+    if (eventKey) await finishWebhookEvent(eventKey, 'FAILED', error instanceof Error ? error.message : 'Webhook processing error').catch(() => {});
+    console.error('Webhook processing error:', error);
     return NextResponse.json({ error: 'Webhook processing error' }, { status: 500 });
   }
 }

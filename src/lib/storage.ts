@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import fs from 'fs';
@@ -255,6 +256,13 @@ export async function generatePrivatePresignedDownloadUrl(
  * Reads a private asset buffer from Cloudflare R2 or local filesystem.
  */
 export async function getPrivateAssetBuffer(key: string): Promise<Buffer | null> {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Private asset buffering is disabled in production.', {
+      keyType: key.includes('/') ? 'object-key' : 'local-key',
+    });
+    return null;
+  }
+
   if (isR2Configured() && key.includes('/')) {
     try {
       const client = getR2Client();
@@ -282,4 +290,26 @@ export async function getPrivateAssetBuffer(key: string): Promise<Buffer | null>
   }
 
   return null;
+}
+
+export async function privateAssetExists(key: string): Promise<boolean> {
+  if (!key) return false;
+
+  if (isR2Configured() && key.includes('/')) {
+    try {
+      await getR2Client().send(
+        new HeadObjectCommand({
+          Bucket: getPrivateBucketName(),
+          Key: key,
+        })
+      );
+      return true;
+    } catch (err) {
+      console.error('Failed to verify private R2 deliverable:', err);
+      return false;
+    }
+  }
+
+  const localFileName = path.basename(key);
+  return fs.existsSync(path.join(process.cwd(), 'storage', 'private-downloads', localFileName));
 }

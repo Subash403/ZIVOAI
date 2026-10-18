@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createRazorpayOrder } from '@/lib/razorpay';
+import { createRazorpayOrder, getRazorpayKeyId } from '@/lib/razorpay';
+import crypto from 'crypto';
 import { getCustomerSession } from '@/lib/auth';
 
 export async function POST(request: Request) {
@@ -90,8 +91,7 @@ export async function POST(request: Request) {
     const serverVerifiedPrice = project.price;
 
     // 5. Generate unique Order ID
-    const count = await prisma.order.count();
-    const orderId = `ORD-${10000 + count + 1}`;
+    const orderId = `ORD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 
     // 6. Create Razorpay order using server-side database price
     const razorpayResult = await createRazorpayOrder({
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       razorpayOrderId,
       amount: serverVerifiedPrice,
       currency: 'INR',
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_sampleKeyId12345',
+      keyId: getRazorpayKeyId(),
       projectName: project.title,
       studentName,
       email,

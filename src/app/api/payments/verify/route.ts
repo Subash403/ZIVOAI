@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyRazorpaySignature } from '@/lib/razorpay';
-import { createReceiptToken, getCustomerSession } from '@/lib/auth';
-import { sendOrderConfirmationNotification } from '@/lib/notifications';
+import { fetchAndValidateRazorpayPayment, verifyRazorpaySignature } from '@/lib/razorpay';
+import { getCustomerSession } from '@/lib/auth';
+import { fulfillVerifiedOrder } from '@/lib/payment-fulfillment';
 
 interface PaymentVerifyPayload {
   internalOrderId: string;
@@ -37,8 +37,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order record not found' }, { status: 404 });
     }
 
-    // Verify order ID integrity: razorpayOrderId must match the record created on backend
-    if (existingOrder.razorpayOrderId && existingOrder.razorpayOrderId !== razorpayOrderId) {
+    // The provider order ID must have been created and stored by the server.
+    if (!existingOrder.razorpayOrderId || existingOrder.razorpayOrderId !== razorpayOrderId) {
       return NextResponse.json(
         { error: 'Security mismatch: razorpayOrderId does not match original order record.' },
         { status: 400 }
@@ -53,18 +53,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const receiptToken = createReceiptToken(existingOrder.orderId);
-
-    // Idempotency: If already marked as PAID, return existing verified order and receipt token
-    if (existingOrder.paymentStatus === 'PAID') {
-      return NextResponse.json({
-        success: true,
-        message: 'Payment already verified and paid.',
-        order: existingOrder,
-        receiptToken,
-      });
-    }
-
     // Verify HMAC-SHA256 signature server-side using Razorpay Key Secret
     const isValid = verifyRazorpaySignature({
       razorpayOrderId,
@@ -73,14 +61,33 @@ export async function POST(request: Request) {
     });
 
     if (!isValid) {
-      // Mark order as FAILED in DB
-      await prisma.order.update({
-        where: { orderId: internalOrderId },
+      await prisma.order.updateMany({
+        where: { orderId: internalOrderId, paymentStatus: { in: ['CREATED', 'FAILED'] } },
         data: { paymentStatus: 'FAILED' },
       });
 
       return NextResponse.json(
         { error: 'Payment signature verification failed. If your account was debited, please contact support with Order ID.' },
+        { status: 400 }
+      );
+    }
+
+    const payment = await fetchAndValidateRazorpayPayment({
+      paymentId: razorpayPaymentId,
+      expectedOrderId: existingOrder.razorpayOrderId,
+      expectedAmount: existingOrder.amount,
+      expectedCurrency: existingOrder.currency,
+    });
+
+    if (!payment) {
+      if (existingOrder.paymentStatus !== 'PAID') {
+        await prisma.order.updateMany({
+          where: { id: existingOrder.id, paymentStatus: { in: ['CREATED', 'FAILED'] } },
+          data: { paymentStatus: 'FAILED' },
+        });
+      }
+      return NextResponse.json(
+        { error: 'Payment could not be verified against the Razorpay order, amount, currency, or capture status.' },
         { status: 400 }
       );
     }
@@ -92,52 +99,19 @@ export async function POST(request: Request) {
       linkedUserId = session.userId;
     }
 
-    // Digital automated delivery: fixed-price projects are automatically DELIVERED
-    const isFixed = existingOrder.project.salesType === 'fixed';
-    const deliveryStatus = isFixed ? 'DELIVERED' : 'PENDING';
-    const downloadTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-    // Mark order as PAID & deliveryStatus in DB
-    const updatedOrder = await prisma.order.update({
-      where: { orderId: internalOrderId },
-      data: {
-        razorpayPaymentId,
-        razorpaySignature,
-        paymentStatus: 'PAID',
-        deliveryStatus,
-        paidAt: new Date(),
-        deliveredAt: isFixed ? new Date() : null,
-        userId: linkedUserId,
-        downloadToken: receiptToken,
-        downloadTokenExpiry,
-      },
+    const updatedOrder = await fulfillVerifiedOrder({
+      internalOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      userId: linkedUserId || undefined,
+      origin: new URL(request.url).origin,
     });
-
-    // Optional stock limit adjustment
-    if (existingOrder.project.stockLimit && existingOrder.project.stockLimit > 0) {
-      await prisma.project.update({
-        where: { id: existingOrder.projectId },
-        data: { stockLimit: { decrement: 1 } },
-      }).catch(() => {});
-    }
-
-    // Trigger customer notification asynchronously
-    const origin = new URL(request.url).origin;
-    sendOrderConfirmationNotification({
-      orderId: updatedOrder.orderId,
-      studentName: updatedOrder.studentName,
-      email: updatedOrder.email,
-      projectName: updatedOrder.projectName,
-      amount: updatedOrder.amount,
-      downloadUrl: isFixed ? `${origin}/api/orders/download/${updatedOrder.orderId}?token=${receiptToken}` : undefined,
-      receiptUrl: `${origin}/orders/confirmation/${updatedOrder.orderId}?token=${receiptToken}`,
-    }).catch((err) => console.error('Notification dispatch error:', err));
 
     return NextResponse.json({
       success: true,
       message: 'Payment verified successfully!',
       order: updatedOrder,
-      receiptToken,
+      receiptToken: updatedOrder.downloadToken,
     });
   } catch (error: unknown) {
     console.error('Error verifying payment signature:', error);

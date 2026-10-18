@@ -5,7 +5,16 @@ import {
   isR2Configured,
   generatePrivatePresignedDownloadUrl,
   getPrivateAssetBuffer,
+  privateAssetExists,
 } from '@/lib/storage';
+
+function safeDownloadFileName(fileName: string): string {
+  const cleaned = fileName
+    .replace(/[\r\n]/g, '')
+    .replace(/[\\/\"\u0000-\u001f\u007f]/g, '_')
+    .trim();
+  return cleaned || 'download.zip';
+}
 
 export async function GET(
   request: Request,
@@ -76,25 +85,18 @@ export async function GET(
       }
     }
 
-    // 5. Download count & rate check (except admin)
-    if (!isAdmin && order.downloadCount >= order.downloadLimit) {
+    if (!order.project.downloadFileUrl || !(await privateAssetExists(order.project.downloadFileUrl))) {
+      console.error('Paid order has no available private deliverable:', {
+        orderId: order.orderId,
+        projectId: order.projectId,
+      });
       return NextResponse.json(
-        { error: `Download limit (${order.downloadLimit}) exceeded for this order. Please contact support.` },
-        { status: 429 }
+        { error: 'The purchased project deliverable is not available yet. Please contact support.' },
+        { status: 503 }
       );
     }
 
-    // 6. Increment download count and update delivery status
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        downloadCount: { increment: 1 },
-        deliveryStatus: 'DELIVERED',
-        deliveredAt: order.deliveredAt || new Date(),
-      },
-    });
-
-    const fileName = order.project.downloadFileName || `${order.project.slug}-source-code.zip`;
+    const fileName = safeDownloadFileName(order.project.downloadFileName || `${order.project.slug}-source-code.zip`);
 
     // 7. Cloudflare R2 Presigned Download Delivery
     if (order.project.downloadFileUrl && isR2Configured()) {
@@ -105,65 +107,57 @@ export async function GET(
       );
 
       if (presignedUrl) {
+        if (!isAdmin) {
+          const reserved = await prisma.order.updateMany({
+            where: { id: order.id, paymentStatus: 'PAID', downloadCount: { lt: order.downloadLimit } },
+            data: { downloadCount: { increment: 1 }, deliveryStatus: 'DELIVERED', deliveredAt: order.deliveredAt || new Date() },
+          });
+          if (reserved.count !== 1) {
+            return NextResponse.json({ error: 'Download limit exceeded or order is no longer eligible.' }, { status: 429 });
+          }
+        }
         return NextResponse.redirect(presignedUrl, 302);
       }
+      console.error('Private R2 presigning failed; refusing application-level buffering.', {
+        orderId: order.orderId,
+        projectId: order.projectId,
+      });
+      return NextResponse.json({ error: 'The download service is temporarily unavailable. Please try again later.' }, { status: 503 });
     }
 
-    // 8. Local filesystem / buffer fallback
-    if (order.project.downloadFileUrl) {
-      const fileBuffer = await getPrivateAssetBuffer(order.project.downloadFileUrl);
-      if (fileBuffer) {
-        return new NextResponse(new Uint8Array(fileBuffer), {
-          headers: {
-            'Content-Type': 'application/zip',
-            'Content-Disposition': `attachment; filename="${fileName}"`,
-            'Content-Length': fileBuffer.length.toString(),
-          },
-        });
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Private storage is not configured in production.', { orderId: order.orderId, projectId: order.projectId });
+      return NextResponse.json({ error: 'The download service is temporarily unavailable. Please try again later.' }, { status: 503 });
+    }
+
+    // Local filesystem fallback is intentionally development-only.
+    const fileBuffer = await getPrivateAssetBuffer(order.project.downloadFileUrl);
+    if (!fileBuffer) {
+      console.error('Private deliverable disappeared during download:', {
+        orderId: order.orderId,
+        projectId: order.projectId,
+      });
+      return NextResponse.json(
+        { error: 'The purchased project deliverable is not available yet. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
+    if (!isAdmin) {
+      const reserved = await prisma.order.updateMany({
+        where: { id: order.id, paymentStatus: 'PAID', downloadCount: { lt: order.downloadLimit } },
+        data: { downloadCount: { increment: 1 }, deliveryStatus: 'DELIVERED', deliveredAt: order.deliveredAt || new Date() },
+      });
+      if (reserved.count !== 1) {
+        return NextResponse.json({ error: 'Download limit exceeded or order is no longer eligible.' }, { status: 429 });
       }
     }
 
-    // 9. If a physical deliverable has not been uploaded yet, generate official project documentation starter bundle
-    const starterContent = `# ${order.project.title}
-==================================================
-Project Order ID: ${order.orderId}
-License Holder: ${order.studentName} (${order.email})
-Date of Delivery: ${new Date().toISOString()}
-
-==================================================
-PROJECT OVERVIEW:
-${order.project.fullDescription}
-
-CATEGORY: ${order.project.category}
-DIFFICULTY: ${order.project.difficulty}
-PROJECT TYPE: ${order.project.projectType}
-TECHNOLOGIES: ${order.project.technologies}
-
-DELIVERABLES INCLUDED:
-- Complete Verified Source Code
-- IEEE Format Project Report
-- Presentation PPT Slides
-- Database Setup Scripts & Schema
-- Installation & Running Guide
-
-SETUP & EXECUTION INSTRUCTIONS:
-${order.project.setupInstructions || '1. Extract this repository\n2. Follow README.md inside the src/ folder\n3. Contact 24/7 technical support via WhatsApp for remote setup assistance'}
-
-PREREQUISITES:
-${order.project.prerequisites || 'Python 3.10+, Node.js 18+, Docker, or Java SDK as specified in the project documentation.'}
-
-SUPPORT:
-WhatsApp Helpline: +91 8220303164
-Support Email: support@zivo.ai
-`;
-    const starterBuffer = Buffer.from(starterContent, 'utf-8');
-    const starterFileName = `${order.project.slug}-documentation-bundle.txt`;
-
-    return new NextResponse(new Uint8Array(starterBuffer), {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${starterFileName}"`,
-        'Content-Length': starterBuffer.length.toString(),
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Length': fileBuffer.length.toString(),
       },
     });
   } catch (error: unknown) {

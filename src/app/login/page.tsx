@@ -118,14 +118,13 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
       <div className="max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="Zivo AI Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="font-extrabold text-xl tracking-tight text-slate-900">
-              Zivo <span className="text-indigo-600">AI</span>
-            </span>
+          <Link href="/" className="inline-flex items-center justify-center group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/zivoai-logo.png"
+              alt="Zivo AI Logo"
+              className="h-20 w-[250px] object-contain mix-blend-multiply transition-transform group-hover:scale-[1.02]"
+            />
           </Link>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             {mode === 'login' ? 'Sign In to Your Account' : 'Create Your Account'}

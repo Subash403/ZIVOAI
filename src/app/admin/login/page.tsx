@@ -39,15 +39,17 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <main className="min-h-screen bg-slate-50 px-4 pb-10 pt-8 text-slate-900 sm:px-6 sm:pt-12 lg:pt-16">
+      <div className="mx-auto w-full max-w-md space-y-5">
         
         {/* Brand Logo Header */}
-        <div className="text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center p-2 mx-auto shadow-lg shadow-indigo-500/20 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="Zivo AI Logo" className="w-full h-full object-contain" />
-          </div>
+        <div className="space-y-3 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/zivoai-logo.png"
+            alt="Zivo AI Logo"
+            className="mx-auto h-20 w-[250px] object-contain mix-blend-multiply"
+          />
           <h1 className="text-2xl font-extrabold text-slate-900">Zivo AI Workspace Console</h1>
           <p className="text-xs text-slate-500 font-medium">Administration & Digital Delivery Operations</p>
         </div>

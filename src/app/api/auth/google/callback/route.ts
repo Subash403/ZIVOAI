@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { signAuthToken, CUSTOMER_TOKEN_COOKIE_NAME } from '@/lib/auth';
+
+const GOOGLE_STATE_COOKIE = 'google_oauth_state';
 
 interface GoogleTokenResponse {
   access_token?: string;
@@ -22,11 +25,25 @@ export async function GET(request: Request) {
   const error = searchParams.get('error');
   const stateRaw = searchParams.get('state');
 
+  const cookieStore = await cookies();
+  const expectedState = cookieStore.get(GOOGLE_STATE_COOKIE)?.value || '';
+  if (!stateRaw || !expectedState || stateRaw !== expectedState) {
+    const response = NextResponse.redirect(new URL('/login?error=invalid_oauth_state', request.url));
+    response.cookies.delete(GOOGLE_STATE_COOKIE);
+    return response;
+  }
+
   let targetUrl = '/account';
   if (stateRaw) {
     try {
       const decoded = JSON.parse(Buffer.from(stateRaw, 'base64').toString('utf-8'));
-      if (decoded?.from && typeof decoded.from === 'string' && decoded.from.startsWith('/')) {
+      if (
+        decoded?.from &&
+        typeof decoded.from === 'string' &&
+        decoded.from.startsWith('/') &&
+        !decoded.from.startsWith('//') &&
+        !decoded.from.includes('\\')
+      ) {
         targetUrl = decoded.from;
       }
     } catch {
@@ -73,7 +90,7 @@ export async function GET(request: Request) {
     });
 
     const userInfo = (await userRes.json()) as GoogleUserInfo;
-    if (!userInfo?.email) {
+    if (!userInfo?.email || !userInfo.sub || userInfo.email_verified !== true) {
       return NextResponse.redirect(new URL('/login?error=invalid_user_info', request.url));
     }
 
@@ -84,11 +101,16 @@ export async function GET(request: Request) {
 
     // 3. Safe Account Linking
     // Check if user with this email or googleId already exists
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { googleId }],
-      },
-    });
+    const [emailUser, googleUser] = await Promise.all([
+      prisma.user.findUnique({ where: { email } }),
+      prisma.user.findUnique({ where: { googleId } }),
+    ]);
+
+    if (emailUser && googleUser && emailUser.id !== googleUser.id) {
+      return NextResponse.redirect(new URL('/login?error=oauth_account_conflict', request.url));
+    }
+
+    let user = emailUser || googleUser;
 
     if (user) {
       // Link Google ID and update avatar if not set
@@ -120,6 +142,7 @@ export async function GET(request: Request) {
     });
 
     const response = NextResponse.redirect(new URL(targetUrl, request.url));
+    response.cookies.delete(GOOGLE_STATE_COOKIE);
     response.cookies.set({
       name: CUSTOMER_TOKEN_COOKIE_NAME,
       value: token,

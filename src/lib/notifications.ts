@@ -123,6 +123,9 @@ export async function sendOrderConfirmationNotification(params: SendOrderEmailPa
       });
       console.log(`[Notification] Live email successfully dispatched to ${params.email} for order ${params.orderId}`);
     } else {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('SMTP notification service is not configured in production.');
+      }
       console.log(`[Notification Dev-Mode] SMTP unconfigured. Order email logged for ${params.email} (Order: ${params.orderId})`);
     }
 

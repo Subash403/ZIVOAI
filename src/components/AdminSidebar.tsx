@@ -38,15 +38,15 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         {/* Brand Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <Link href="/admin" onClick={onClose} className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 shadow-md shadow-indigo-500/20 overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="Zivo AI Logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <span className="font-extrabold text-lg text-slate-900 block leading-tight">
-                Zivo <span className="text-indigo-600">AI</span>
-              </span>
-              <span className="text-[10px] text-slate-500 font-semibold">Workspace Console</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/zivoai-logo.png"
+              alt="Zivo AI Logo"
+              className="h-12 w-[135px] shrink-0 object-contain mix-blend-multiply"
+            />
+            <div className="border-l border-slate-200 pl-2.5">
+              <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Workspace</span>
+              <span className="text-xs text-indigo-600 font-bold block">Console</span>
             </div>
           </Link>
           {onClose && (
@@ -121,4 +121,3 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     </>
   );
 }
-

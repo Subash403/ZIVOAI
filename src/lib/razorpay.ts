@@ -4,6 +4,14 @@ import crypto from 'crypto';
 const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_sampleKeyId12345';
 const keySecret = process.env.RAZORPAY_KEY_SECRET || 'sampleKeySecret67890';
 
+export function getRazorpayKeyId(): string {
+  const configuredKeyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  if (process.env.NODE_ENV === 'production' && (!configuredKeyId || configuredKeyId === 'rzp_test_sampleKeyId12345')) {
+    throw new Error('CRITICAL SECURITY ERROR: Valid Razorpay key ID must be configured in production.');
+  }
+  return configuredKeyId || keyId;
+}
+
 export function getRazorpayKeySecret(): string {
   if (process.env.NODE_ENV === 'production') {
     if (!process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET === 'sampleKeySecret67890') {
@@ -26,6 +34,8 @@ export interface CreateOrderParams {
 
 export async function createRazorpayOrder({ amount, receipt, notes }: CreateOrderParams) {
   try {
+    getRazorpayKeyId();
+    getRazorpayKeySecret();
     // Razorpay expects amount in smallest currency unit (paise for INR, i.e. amount * 100)
     const options = {
       amount: Math.round(amount * 100),
@@ -108,3 +118,91 @@ export function verifyRazorpaySignature({
   }
 }
 
+export interface RazorpayPaymentDetails {
+  id?: string;
+  order_id?: string;
+  amount?: number | string;
+  currency?: string;
+  status?: string;
+  captured?: boolean | number | string;
+}
+
+export function validateRazorpayPayment({
+  payment,
+  expectedOrderId,
+  expectedAmount,
+  expectedCurrency,
+}: {
+  payment: RazorpayPaymentDetails;
+  expectedOrderId: string;
+  expectedAmount: number;
+  expectedCurrency: string;
+}): boolean {
+  const amount = Number(payment.amount);
+  return Boolean(
+    payment.order_id === expectedOrderId &&
+      Number.isFinite(amount) &&
+      amount === Math.round(expectedAmount * 100) &&
+      payment.currency?.toUpperCase() === expectedCurrency.toUpperCase() &&
+      payment.status === 'captured' &&
+      (payment.captured === true || payment.captured === 1 || payment.captured === '1')
+  );
+}
+
+export async function fetchAndValidateRazorpayPayment({
+  paymentId,
+  expectedOrderId,
+  expectedAmount,
+  expectedCurrency,
+}: {
+  paymentId: string;
+  expectedOrderId: string;
+  expectedAmount: number;
+  expectedCurrency: string;
+}): Promise<RazorpayPaymentDetails | null> {
+  try {
+    const payment = (await razorpayInstance.payments.fetch(paymentId)) as RazorpayPaymentDetails;
+    return payment.id === paymentId && validateRazorpayPayment({ payment, expectedOrderId, expectedAmount, expectedCurrency })
+      ? payment
+      : null;
+  } catch (error) {
+    console.error('Failed to fetch Razorpay payment for verification:', error);
+    return null;
+  }
+}
+
+export async function fetchAndValidateCapturedPaymentForOrder({
+  orderId,
+  expectedAmount,
+  expectedCurrency,
+}: {
+  orderId: string;
+  expectedAmount: number;
+  expectedCurrency: string;
+}): Promise<RazorpayPaymentDetails | null> {
+  try {
+    const response = await razorpayInstance.orders.fetchPayments(orderId);
+    const payment = response.items.find((candidate) =>
+      validateRazorpayPayment({
+        payment: candidate,
+        expectedOrderId: orderId,
+        expectedAmount,
+        expectedCurrency,
+      })
+    );
+    return payment ? (payment as RazorpayPaymentDetails) : null;
+  } catch (error) {
+    console.error('Failed to fetch captured Razorpay payments for verification:', error);
+    return null;
+  }
+}
+
+export function verifyRazorpayWebhookSignature(rawBody: string, signature: string, webhookSecret: string): boolean {
+  if (!rawBody || !signature || !webhookSecret) return false;
+
+  const expectedSignature = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
+  const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+  const actualBuffer = Buffer.from(signature, 'utf8');
+
+  return expectedBuffer.length === actualBuffer.length && crypto.timingSafeEqual(expectedBuffer, actualBuffer);
+}

@@ -9,6 +9,7 @@ import {
   deletePublicAsset,
   uploadPrivateAsset,
   generatePrivatePresignedDownloadUrl,
+  getPrivateAssetBuffer,
 } from '../src/lib/storage';
 
 test('Cloudflare R2 & Storage Architecture', async (t) => {
@@ -83,5 +84,17 @@ test('Cloudflare R2 & Storage Architecture', async (t) => {
     const publicUrl = getPublicBaseUrl();
     assert.ok(!publicUrl.includes(process.env.R2_SECRET_ACCESS_KEY || 'SECRET_KEY_NOT_SET'));
     assert.ok(!publicUrl.includes(process.env.R2_ACCESS_KEY_ID || 'ACCESS_KEY_NOT_SET'));
+  });
+
+  await t.test('Private object buffering is disabled in production', async () => {
+    const environment = process.env as Record<string, string | undefined>;
+    const previousNodeEnv = environment.NODE_ENV;
+    environment.NODE_ENV = 'production';
+    try {
+      assert.equal(await getPrivateAssetBuffer('deliverables/production-guard-test.zip'), null);
+    } finally {
+      if (previousNodeEnv === undefined) delete environment.NODE_ENV;
+      else environment.NODE_ENV = previousNodeEnv;
+    }
   });
 });
