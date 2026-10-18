@@ -141,6 +141,7 @@ model Order {
   downloadCount       Int       @default(0)
   downloadLimit       Int       @default(5)
   notificationSent    Boolean   @default(false)
+  notification        OrderNotification?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 }
@@ -165,6 +166,35 @@ model NotificationLog {
   error          String?
   orderId        String?
   createdAt      DateTime @default(now())
+}
+
+model OrderNotification {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  order         Order    @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  status        String   @default("PENDING")
+  attemptCount  Int      @default(0)
+  nextAttemptAt DateTime?
+  lockedAt      DateTime?
+  lastError     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PaymentWebhookEvent {
+  id                String    @id @default(cuid())
+  eventKey          String    @unique
+  eventType         String
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  payloadHash       String
+  status            String    @default("PROCESSING")
+  attemptCount      Int       @default(1)
+  lockedAt          DateTime?
+  lastError         String?
+  processedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model Setting {
