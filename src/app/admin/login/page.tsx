@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, Mail, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
@@ -10,6 +10,16 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('/images/zivoai-logo.png');
+
+  useEffect(() => {
+    fetch('/api/settings', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings?.logoUrl) setLogoUrl(data.settings.logoUrl);
+      })
+      .catch(() => {});
+  }, []);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,7 +56,7 @@ export default function AdminLoginPage() {
         <div className="space-y-3 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/images/zivoai-logo.png"
+            src={logoUrl}
             alt="Zivo AI Logo"
             className="mx-auto h-20 w-[250px] object-contain mix-blend-multiply"
           />

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { filterPublicSettings, ALLOWED_SETTING_KEYS } from '../src/lib/settings';
+import { filterPublicSettings, ALLOWED_SETTING_KEYS, isSafeHttpUrl, validateSettingPayload } from '../src/lib/settings';
 
 test('Public Settings Filtering & Sensitive Data Exposure Prevention', async (t) => {
   await t.test('filterPublicSettings retains non-sensitive public configuration', () => {
@@ -54,5 +54,48 @@ test('Public Settings Filtering & Sensitive Data Exposure Prevention', async (t)
     assert.ok(keys.includes('googleSheetId'));
     assert.ok(!keys.includes('adminPasswordHash'));
     assert.ok(!keys.includes('secretKey'));
+  });
+
+  await t.test('validateSettingPayload accepts supported public settings and footer fields', () => {
+    const settings = validateSettingPayload({
+      supportEmail: 'admin@example.com',
+      phoneNumber: '+91 8220303164',
+      githubUrl: 'https://github.com/example',
+      showStatsSection: false,
+      footerDescription: 'A safe footer description',
+      footerCopyright: 'Built with care',
+    });
+
+    assert.equal(settings.supportEmail, 'admin@example.com');
+    assert.equal(settings.showStatsSection, 'false');
+    assert.equal(settings.footerCopyright, 'Built with care');
+  });
+
+  await t.test('validateSettingPayload rejects unsafe or malformed values', () => {
+    assert.throws(() => validateSettingPayload({ supportEmail: 'not-an-email' }), /Invalid support email/);
+    assert.throws(() => validateSettingPayload({ githubUrl: 'javascript:alert(1)' }), /Invalid URL protocol/);
+    assert.throws(() => validateSettingPayload({ showStatsSection: 'yes' }), /Invalid value/);
+    assert.throws(() => validateSettingPayload({ unknownSetting: 'value' }), /Unsupported setting/);
+  });
+
+  await t.test('social visibility defaults to Instagram only', () => {
+    const publicSettings = filterPublicSettings({});
+    assert.equal(publicSettings.showInstagram, true);
+    assert.equal(publicSettings.showGithub, false);
+    assert.equal(publicSettings.showLinkedin, false);
+    assert.equal(publicSettings.showYoutube, false);
+  });
+
+  await t.test('social visibility preserves configured URLs and validates public links', () => {
+    const publicSettings = filterPublicSettings({
+      githubUrl: 'https://github.com/zivo',
+      showGithub: 'true',
+      showInstagram: 'false',
+    });
+    assert.equal(publicSettings.githubUrl, 'https://github.com/zivo');
+    assert.equal(publicSettings.showGithub, true);
+    assert.equal(publicSettings.showInstagram, false);
+    assert.equal(isSafeHttpUrl(publicSettings.githubUrl), true);
+    assert.equal(isSafeHttpUrl('javascript:alert(1)'), false);
   });
 });

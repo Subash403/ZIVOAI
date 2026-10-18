@@ -224,7 +224,7 @@ export default function HomePage() {
       )}
 
       {/* 3. CAPABILITIES BENTO GRID */}
-      <CapabilitiesBento />
+      <CapabilitiesBento showStats={settings?.showStatsSection !== false} />
 
       {/* 4. GET STARTED OPTIONS (TWO CLEAR PATHWAYS) */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">

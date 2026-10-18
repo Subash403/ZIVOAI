@@ -26,6 +26,7 @@ export default function Navbar() {
     whatsappNumber: '918220303164',
     businessName: 'Zivo AI',
     announcementNotice: '100% Verified Production AI & Full-Stack Projects with Full Source Code & 1-on-1 Setup Support',
+    logoUrl: '/images/zivoai-logo.png',
   });
 
   useEffect(() => {
@@ -91,24 +92,24 @@ export default function Navbar() {
       }`}
     >
       <div className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8 2xl:px-10">
-        <div className="grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 xl:h-20">
+        <div className="grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 sm:gap-4 xl:h-20 xl:gap-5">
           {/* Logo */}
           <Link href="/" className="flex shrink-0 items-center gap-3 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/zivoai-logo.png"
+              src={settings.logoUrl || '/images/zivoai-logo.png'}
               alt="Zivo AI Logo"
               className="h-11 w-[120px] object-contain transition-transform group-hover:scale-[1.02] sm:h-12 sm:w-[135px] xl:h-14 xl:w-[155px] mix-blend-multiply"
             />
             <div className="hidden shrink-0 flex-col xl:flex">
-              <span className="text-[10px] text-slate-500 tracking-wider uppercase font-semibold">
+              <span className="whitespace-nowrap text-[13px] text-slate-500 tracking-wider uppercase font-semibold">
                 AI & Engineering Platform
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden min-w-0 items-center justify-center gap-0.5 lg:flex xl:gap-1">
+          <nav className="hidden min-w-0 items-center justify-center gap-1 lg:flex xl:gap-1.5">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               const Icon = link.icon;
@@ -116,7 +117,7 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-1 text-[9px] font-bold transition-colors hover:bg-indigo-50 hover:text-indigo-600 sm:px-1.5 xl:h-10 xl:gap-1.5 xl:px-2 xl:text-xs ${
+                    className={`flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-1 text-[11px] font-semibold transition-colors hover:bg-indigo-50 hover:text-indigo-600 sm:px-1.5 xl:h-10 xl:gap-1.5 xl:px-2 xl:text-[13px] ${
                     isActive ? 'text-indigo-600' : 'text-slate-600'
                   }`}
                 >

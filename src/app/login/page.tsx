@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'register' }) {
+  const [logoUrl, setLogoUrl] = useState('/images/zivoai-logo.png');
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from') || '/account';
@@ -42,6 +43,15 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
   const [college, setCollege] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('Final Year');
+
+  useEffect(() => {
+    fetch('/api/settings', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings?.logoUrl) setLogoUrl(data.settings.logoUrl);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +131,7 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
           <Link href="/" className="inline-flex items-center justify-center group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/zivoai-logo.png"
+              src={logoUrl}
               alt="Zivo AI Logo"
               className="h-20 w-[250px] object-contain mix-blend-multiply transition-transform group-hover:scale-[1.02]"
             />

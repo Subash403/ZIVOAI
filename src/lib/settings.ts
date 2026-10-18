@@ -7,6 +7,8 @@ export const ALLOWED_SETTING_KEYS = [
   'phoneNumber',
   'whatsappNumber',
   'supportEmail',
+  'footerDescription',
+  'footerCopyright',
   'announcementNotice',
 
   // Hero Section
@@ -29,6 +31,10 @@ export const ALLOWED_SETTING_KEYS = [
   'linkedinUrl',
   'instagramUrl',
   'youtubeUrl',
+  'showGithub',
+  'showLinkedin',
+  'showInstagram',
+  'showYoutube',
   'address',
 
   // Policies
@@ -54,6 +60,8 @@ export interface PublicSettings {
   phoneNumber: string;
   whatsappNumber: string;
   supportEmail: string;
+  footerDescription: string;
+  footerCopyright: string;
   announcementNotice: string;
 
   heroHeading?: string;
@@ -73,6 +81,10 @@ export interface PublicSettings {
   linkedinUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  showGithub?: boolean;
+  showLinkedin?: boolean;
+  showInstagram?: boolean;
+  showYoutube?: boolean;
   address?: string;
 
   refundPolicy?: string;
@@ -107,6 +119,11 @@ export function filterPublicSettings(settingsObj: Record<string, string>): Publi
     phoneNumber: settingsObj.phoneNumber || '+91 8220303164',
     whatsappNumber: settingsObj.whatsappNumber || '918220303164',
     supportEmail: settingsObj.supportEmail || 'support@zivo.ai',
+    footerDescription:
+      settingsObj.footerDescription ||
+      'Modern project discovery and digital delivery platform. Verified production AI, full-stack architectures, computer vision pipelines, and custom software systems with instant automated delivery.',
+    footerCopyright:
+      settingsObj.footerCopyright || 'Engineering the future with modern AI, cloud architectures, and developer-first digital assets.',
     announcementNotice:
       settingsObj.announcementNotice ||
       '🔥 Production-Ready AI & Full-Stack Architectures with Instant Automated Delivery',
@@ -131,6 +148,10 @@ export function filterPublicSettings(settingsObj: Record<string, string>): Publi
     linkedinUrl: settingsObj.linkedinUrl || 'https://linkedin.com',
     instagramUrl: settingsObj.instagramUrl || 'https://instagram.com',
     youtubeUrl: settingsObj.youtubeUrl || 'https://youtube.com',
+    showGithub: settingsObj.showGithub === 'true',
+    showLinkedin: settingsObj.showLinkedin === 'true',
+    showInstagram: settingsObj.showInstagram !== 'false',
+    showYoutube: settingsObj.showYoutube === 'true',
     address: settingsObj.address || 'Chennai / Bangalore, India',
 
     refundPolicy:
@@ -148,4 +169,108 @@ export function filterPublicSettings(settingsObj: Record<string, string>): Publi
 
     faqItems: settingsObj.faqItems || '',
   };
+}
+
+const URL_SETTING_KEYS = new Set([
+  'githubUrl',
+  'linkedinUrl',
+  'instagramUrl',
+  'youtubeUrl',
+]);
+
+const EMAIL_SETTING_KEYS = new Set(['supportEmail']);
+const PHONE_SETTING_KEYS = new Set(['phoneNumber', 'whatsappNumber']);
+const BOOLEAN_SETTING_KEYS = new Set([
+  'heroBannerActive',
+  'showFeaturedSection',
+  'showHowItWorksSection',
+  'showTestimonialsSection',
+  'showFaqSection',
+  'showStatsSection',
+  'showGithub',
+  'showLinkedin',
+  'showInstagram',
+  'showYoutube',
+]);
+
+export function isSafeHttpUrl(value: string | undefined): value is string {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+const SETTING_MAX_LENGTHS: Record<string, number> = {
+  logoUrl: 2048,
+  faviconUrl: 2048,
+  announcementNotice: 500,
+  heroHeading: 200,
+  heroSubheading: 1000,
+  heroBadgeText: 200,
+  heroPrimaryButtonText: 100,
+  heroSecondaryButtonText: 100,
+  address: 500,
+  footerDescription: 1000,
+  footerCopyright: 500,
+  faqItems: 20000,
+  refundPolicy: 10000,
+  deliveryPolicy: 10000,
+  termsConditions: 10000,
+  privacyPolicy: 10000,
+};
+
+export function validateSettingPayload(payload: unknown): Record<string, string> {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('Invalid settings payload');
+  }
+
+  const validated: Record<string, string> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (!(ALLOWED_SETTING_KEYS as readonly string[]).includes(key)) {
+      throw new Error(`Unsupported setting: ${key}`);
+    }
+    if (value === undefined || value === null) continue;
+
+    if (BOOLEAN_SETTING_KEYS.has(key)) {
+      if (typeof value !== 'boolean' && value !== 'true' && value !== 'false') {
+        throw new Error(`Invalid value for ${key}`);
+      }
+      validated[key] = String(value);
+      continue;
+    }
+
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      throw new Error(`Invalid value for ${key}`);
+    }
+    const sanitizedValue = String(value).trim();
+    const maxLength = SETTING_MAX_LENGTHS[key] || 300;
+    if (sanitizedValue.length > maxLength) {
+      throw new Error(`${key} exceeds the maximum allowed length`);
+    }
+    if (EMAIL_SETTING_KEYS.has(key) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedValue)) {
+      throw new Error('Invalid support email');
+    }
+    if (PHONE_SETTING_KEYS.has(key) && !/^\+?[\d\s().-]{7,25}$/.test(sanitizedValue)) {
+      throw new Error(`Invalid ${key}`);
+    }
+    if (URL_SETTING_KEYS.has(key)) {
+      let parsed: URL;
+      try {
+        parsed = new URL(sanitizedValue);
+      } catch {
+        throw new Error(`Invalid URL for ${key}`);
+      }
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        throw new Error(`Invalid URL protocol for ${key}`);
+      }
+    }
+    if ((key === 'logoUrl' || key === 'faviconUrl') && !sanitizedValue.startsWith('/') && !/^https?:\/\//i.test(sanitizedValue)) {
+      throw new Error(`Invalid asset URL for ${key}`);
+    }
+    validated[key] = sanitizedValue;
+  }
+  return validated;
 }

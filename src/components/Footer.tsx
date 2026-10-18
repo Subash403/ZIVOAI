@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, Lock, Terminal, Mail, MessageSquare, FileText } from 'lucide-react';
-import { PublicSettings } from '@/lib/settings';
+import { Shield, Lock, Terminal, Mail, MessageSquare, FileText, MapPin, Phone, ExternalLink } from 'lucide-react';
+import { isSafeHttpUrl, PublicSettings } from '@/lib/settings';
 
 export default function Footer() {
   const pathname = usePathname();
@@ -30,6 +30,9 @@ export default function Footer() {
   const rawWhatsapp = settings?.whatsappNumber || '918220303164';
   const cleanWhatsapp = rawWhatsapp.replace(/\D/g, '') || '918220303164';
   const supportEmail = settings?.supportEmail || 'support@zivo.ai';
+  const phoneNumber = settings?.phoneNumber || '+91 8220303164';
+  const address = settings?.address || 'Chennai / Bangalore, India';
+  const logoUrl = settings?.logoUrl || '/images/zivoai-logo.png';
 
   return (
     <footer className="border-t border-slate-200 bg-slate-100 pt-14 pb-10 text-slate-600 sm:pt-16 sm:pb-12">
@@ -41,13 +44,13 @@ export default function Footer() {
             <Link href="/" className="inline-flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/images/zivoai-logo.png"
+                src={logoUrl}
                 alt="Zivo AI Logo"
                 className="h-16 w-[210px] object-contain mix-blend-multiply"
               />
             </Link>
             <p className="text-sm text-slate-600 max-w-sm leading-relaxed">
-              Modern project discovery and digital delivery platform. Verified production AI models, full-stack architectures, computer vision pipelines, and custom software systems with instant automated delivery.
+              {settings?.footerDescription || 'Modern project discovery and digital delivery platform. Verified production AI models, full-stack architectures, computer vision pipelines, and custom software systems with instant automated delivery.'}
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 text-xs font-medium text-slate-500">
               <span className="flex items-center gap-1"><Shield className="w-4 h-4 text-emerald-600" /> 100% Tested Code</span>
@@ -86,6 +89,18 @@ export default function Footer() {
                 <MessageSquare className="w-4 h-4 text-emerald-600" />
                 <a href={`https://wa.me/${cleanWhatsapp}?text=Hi%2C%20I%20am%20interested%20in%20exploring%20Zivo%20AI%20projects`} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 font-semibold text-slate-900">WhatsApp: {rawWhatsapp}</a>
               </li>
+              <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-indigo-600" /><a href={`tel:${phoneNumber.replace(/[^\d+]/g, '')}`} className="hover:text-indigo-600">{phoneNumber}</a></li>
+              <li className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-indigo-600" /><span>{address}</span></li>
+              <li className="flex flex-wrap items-center gap-3 pt-2">
+                {[
+                  { href: settings?.githubUrl, label: 'GitHub', enabled: settings?.showGithub === true },
+                  { href: settings?.linkedinUrl, label: 'LinkedIn', enabled: settings?.showLinkedin === true },
+                  { href: settings?.instagramUrl, label: 'Instagram', enabled: settings?.showInstagram !== false },
+                  { href: settings?.youtubeUrl, label: 'YouTube', enabled: settings?.showYoutube === true },
+                ].filter((social): social is typeof social & { href: string } => social.enabled && isSafeHttpUrl(social.href)).map(({ href, label }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-indigo-600"><ExternalLink className="w-3.5 h-3.5" />{label}</a>
+                ))}
+              </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-indigo-600" />
                 <a href={`mailto:${supportEmail}`} className="break-all text-xs hover:text-indigo-600">{supportEmail}</a>
@@ -101,7 +116,7 @@ export default function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-3 pt-7 text-center text-xs text-slate-500 md:flex-row md:items-center md:text-left">
           <p>&copy; {new Date().getFullYear()} {businessName}. All rights reserved.</p>
-          <p className="max-w-xl text-slate-500 md:text-right">Engineering the future with modern AI, cloud architectures, and developer-first digital assets.</p>
+          <p className="max-w-xl text-slate-500 md:text-right">{settings?.footerCopyright || 'Engineering the future with modern AI, cloud architectures, and developer-first digital assets.'}</p>
         </div>
       </div>
     </footer>

@@ -25,6 +25,8 @@ export default function AdminSettingsPage() {
     phoneNumber: '+91 8220303164',
     whatsappNumber: '918220303164',
     supportEmail: 'support@zivo.ai',
+    footerDescription: 'Modern project discovery and digital delivery platform. Verified production AI, full-stack architectures, computer vision pipelines, and custom software systems with instant automated delivery.',
+    footerCopyright: 'Engineering the future with modern AI, cloud architectures, and developer-first digital assets.',
     announcementNotice: '🔥 Production-Ready AI & Full-Stack Architectures with Instant Automated Delivery',
     razorpayKeyId: '',
     googleSheetId: '',
@@ -47,6 +49,10 @@ export default function AdminSettingsPage() {
     linkedinUrl: 'https://linkedin.com',
     instagramUrl: 'https://instagram.com',
     youtubeUrl: 'https://youtube.com',
+    showGithub: false,
+    showLinkedin: false,
+    showInstagram: true,
+    showYoutube: false,
     address: 'Chennai / Bangalore, India',
 
     refundPolicy:
@@ -250,6 +256,16 @@ export default function AdminSettingsPage() {
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1">Footer Description</label>
+                <textarea rows={2} value={settings.footerDescription} onChange={(e) => handleChange('footerDescription', e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1">Footer Copyright Text</label>
+                <input type="text" value={settings.footerCopyright} onChange={(e) => handleChange('footerCopyright', e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
             </div>
           </div>
         )}
@@ -418,6 +434,35 @@ export default function AdminSettingsPage() {
                   onChange={(e) => handleChange('address', e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+              </div>
+
+              <div className="sm:col-span-2 space-y-2">
+                <p className="text-xs font-bold text-slate-700">Footer Social Visibility</p>
+                {[
+                  { key: 'showInstagram', label: 'Show Instagram', defaultEnabled: true },
+                  { key: 'showGithub', label: 'Show GitHub', defaultEnabled: false },
+                  { key: 'showLinkedin', label: 'Show LinkedIn', defaultEnabled: false },
+                  { key: 'showYoutube', label: 'Show YouTube', defaultEnabled: false },
+                ].map((social) => (
+                  <label key={social.key} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-slate-700">
+                    <span>{social.label}</span>
+                    <input
+                      type="checkbox"
+                      checked={settings[social.key as keyof SiteSettings] === undefined ? social.defaultEnabled : settings[social.key as keyof SiteSettings] === true}
+                      onChange={(e) => handleChange(social.key as keyof SiteSettings, e.target.checked)}
+                      className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Instagram Profile</label>
+                <input type="url" value={settings.instagramUrl || ''} onChange={(e) => handleChange('instagramUrl', e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">YouTube Channel</label>
+                <input type="url" value={settings.youtubeUrl || ''} onChange={(e) => handleChange('youtubeUrl', e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
             </div>
           </div>

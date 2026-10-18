@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -21,6 +22,16 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [logoUrl, setLogoUrl] = useState('/images/zivoai-logo.png');
+
+  useEffect(() => {
+    fetch('/api/settings', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings?.logoUrl) setLogoUrl(data.settings.logoUrl);
+      })
+      .catch(() => {});
+  }, []);
 
   const navItems = [
     { name: 'Overview', href: '/admin', icon: LayoutDashboard },
@@ -40,7 +51,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           <Link href="/admin" onClick={onClose} className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/zivoai-logo.png"
+              src={logoUrl}
               alt="Zivo AI Logo"
               className="h-12 w-[135px] shrink-0 object-contain mix-blend-multiply"
             />

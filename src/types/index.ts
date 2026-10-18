@@ -169,6 +169,8 @@ export interface SiteSettings {
   phoneNumber: string;
   whatsappNumber: string;
   supportEmail: string;
+  footerDescription: string;
+  footerCopyright: string;
   announcementNotice: string;
   razorpayKeyId?: string;
   googleSheetId?: string;
@@ -193,6 +195,10 @@ export interface SiteSettings {
   linkedinUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  showGithub?: boolean;
+  showLinkedin?: boolean;
+  showInstagram?: boolean;
+  showYoutube?: boolean;
   address?: string;
 
   // Policies

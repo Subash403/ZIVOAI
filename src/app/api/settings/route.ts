@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
-import { ALLOWED_SETTING_KEYS, filterPublicSettings } from '@/lib/settings';
+import { filterPublicSettings, validateSettingPayload } from '@/lib/settings';
 
 export async function GET() {
   try {
@@ -46,28 +46,24 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized admin access' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const settings = validateSettingPayload(await request.json());
 
-    if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Invalid settings payload' }, { status: 400 });
-    }
-
-    const allowedKeys: readonly string[] = ALLOWED_SETTING_KEYS;
-    for (const [key, value] of Object.entries(body)) {
-      if (allowedKeys.includes(key) && value !== undefined && value !== null) {
-        const sanitizedValue = String(value).trim();
-        await prisma.setting.upsert({
+    await prisma.$transaction(async (tx) => {
+      for (const [key, value] of Object.entries(settings)) {
+        await tx.setting.upsert({
           where: { key },
-          update: { value: sanitizedValue },
-          create: { key, value: sanitizedValue },
+          update: { value },
+          create: { key, value },
         });
       }
-    }
+    });
 
     return NextResponse.json({ success: true, message: 'Settings saved successfully' });
   } catch (error: unknown) {
+    if (error instanceof Error && (error.message.startsWith('Invalid') || error.message.startsWith('Unsupported') || error.message.includes('exceeds'))) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error('Error updating settings:', error);
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }
-

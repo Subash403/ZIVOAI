@@ -68,7 +68,7 @@ const CAPABILITIES: CapabilityCard[] = [
   },
 ];
 
-export default function CapabilitiesBento() {
+export default function CapabilitiesBento({ showStats = true }: { showStats?: boolean }) {
   const featured = CAPABILITIES.find((c) => c.isFeatured) || CAPABILITIES[0];
   const supporting = CAPABILITIES.filter((c) => !c.isFeatured);
 
@@ -105,7 +105,7 @@ export default function CapabilitiesBento() {
           </div>
 
           {/* Quick Metrics Callout */}
-          <div className="pt-6 border-t border-slate-200/80 grid grid-cols-2 gap-4">
+          {showStats && <div className="pt-6 border-t border-slate-200/80 grid grid-cols-2 gap-4">
             <div>
               <div className="text-2xl font-black text-slate-900 font-mono">100%</div>
               <div className="text-xs text-slate-500 font-medium mt-0.5">Verified Runtimes</div>
@@ -114,7 +114,7 @@ export default function CapabilitiesBento() {
               <div className="text-2xl font-black text-indigo-600 font-mono">1–3h</div>
               <div className="text-xs text-slate-500 font-medium mt-0.5">Automated Delivery</div>
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* Right Column: Asymmetric Bento Grid */}
