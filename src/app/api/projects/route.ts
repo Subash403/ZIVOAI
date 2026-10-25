@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { slugify } from '@/lib/utils';
 import { Prisma } from '@prisma/client';
+import { verifyPrivateUploadFinalizationToken } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -157,6 +158,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Required project fields missing' }, { status: 400 });
     }
 
+    if (body.downloadFileUrl) {
+      const isVerifiedUpload = verifyPrivateUploadFinalizationToken(body.downloadUploadToken || '', {
+        key: body.downloadFileUrl,
+        fileName: body.downloadFileName || '',
+        contentType: body.downloadFileContentType || '',
+        sizeBytes: Number(body.downloadFileSizeBytes),
+      });
+      if (!isVerifiedUpload) {
+        return NextResponse.json({ error: 'Private deliverable must be finalized before saving the project.' }, { status: 400 });
+      }
+    }
+
     const baseSlug = slugify(title);
     let uniqueSlug = baseSlug;
     let count = 1;
@@ -207,4 +220,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

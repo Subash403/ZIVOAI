@@ -65,12 +65,16 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
     stockLimit: initialData?.stockLimit !== undefined && initialData?.stockLimit !== null ? initialData.stockLimit : '',
     downloadFileName: initialData?.downloadFileName || '',
     downloadFileUrl: initialData?.downloadFileUrl || '',
+    downloadFileContentType: '',
+    downloadFileSizeBytes: 0,
+    downloadUploadToken: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
   const allMaterials = [
@@ -102,33 +106,62 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
 
     setUploadingFile(true);
     setUploadSuccess(null);
+    setUploadProgress(0);
     setError(null);
 
-    const data = new FormData();
-    data.append('file', file);
-
     try {
-      const res = await fetch('/api/admin/projects/upload', {
+      const initResponse = await fetch('/api/admin/projects/upload/initiate', {
         method: 'POST',
-        body: data,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, contentType: file.type, sizeBytes: file.size }),
+      });
+      const initData = await initResponse.json();
+      if (!initResponse.ok) {
+        throw new Error(initData.error || 'Could not start secure upload');
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const upload = new XMLHttpRequest();
+        upload.open('PUT', initData.uploadUrl);
+        Object.entries(initData.requiredHeaders as Record<string, string>).forEach(([name, value]) => upload.setRequestHeader(name, value));
+        upload.upload.onprogress = (event) => {
+          if (event.lengthComputable) setUploadProgress(Math.round((event.loaded / event.total) * 100));
+        };
+        upload.onerror = () => reject(new Error('Upload to secure storage failed.'));
+        upload.onload = () => (upload.status >= 200 && upload.status < 300 ? resolve() : reject(new Error('Upload to secure storage was rejected.')));
+        upload.send(file);
       });
 
-      const resData = await res.json();
-      if (!res.ok) {
-        throw new Error(resData.error || 'Upload failed');
+      const finalizeResponse = await fetch('/api/admin/projects/upload/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: initData.key,
+          fileName: initData.fileName,
+          contentType: initData.contentType,
+          sizeBytes: initData.sizeBytes,
+        }),
+      });
+      const finalizeData = await finalizeResponse.json();
+      if (!finalizeResponse.ok) {
+        throw new Error(finalizeData.error || 'Uploaded file could not be verified');
       }
 
       setFormData((prev) => ({
         ...prev,
-        downloadFileName: resData.fileName,
-        downloadFileUrl: resData.fileUrl,
+        downloadFileName: finalizeData.fileName,
+        downloadFileUrl: finalizeData.fileUrl,
+        downloadFileContentType: initData.contentType,
+        downloadFileSizeBytes: finalizeData.sizeBytes,
+        downloadUploadToken: finalizeData.uploadToken,
       }));
 
-      setUploadSuccess(`File uploaded successfully: ${resData.fileName}`);
+      setUploadSuccess(`File uploaded and verified: ${finalizeData.fileName}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'File upload failed');
     } finally {
       setUploadingFile(false);
+      setUploadProgress(null);
     }
   };
 
@@ -403,19 +436,19 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
             <Upload className="w-8 h-8 text-indigo-600" />
             <div>
               <label className="cursor-pointer text-xs font-bold text-indigo-600 hover:underline">
-                <span>Upload Project Archive (.zip, .tar.gz, .pdf)</span>
+                <span>Upload Project Archive (.zip, .tar.gz, .rar, .7z, .pdf, .docx, .txt)</span>
                 <input
                   type="file"
                   onChange={handleFileUpload}
                   className="hidden"
-                  accept=".zip,.tar.gz,.rar,.7z,.pdf"
+                  accept=".zip,.tar.gz,.rar,.7z,.pdf,.docx,.txt"
                 />
               </label>
-              <p className="text-[11px] text-slate-400 mt-0.5">Maximum file size: 100MB</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Secure direct upload to private storage. Maximum file size: 2GB.</p>
             </div>
             {uploadingFile && (
               <div className="flex items-center gap-2 text-xs text-indigo-600 font-semibold">
-                <Loader2 className="w-4 h-4 animate-spin" /> Uploading to secure storage...
+                <Loader2 className="w-4 h-4 animate-spin" /> Uploading to secure storage{uploadProgress !== null ? `: ${uploadProgress}%` : '...'}
               </div>
             )}
             {uploadSuccess && (

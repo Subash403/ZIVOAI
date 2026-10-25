@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { Prisma } from '@prisma/client';
+import { verifyPrivateUploadFinalizationToken } from '@/lib/storage';
 
 export async function GET(
   request: Request,
@@ -76,6 +77,21 @@ export async function PUT(
     const existing = await prisma.project.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const changesPrivateDeliverable =
+      body.downloadFileUrl !== undefined &&
+      (body.downloadFileUrl !== existing.downloadFileUrl || body.downloadFileName !== existing.downloadFileName);
+    if (changesPrivateDeliverable && body.downloadFileUrl) {
+      const isVerifiedUpload = verifyPrivateUploadFinalizationToken(body.downloadUploadToken || '', {
+        key: body.downloadFileUrl,
+        fileName: body.downloadFileName || '',
+        contentType: body.downloadFileContentType || '',
+        sizeBytes: Number(body.downloadFileSizeBytes),
+      });
+      if (!isVerifiedUpload) {
+        return NextResponse.json({ error: 'Private deliverable must be finalized before saving the project.' }, { status: 400 });
+      }
     }
 
     const updated = await prisma.project.update({
@@ -187,4 +203,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
   }
 }
-

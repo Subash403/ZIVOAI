@@ -10,6 +10,75 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { generateSafeImageFileName, safeDeleteUploadedImage, getImageStorageDir } from './image-upload';
+import { getJwtSecret } from './auth';
+
+export const MAX_PRIVATE_DELIVERABLE_SIZE_BYTES = 2 * 1024 * 1024 * 1024;
+const PRIVATE_UPLOAD_TOKEN_TTL_MS = 15 * 60 * 1000;
+const ALLOWED_PRIVATE_DELIVERABLES: Record<string, string[]> = {
+  '.zip': ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'],
+  '.tar.gz': ['application/gzip', 'application/x-gzip', 'application/octet-stream'],
+  '.rar': ['application/vnd.rar', 'application/x-rar-compressed', 'application/octet-stream'],
+  '.7z': ['application/x-7z-compressed', 'application/octet-stream'],
+  '.pdf': ['application/pdf'],
+  '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  '.txt': ['text/plain'],
+};
+
+export interface PrivateDeliverableUpload {
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+export function validatePrivateDeliverableUpload({ fileName, contentType, sizeBytes }: PrivateDeliverableUpload): string | null {
+  const normalizedName = fileName.trim();
+  const normalizedType = contentType.trim().toLowerCase();
+  const extension = Object.keys(ALLOWED_PRIVATE_DELIVERABLES).find((candidate) => normalizedName.toLowerCase().endsWith(candidate));
+  if (!normalizedName || normalizedName.length > 180 || !extension) {
+    return 'Unsupported deliverable file type.';
+  }
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > MAX_PRIVATE_DELIVERABLE_SIZE_BYTES) {
+    return `Deliverables must be between 1 byte and ${MAX_PRIVATE_DELIVERABLE_SIZE_BYTES / (1024 * 1024 * 1024)} GB.`;
+  }
+  if (!normalizedType || !ALLOWED_PRIVATE_DELIVERABLES[extension].includes(normalizedType)) {
+    return 'The declared file type does not match an allowed deliverable format.';
+  }
+  return null;
+}
+
+function sanitizePrivateDeliverableName(originalName: string): string {
+  return originalName.trim().replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+export function createPrivateDeliverableKey(originalName: string): string {
+  return `deliverables/${Date.now()}_${crypto.randomBytes(16).toString('hex')}_${sanitizePrivateDeliverableName(originalName)}`;
+}
+
+function createPrivateUploadTokenPayload(upload: PrivateDeliverableUpload & { key: string; expiresAt: number }) {
+  return `${upload.key}\n${upload.fileName}\n${upload.contentType}\n${upload.sizeBytes}\n${upload.expiresAt}`;
+}
+
+export function createPrivateUploadFinalizationToken(upload: PrivateDeliverableUpload & { key: string }): string {
+  const expiresAt = Date.now() + PRIVATE_UPLOAD_TOKEN_TTL_MS;
+  const encoded = Buffer.from(JSON.stringify({ ...upload, expiresAt })).toString('base64url');
+  const signature = crypto.createHmac('sha256', getJwtSecret()).update(createPrivateUploadTokenPayload({ ...upload, expiresAt })).digest('base64url');
+  return `${encoded}.${signature}`;
+}
+
+export function verifyPrivateUploadFinalizationToken(token: string, upload: PrivateDeliverableUpload & { key: string }): boolean {
+  try {
+    const [encoded, signature] = token.split('.');
+    if (!encoded || !signature) return false;
+    const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8')) as PrivateDeliverableUpload & { key: string; expiresAt: number };
+    if (payload.expiresAt < Date.now() || payload.key !== upload.key || payload.fileName !== upload.fileName || payload.contentType !== upload.contentType || payload.sizeBytes !== upload.sizeBytes) return false;
+    const expected = crypto.createHmac('sha256', getJwtSecret()).update(createPrivateUploadTokenPayload(payload)).digest('base64url');
+    const expectedBuffer = Buffer.from(expected, 'utf8');
+    const signatureBuffer = Buffer.from(signature, 'utf8');
+    return expectedBuffer.length === signatureBuffer.length && crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Checks whether Cloudflare R2 credentials are fully configured in environment.
@@ -51,6 +120,57 @@ export function getPublicBucketName(): string {
 
 export function getPrivateBucketName(): string {
   return process.env.R2_BUCKET_PRIVATE || 'zivo-private-files';
+}
+
+export async function createPrivatePresignedUpload(upload: PrivateDeliverableUpload): Promise<{
+  key: string;
+  uploadUrl: string;
+  requiredHeaders: Record<string, string>;
+  fileName: string;
+}> {
+  const validationError = validatePrivateDeliverableUpload(upload);
+  if (validationError) throw new Error(validationError);
+  if (!isR2Configured()) throw new Error('Private uploads require configured R2 storage.');
+
+  const fileName = sanitizePrivateDeliverableName(upload.fileName);
+  const key = createPrivateDeliverableKey(fileName);
+  const requiredHeaders = {
+    'content-type': upload.contentType,
+    'x-amz-meta-original-name': fileName,
+    'x-amz-meta-upload-kind': 'private-deliverable',
+  };
+  const uploadUrl = await getSignedUrl(
+    getR2Client(),
+    new PutObjectCommand({
+      Bucket: getPrivateBucketName(),
+      Key: key,
+      ContentType: upload.contentType,
+      Metadata: { 'original-name': fileName, 'upload-kind': 'private-deliverable' },
+    }),
+    { expiresIn: 10 * 60 }
+  );
+
+  return { key, uploadUrl, requiredHeaders, fileName };
+}
+
+export async function verifyPrivatePresignedUpload(upload: PrivateDeliverableUpload & { key: string }): Promise<boolean> {
+  const validationError = validatePrivateDeliverableUpload(upload);
+  if (validationError || !isR2Configured() || !upload.key.startsWith('deliverables/')) return false;
+
+  try {
+    const result = await getR2Client().send(
+      new HeadObjectCommand({ Bucket: getPrivateBucketName(), Key: upload.key })
+    );
+    return (
+      result.ContentLength === upload.sizeBytes &&
+      result.ContentType?.toLowerCase() === upload.contentType.toLowerCase() &&
+      result.Metadata?.['original-name'] === sanitizePrivateDeliverableName(upload.fileName) &&
+      result.Metadata?.['upload-kind'] === 'private-deliverable'
+    );
+  } catch (error) {
+    console.warn('Private upload finalization check failed:', error);
+    return false;
+  }
 }
 
 export function getPublicBaseUrl(): string {
