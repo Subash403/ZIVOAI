@@ -142,11 +142,10 @@ export async function POST(request: Request) {
       phone: formattedPhone,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to initialize payment order';
     console.error('Error creating payment order:', error);
     return NextResponse.json(
-      { error: message },
-      { status: 500 }
+      { error: 'Payment service is temporarily unavailable. Please try again shortly.' },
+      { status: 502 }
     );
   }
 }

@@ -154,6 +154,13 @@ export function useRazorpayCheckout(options?: UseRazorpayCheckoutOptions) {
               });
 
               const verifyData = await verifyRes.json();
+              if (verifyRes.status === 202 && verifyData.pending) {
+                const msg = verifyData.message || 'Payment is awaiting capture. Your order will update automatically.';
+                setErrorMsg(msg);
+                if (options?.onError) options.onError(msg);
+                setLoading(false);
+                return;
+              }
               if (!verifyRes.ok) {
                 throw new Error(verifyData.error || 'Payment signature verification failed.');
               }

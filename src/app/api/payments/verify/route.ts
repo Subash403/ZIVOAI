@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { fetchAndValidateRazorpayPayment, verifyRazorpaySignature } from '@/lib/razorpay';
+import {
+  fetchRazorpayPayment,
+  isRazorpayPaymentPendingCapture,
+  validateRazorpayPayment,
+  verifyRazorpaySignature,
+} from '@/lib/razorpay';
 import { getCustomerSession } from '@/lib/auth';
 import { fulfillVerifiedOrder } from '@/lib/payment-fulfillment';
 
@@ -72,14 +77,32 @@ export async function POST(request: Request) {
       );
     }
 
-    const payment = await fetchAndValidateRazorpayPayment({
-      paymentId: razorpayPaymentId,
+    const payment = await fetchRazorpayPayment(razorpayPaymentId);
+    if (
+      payment &&
+      isRazorpayPaymentPendingCapture({
+        payment,
+        expectedOrderId: existingOrder.razorpayOrderId,
+        expectedAmount: existingOrder.amount,
+        expectedCurrency: existingOrder.currency,
+      })
+    ) {
+      await prisma.order.updateMany({
+        where: { id: existingOrder.id, paymentStatus: 'CREATED' },
+        data: { razorpayPaymentId },
+      });
+      return NextResponse.json(
+        { pending: true, message: 'Payment is authorized and awaiting capture. Your order will update automatically.' },
+        { status: 202 }
+      );
+    }
+
+    if (!payment || !validateRazorpayPayment({
+      payment,
       expectedOrderId: existingOrder.razorpayOrderId,
       expectedAmount: existingOrder.amount,
       expectedCurrency: existingOrder.currency,
-    });
-
-    if (!payment) {
+    })) {
       if (existingOrder.paymentStatus !== 'PAID') {
         await prisma.order.updateMany({
           where: { id: existingOrder.id, paymentStatus: { in: ['CREATED', 'FAILED'] } },

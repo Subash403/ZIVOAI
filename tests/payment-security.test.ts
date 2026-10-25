@@ -5,6 +5,9 @@ import fs from 'fs';
 import path from 'path';
 import { prisma } from '../src/lib/prisma';
 import {
+  createRazorpayOrder,
+  getRazorpayKeyId,
+  isRazorpayPaymentPendingCapture,
   razorpayInstance,
   validateRazorpayPayment,
   verifyRazorpayWebhookSignature,
@@ -62,6 +65,42 @@ test('Razorpay payment validation rejects mismatched order, amount, currency, an
       }),
       false
     );
+  }
+
+  assert.equal(
+    isRazorpayPaymentPendingCapture({
+      payment: { ...validPayment, status: 'authorized', captured: false },
+      expectedOrderId: 'order_test_security',
+      expectedAmount: 4999,
+      expectedCurrency: 'INR',
+    }),
+    true
+  );
+});
+
+test('Razorpay never creates mock orders when credentials are missing or the provider fails', async () => {
+  const environment = process.env as Record<string, string | undefined>;
+  const previousKeyId = environment.RAZORPAY_KEY_ID;
+  const previousSecret = environment.RAZORPAY_KEY_SECRET;
+  const orderApi = razorpayInstance.orders as unknown as { create: (options: unknown) => Promise<unknown> };
+  const originalCreate = orderApi.create;
+  try {
+    delete environment.RAZORPAY_KEY_ID;
+    assert.throws(() => getRazorpayKeyId(), /credentials are not configured/i);
+    await assert.rejects(() => createRazorpayOrder({ amount: 1, receipt: 'missing-credentials' }), /order creation failed/i);
+
+    environment.RAZORPAY_KEY_ID = 'rzp_test_unit_test';
+    environment.RAZORPAY_KEY_SECRET = 'unit-test-secret';
+    orderApi.create = async () => {
+      throw new Error('provider unavailable');
+    };
+    await assert.rejects(() => createRazorpayOrder({ amount: 1, receipt: 'provider-failure' }), /order creation failed/i);
+  } finally {
+    orderApi.create = originalCreate;
+    if (previousKeyId === undefined) delete environment.RAZORPAY_KEY_ID;
+    else environment.RAZORPAY_KEY_ID = previousKeyId;
+    if (previousSecret === undefined) delete environment.RAZORPAY_KEY_SECRET;
+    else environment.RAZORPAY_KEY_SECRET = previousSecret;
   }
 });
 
@@ -224,6 +263,15 @@ test('Payment verification route requires the stored Razorpay order and validate
     const response = await verifyPayment(new Request('https://example.test/api/payments/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ internalOrderId: order.orderId, razorpayOrderId: order.razorpayOrderId, razorpayPaymentId: paymentId, razorpaySignature: signature }) }));
     assert.equal(response.status, 200);
     assert.equal((await prisma.order.findUnique({ where: { id: order.id } }))?.paymentStatus, 'PAID');
+
+    const pendingOrder = await prisma.order.create({ data: { orderId: `VERIFY_PENDING_${suffix}`, studentName: 'x', email: 'pending@example.com', phone: '1', projectId: project.id, projectName: project.title, amount: 4999, razorpayOrderId: `order_pending_${suffix}` } });
+    const pendingPaymentId = `pay_pending_${suffix}`;
+    const pendingSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'sampleKeySecret67890').update(`${pendingOrder.razorpayOrderId}|${pendingPaymentId}`).digest('hex');
+    paymentApi.fetch = async () => ({ id: pendingPaymentId, order_id: pendingOrder.razorpayOrderId, amount: 499900, currency: 'INR', status: 'authorized', captured: false });
+    const pendingResponse = await verifyPayment(new Request('https://example.test/api/payments/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ internalOrderId: pendingOrder.orderId, razorpayOrderId: pendingOrder.razorpayOrderId, razorpayPaymentId: pendingPaymentId, razorpaySignature: pendingSignature }) }));
+    assert.equal(pendingResponse.status, 202);
+    assert.equal((await prisma.order.findUnique({ where: { id: pendingOrder.id } }))?.paymentStatus, 'CREATED');
+    await prisma.order.delete({ where: { id: pendingOrder.id } });
   } finally {
     paymentApi.fetch = originalFetch;
     await prisma.orderNotification.deleteMany({ where: { orderId: order.orderId } });

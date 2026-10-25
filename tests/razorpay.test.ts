@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import crypto from 'crypto';
 import { verifyRazorpaySignature } from '../src/lib/razorpay';
 
+process.env.RAZORPAY_KEY_SECRET ||= 'razorpay-test-secret';
+
 test('Razorpay Payment Verification Security', async (t) => {
   const secret = process.env.RAZORPAY_KEY_SECRET || 'sampleKeySecret67890';
   const orderId = 'order_test_998877';
