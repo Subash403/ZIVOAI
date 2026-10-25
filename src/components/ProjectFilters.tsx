@@ -54,7 +54,7 @@ export default function ProjectFilters({
   ];
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+    <div className="zivo-surface space-y-5 rounded-3xl p-5 sm:p-6">
       {/* Search Input Bar */}
       <div className="relative">
         <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />

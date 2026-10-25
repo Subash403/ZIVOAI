@@ -22,16 +22,16 @@ export default function PoliciesPage() {
   const businessName = settings?.businessName || 'Zivo AI';
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="zivo-page min-h-screen px-4 py-12 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold">
+        <div className="zivo-reveal space-y-3 text-center">
+          <div className="zivo-eyebrow">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
             <span>Transparency & Trust</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">
             Customer Policies & Terms
           </h1>
           <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
@@ -67,7 +67,7 @@ export default function PoliciesPage() {
         </div>
 
         {/* Policy Content Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-md p-6 sm:p-10 space-y-6">
+        <div className="zivo-surface space-y-6 rounded-3xl p-6 sm:p-10">
           {activeTab === 'refund' && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-100 pb-4">

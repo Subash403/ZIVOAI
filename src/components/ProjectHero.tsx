@@ -20,15 +20,15 @@ interface ProjectHeroProps {
 
 export default function ProjectHero({ settings }: ProjectHeroProps = {}) {
   return (
-    <section className="relative min-h-[75vh] flex flex-col justify-center overflow-hidden bg-transparent pt-28 pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80">
+    <section className="relative flex flex-col justify-center overflow-hidden border-b border-slate-200/80 bg-transparent px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
       {/* Background Subtle Tech Ambient Glow */}
       <div className="absolute inset-0 bg-radial-[at_50%_30%] from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center relative z-10">
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
         {/* Left Column: Hero Copy & Actions */}
-        <div className="lg:col-span-7 space-y-6 text-left">
+        <div className="space-y-6 text-left lg:col-span-7">
           {/* Top Tech Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 border border-indigo-200/80 text-indigo-700 text-xs font-semibold shadow-xs">
+          <div className="zivo-eyebrow zivo-reveal">
             <Zap className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
             <span className="font-bold tracking-wide">
               {settings?.heroBadgeText || '⚡ Modern AI & Software Engineering Platform'}
@@ -36,8 +36,8 @@ export default function ProjectHero({ settings }: ProjectHeroProps = {}) {
           </div>
 
           {/* Main Cinematic Heading */}
-          <div className="space-y-1">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+          <div className="zivo-reveal zivo-reveal-delay-1 space-y-1">
+            <h1 className="zivo-display text-4xl font-bold leading-[1.04] text-slate-900 sm:text-5xl lg:text-6xl">
               {settings?.heroHeading ? (
                 <span>{settings.heroHeading}</span>
               ) : (
@@ -52,13 +52,13 @@ export default function ProjectHero({ settings }: ProjectHeroProps = {}) {
           </div>
 
           {/* Supporting Pitch Text */}
-          <p className="text-base sm:text-lg text-slate-600 max-w-xl font-normal leading-relaxed">
+          <p className="zivo-reveal zivo-reveal-delay-2 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
             {settings?.heroSubheading ||
               'Discover, benchmark, and deploy verified AI agents, machine learning pipelines, full-stack web applications, and software architectures with complete source code & live documentation.'}
           </p>
 
           {/* Key Value Prop Highlights */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-semibold text-slate-700 pt-1">
+          <div className="zivo-reveal zivo-reveal-delay-2 grid grid-cols-2 gap-3 pt-1 text-xs font-semibold text-slate-700 sm:grid-cols-3">
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>100% Tested Code</span>
@@ -74,7 +74,7 @@ export default function ProjectHero({ settings }: ProjectHeroProps = {}) {
           </div>
 
           {/* Primary & Secondary Action CTAs */}
-          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="zivo-reveal zivo-reveal-delay-3 flex flex-col items-stretch gap-4 pt-2 sm:flex-row sm:items-center">
             <Link
               href="/projects"
               className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl glow-gradient text-white text-sm font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
@@ -95,8 +95,8 @@ export default function ProjectHero({ settings }: ProjectHeroProps = {}) {
         </div>
 
         {/* Right Column: Clean Architectural Code & Deliverable Preview */}
-        <div className="lg:col-span-5 w-full flex items-center justify-center">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl overflow-hidden transition-all">
+        <div className="zivo-reveal zivo-reveal-delay-2 flex w-full items-center justify-center lg:col-span-5">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700/80 bg-white shadow-2xl shadow-indigo-950/15 transition-transform duration-300 hover:-translate-y-1">
             {/* Terminal Top Window Bar */}
             <div className="px-4 py-3 bg-slate-900 text-slate-300 flex items-center justify-between border-b border-slate-800 text-xs">
               <div className="flex items-center gap-2">

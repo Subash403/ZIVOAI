@@ -87,8 +87,8 @@ export default function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-md'
-          : 'bg-white/80 backdrop-blur-sm border-b border-slate-200/60'
+          ? 'border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl'
+          : 'border-b border-white/60 bg-white/55 backdrop-blur-xl'
       }`}
     >
       <div className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8 2xl:px-10">
@@ -99,7 +99,7 @@ export default function Navbar() {
             <img
               src={settings.logoUrl || '/images/zivoai-logo.png'}
               alt="Zivo AI Logo"
-              className="h-11 w-[120px] object-contain transition-transform group-hover:scale-[1.02] sm:h-12 sm:w-[135px] xl:h-14 xl:w-[155px] mix-blend-multiply"
+              className="h-10 w-auto object-contain transition-transform group-hover:scale-[1.02] sm:h-11 xl:h-12 mix-blend-multiply"
             />
             <div className="hidden shrink-0 flex-col xl:flex">
               <span className="whitespace-nowrap text-[13px] text-slate-500 tracking-wider uppercase font-semibold">

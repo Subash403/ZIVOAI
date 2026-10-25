@@ -53,7 +53,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <img
               src={logoUrl}
               alt="Zivo AI Logo"
-              className="h-12 w-[135px] shrink-0 object-contain mix-blend-multiply"
+              className="h-11 w-auto shrink-0 object-contain mix-blend-multiply"
             />
             <div className="border-l border-slate-200 pl-2.5">
               <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Workspace</span>

@@ -57,24 +57,28 @@ export default function HomePage() {
 
   const defaultFaqs = [
     {
-      q: 'What assets are included with every project?',
-      a: 'Each package includes 100% verified executable source code, full system architecture documentation, comprehensive specifications, module breakdowns, configuration files, sample datasets, and step-by-step deployment instructions.',
+      q: 'How do I browse and purchase a project?',
+      a: 'Browse the project catalog, review the project details and deliverables, then choose a fixed-price project to open secure checkout. You need an account so your order and downloads can be linked to you.',
     },
     {
-      q: 'How does instant automated delivery work?',
-      a: 'For fixed-price codebases, payments are verified server-side with HMAC security. Upon confirmation, you receive a cryptographically signed, expiring download link immediately with zero waiting time.',
+      q: 'Which payment methods can I use, and when is payment confirmed?',
+      a: 'Payment options are presented by Razorpay Checkout for the current order. An order is completed only after the payment signature and the captured payment details are verified on the server.',
     },
     {
-      q: 'Can I request a custom software or AI architecture?',
-      a: 'Yes. Our senior engineering team crafts bespoke solutions tailored to your technical stack, performance benchmarks, and deployment constraints. You can track milestone progress through 8 distinct development stages.',
+      q: 'How are purchased files delivered and downloaded?',
+      a: 'After a fixed-price payment is verified, the order confirmation and your account provide access to a protected, time-limited download link for the deliverable attached to that project.',
     },
     {
-      q: 'Do you provide setup and environment configuration support?',
-      a: 'Yes! We provide 1-on-1 remote setup assistance via Screen Share / Anydesk to configure your local or cloud environment (Python, Node.js, PyTorch, Docker, CUDA, etc.) and run the architecture live.',
+      q: 'Where can I find my purchases or track an order?',
+      a: 'Sign in to your customer dashboard to see linked purchases. You can also use the Track Order page with your order or custom-project reference and billing email.',
     },
     {
-      q: 'Are the project licenses commercial and educational friendly?',
-      a: 'All source code is released with full developer rights for study, customization, research, benchmarking, degree defense, and production prototyping.',
+      q: 'How do I get technical support?',
+      a: 'Use the configured WhatsApp or support email shown in the footer for help with a project, setup, or custom requirement. Include your order or project reference where available.',
+    },
+    {
+      q: 'What are the refund and cancellation terms?',
+      a: 'Refund, delivery, and license terms are published on the policies page. Please review those terms before purchase and contact support if you need help with an order.',
     },
   ];
 
@@ -94,7 +98,7 @@ export default function HomePage() {
   const cleanWhatsapp = rawWhatsapp.replace(/\D/g, '') || '918220303164';
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pb-20 space-y-24">
+    <main className="min-h-screen bg-slate-50 pt-16 text-slate-900 pb-20 space-y-16 sm:pt-20 sm:space-y-20">
       {/* Modals for Immediate Interaction */}
       <CheckoutModal
         isOpen={!!selectedBuyProject}
@@ -107,19 +111,39 @@ export default function HomePage() {
         project={selectedDiscussProject}
       />
 
-      {/* Dynamic Announcement Banner */}
-      {settings?.heroBannerActive && settings?.announcementNotice && (
-        <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 text-center flex items-center justify-center gap-2 shadow-inner">
-          <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span>{settings.announcementNotice}</span>
-        </div>
-      )}
+      <div>
+        {/* Dynamic Announcement Banner */}
+        {settings?.heroBannerActive && settings?.announcementNotice && (
+          <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-inner sm:text-sm">
+            <Zap className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+            <span>{settings.announcementNotice}</span>
+          </div>
+        )}
 
-      {/* 1. HERO SECTION */}
-      <ProjectHero settings={settings} />
+        {/* 1. HERO SECTION */}
+        <ProjectHero settings={settings} />
+      </div>
+
+      <nav aria-label="Homepage sections" className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-1 sm:px-6 lg:px-8">
+        {[
+          settings?.showFeaturedSection !== false && { href: '#featured-codebases', label: 'Featured Codebase' },
+          { href: '#delivery-track', label: 'Choose Your Delivery' },
+          settings?.showHowItWorksSection !== false && { href: '#how-it-works', label: 'How Zivo AI Works' },
+          settings?.showTestimonialsSection !== false && { href: '#quality-standards', label: 'Quality Standards' },
+          settings?.showFaqSection !== false && { href: '#faq', label: 'FAQ' },
+        ].filter((item): item is { href: string; label: string } => Boolean(item)).map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            className="shrink-0 rounded-full border border-slate-200 bg-white/85 px-3 py-2 text-xs font-semibold text-slate-600 shadow-2xs transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
 
       {/* TRUST INDICATORS BAR */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="zivo-card rounded-2xl p-6 sm:p-8 bg-white border border-slate-200/90 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
@@ -165,7 +189,7 @@ export default function HomePage() {
 
       {/* 2. FEATURED PROJECTS SHOWCASE */}
       {settings?.showFeaturedSection !== false && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <section id="featured-codebases" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider">
@@ -227,7 +251,7 @@ export default function HomePage() {
       <CapabilitiesBento showStats={settings?.showStatsSection !== false} />
 
       {/* 4. GET STARTED OPTIONS (TWO CLEAR PATHWAYS) */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <section id="delivery-track" className="scroll-mt-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center space-y-2">
           <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Get Started</span>
           <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Choose Your Delivery Track</h2>
@@ -335,7 +359,7 @@ export default function HomePage() {
 
       {/* 5. HOW IT WORKS (4 STEPS) */}
       {settings?.showHowItWorksSection !== false && (
-        <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <section id="how-it-works" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Engineering Workflow</span>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">How Zivo AI Works</h2>
@@ -380,7 +404,7 @@ export default function HomePage() {
 
       {/* 6. THE ZIVO AI STANDARD (BENEFITS & TRUST) */}
       {settings?.showTestimonialsSection !== false && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section id="quality-standards" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-md space-y-10">
             <div className="text-center max-w-2xl mx-auto space-y-3">
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -428,7 +452,7 @@ export default function HomePage() {
 
       {/* 7. FAQ ACCORDION */}
       {settings?.showFaqSection !== false && (
-        <section id="faq" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <section id="faq" className="scroll-mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="text-center space-y-3">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider">
               <HelpCircle className="w-4 h-4" /> Got Questions?
@@ -436,6 +460,9 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
               Frequently Asked Questions
             </h2>
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600">
+              Clear answers about choosing a codebase, secure checkout, delivery access, support, and policies.
+            </p>
           </div>
 
           <div className="space-y-3">
@@ -448,7 +475,9 @@ export default function HomePage() {
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 text-sm sm:text-base focus:outline-none"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${idx}`}
+                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 text-sm sm:text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
@@ -456,7 +485,7 @@ export default function HomePage() {
                     />
                   </button>
                   {isOpen && (
-                    <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                    <div id={`faq-answer-${idx}`} role="region" aria-label={faq.q} className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
                       {faq.a}
                     </div>
                   )}

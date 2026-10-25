@@ -86,9 +86,9 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
   };
 
   return (
-    <div className="group zivo-card rounded-2xl overflow-hidden flex flex-col h-full bg-white relative">
+    <div className="group zivo-card relative flex h-full flex-col overflow-hidden rounded-3xl bg-white">
       {/* Top Image Banner */}
-      <Link href={`/projects/${project.slug}`} className="block relative w-full aspect-16/9 overflow-hidden bg-slate-100">
+      <Link href={`/projects/${project.slug}`} className="relative block aspect-[16/10] w-full overflow-hidden bg-slate-100">
         <Image
           src={project.mainImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80'}
           alt={project.title}
@@ -109,7 +109,7 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
           <div className="flex items-center gap-1.5">
             <button
               onClick={toggleWishlist}
-              className={`p-1.5 rounded-full backdrop-blur-md border transition-all ${
+              className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
                 isWishlisted
                   ? 'bg-pink-600 text-white border-pink-500 shadow-xs'
                   : 'bg-white/90 hover:bg-white text-slate-600 hover:text-pink-600 border-slate-200'
@@ -152,11 +152,11 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
       </Link>
 
       {/* Content Area */}
-      <div className="p-5 flex flex-col flex-grow justify-between space-y-4">
+      <div className="flex flex-grow flex-col justify-between space-y-4 p-5 sm:p-6">
         <div className="space-y-2">
           {/* Title */}
           <Link href={`/projects/${project.slug}`} className="block group-hover:text-indigo-600 transition-colors">
-            <h3 className="font-bold text-base text-slate-900 leading-snug line-clamp-2">
+            <h3 className="text-base font-bold leading-snug text-slate-900 transition-colors line-clamp-2 sm:text-lg">
               {project.title}
             </h3>
           </Link>

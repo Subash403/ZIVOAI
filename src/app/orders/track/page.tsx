@@ -177,9 +177,14 @@ function OrderTrackContent() {
   };
 
   return (
-    <div className="min-h-[80vh] px-4 py-16 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8">
-      {/* If custom project details loaded, show rich tracker view */}
-      {trackedCustomProject ? (
+    <div className="zivo-page relative isolate mx-auto min-h-[80vh] max-w-5xl overflow-hidden px-4 py-16 sm:px-6 lg:px-8">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(99,102,241,0.11),transparent_34%),radial-gradient(circle_at_84%_72%,rgba(16,185,129,0.08),transparent_30%)]" />
+        <div className="tracking-orb absolute -right-20 top-24 h-56 w-56 rounded-full bg-indigo-300/20 blur-3xl" />
+      </div>
+      <div className="relative z-10 space-y-8">
+        {/* If custom project details loaded, show rich tracker view */}
+        {trackedCustomProject ? (
         <div className="space-y-8 animate-fadeIn">
           {/* Top Actions */}
           <div className="flex items-center justify-between">
@@ -468,7 +473,8 @@ function OrderTrackContent() {
             </p>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

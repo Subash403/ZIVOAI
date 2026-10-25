@@ -202,9 +202,9 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="zivo-page mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
       {/* Account Hero Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="zivo-surface zivo-reveal flex flex-col justify-between gap-6 rounded-3xl p-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl glow-gradient flex items-center justify-center text-white font-black text-2xl shadow-md shrink-0">
             {user?.name ? user.name[0].toUpperCase() : 'U'}

@@ -128,14 +128,15 @@ export default function ProjectFinderPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+    <main className="zivo-page min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-10">
       {/* Header */}
-      <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
+      <div className="zivo-reveal mx-auto max-w-2xl space-y-3 text-center">
+        <div className="zivo-eyebrow">
           <Sparkles className="w-3.5 h-3.5" />
           AI-Powered Project & Architecture Advisor
         </div>
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+        <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">
           Find Your Ideal Software & AI Architecture
         </h1>
         <p className="text-sm text-slate-600">
@@ -144,7 +145,7 @@ export default function ProjectFinderPage() {
       </div>
 
       {/* Stepper Progress Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+      <div className="zivo-surface rounded-3xl p-4 sm:p-5">
         <div className="grid grid-cols-5 gap-2 text-center">
           {STEPS.map((s) => {
             const isCompleted = step > s.id;
@@ -177,12 +178,12 @@ export default function ProjectFinderPage() {
 
       {/* Step Content Card */}
       {!hasSearched ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-xs max-w-3xl mx-auto space-y-8">
+        <div className="zivo-surface mx-auto max-w-3xl space-y-8 rounded-3xl p-6 sm:p-10">
           <div>
             <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
               Step {step} of 5
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
+            <h2 className="zivo-display mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
               {STEPS[step - 1].description}
             </h2>
           </div>
@@ -382,6 +383,7 @@ export default function ProjectFinderPage() {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </main>
   );
 }

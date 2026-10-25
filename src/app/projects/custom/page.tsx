@@ -120,7 +120,7 @@ export default function CustomProjectPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20">
+    <main className="zivo-page min-h-screen text-slate-900 pb-20 pt-28">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Back Link */}
@@ -132,12 +132,12 @@ export default function CustomProjectPage() {
         </Link>
 
         {/* Page Header */}
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold">
+        <div className="zivo-reveal mx-auto max-w-2xl space-y-3 text-center">
+          <div className="zivo-eyebrow">
             <Sparkles className="w-4 h-4 text-indigo-600" />
             <span>Bespoke Engineering & Custom AI Systems</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900">Build a Custom Software Architecture</h1>
+          <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">Build a Custom Software Architecture</h1>
 
           <p className="text-sm text-slate-600">
             Submit your specific technical requirements, system architecture constraints, novel research papers, or startup idea. Our senior engineers will craft it to your exact specifications!
@@ -188,7 +188,7 @@ export default function CustomProjectPage() {
         )}
 
         {/* Form Container */}
-        <div className="bg-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-xl">
+        <div className="zivo-surface rounded-3xl p-6 sm:p-10">
           {successLeadId ? (
             <div className="text-center py-10 space-y-6">
               <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto">
@@ -526,4 +526,3 @@ export default function CustomProjectPage() {
     </main>
   );
 }
-

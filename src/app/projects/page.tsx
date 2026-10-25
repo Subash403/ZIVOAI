@@ -68,7 +68,7 @@ function ProjectsContent() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
       {/* Modals */}
       <RequirementModal
         isOpen={!!selectedDiscussProject}
@@ -82,13 +82,13 @@ function ProjectsContent() {
       />
 
       {/* Page Title Header */}
-      <div className="space-y-3 text-center sm:text-left">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold">
+      <div className="zivo-reveal space-y-3 text-center sm:text-left">
+        <div className="zivo-eyebrow">
           <Layers className="w-3.5 h-3.5 text-indigo-600" />
           <span>Zivo AI Verified Catalog</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900">Explore Production Architectures</h1>
-        <p className="text-sm text-slate-600 max-w-2xl">
+        <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">Explore Production Architectures</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
           Filter by domain, technology stack, project type, or search by keywords to discover verified AI models, web apps, and IoT systems with instant automated digital delivery.
         </p>
       </div>
@@ -152,7 +152,7 @@ function ProjectsContent() {
 
 export default function ProjectsPage() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20">
+    <main className="zivo-page min-h-screen text-slate-900 pb-20 pt-28">
       <Suspense fallback={<div className="text-center py-20 text-slate-500">Loading Marketplace...</div>}>
         <ProjectsContent />
       </Suspense>

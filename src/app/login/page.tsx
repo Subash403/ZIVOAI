@@ -124,8 +124,8 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-16 sm:px-6 lg:px-8 bg-gradient-to-b from-slate-50 via-white to-slate-50">
-      <div className="max-w-md w-full space-y-6">
+    <div className="zivo-page flex min-h-[85vh] items-center justify-center bg-transparent px-4 py-16 sm:px-6 lg:px-8">
+      <div className="zivo-reveal w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center justify-center group">
@@ -133,10 +133,10 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
             <img
               src={logoUrl}
               alt="Zivo AI Logo"
-              className="h-20 w-[250px] object-contain mix-blend-multiply transition-transform group-hover:scale-[1.02]"
+              className="h-16 w-auto object-contain mix-blend-multiply transition-transform group-hover:scale-[1.02] sm:h-20"
             />
           </Link>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="zivo-display text-3xl font-bold text-slate-900">
             {mode === 'login' ? 'Sign In to Your Account' : 'Create Your Account'}
           </h1>
           <p className="text-xs text-slate-500 font-medium">

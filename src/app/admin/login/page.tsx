@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
           <img
             src={logoUrl}
             alt="Zivo AI Logo"
-            className="mx-auto h-20 w-[250px] object-contain mix-blend-multiply"
+            className="mx-auto h-16 w-auto object-contain mix-blend-multiply sm:h-20"
           />
           <h1 className="text-2xl font-extrabold text-slate-900">Zivo AI Workspace Console</h1>
           <p className="text-xs text-slate-500 font-medium">Administration & Digital Delivery Operations</p>
