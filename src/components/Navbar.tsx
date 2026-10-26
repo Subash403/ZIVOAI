@@ -25,7 +25,7 @@ export default function Navbar() {
     phoneNumber: '+91 8220303164',
     whatsappNumber: '918220303164',
     businessName: 'Zivo AI',
-    announcementNotice: '100% Verified Production AI & Full-Stack Projects with Full Source Code & 1-on-1 Setup Support',
+    announcementNotice: 'AI & Engineering Platform — Explore production-ready digital projects',
     logoUrl: '/images/zivoai-logo.png',
   });
 
@@ -82,6 +82,9 @@ export default function Navbar() {
   }
 
   const waNumber = settings.whatsappNumber || '918220303164';
+  const announcement =
+    settings.announcementNotice?.trim() ||
+    'AI & Engineering Platform — Explore production-ready digital projects';
 
   return (
     <header
@@ -101,7 +104,7 @@ export default function Navbar() {
               alt="Zivo AI Logo"
               className="h-10 w-auto object-contain transition-transform group-hover:scale-[1.02] sm:h-11 xl:h-12 mix-blend-multiply"
             />
-            <div className="hidden shrink-0 flex-col xl:flex">
+            <div className="hidden shrink-0 flex-col 2xl:flex">
               <span className="whitespace-nowrap text-[13px] text-slate-500 tracking-wider uppercase font-semibold">
                 AI & Engineering Platform
               </span>
@@ -219,6 +222,25 @@ export default function Navbar() {
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="border-t border-indigo-100/80 bg-gradient-to-r from-indigo-50 via-violet-50 to-cyan-50">
+        <div className="mx-auto flex h-8 max-w-[1800px] items-center justify-center gap-2 overflow-hidden px-4 sm:h-9 sm:px-6 lg:px-8 2xl:px-10">
+          <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          </span>
+          <p className="min-w-0 truncate text-[11px] font-semibold tracking-wide text-indigo-900 sm:text-xs">
+            {announcement}
+          </p>
+          <Link
+            href="/projects"
+            className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-[11px] font-bold text-indigo-700 hover:text-indigo-900 sm:inline-flex"
+          >
+            Browse catalog
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       </div>
 

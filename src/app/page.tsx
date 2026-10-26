@@ -98,7 +98,7 @@ export default function HomePage() {
   const cleanWhatsapp = rawWhatsapp.replace(/\D/g, '') || '918220303164';
 
   return (
-    <main className="min-h-screen bg-slate-50 pt-16 text-slate-900 pb-20 space-y-16 sm:pt-20 sm:space-y-20">
+    <main className="min-h-screen bg-slate-50 pt-[6rem] text-slate-900 pb-20 xl:pt-[7rem]">
       {/* Modals for Immediate Interaction */}
       <CheckoutModal
         isOpen={!!selectedBuyProject}
@@ -111,19 +111,10 @@ export default function HomePage() {
         project={selectedDiscussProject}
       />
 
-      <div>
-        {/* Dynamic Announcement Banner */}
-        {settings?.heroBannerActive && settings?.announcementNotice && (
-          <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-inner sm:text-sm">
-            <Zap className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-            <span>{settings.announcementNotice}</span>
-          </div>
-        )}
+      {/* 1. HERO SECTION */}
+      <ProjectHero settings={settings} />
 
-        {/* 1. HERO SECTION */}
-        <ProjectHero settings={settings} />
-      </div>
-
+      <div className="space-y-16 sm:space-y-20">
       <nav aria-label="Homepage sections" className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-1 sm:px-6 lg:px-8">
         {[
           settings?.showFeaturedSection !== false && { href: '#featured-codebases', label: 'Featured Codebase' },
@@ -527,6 +518,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </div>
     </main>
   );
 }

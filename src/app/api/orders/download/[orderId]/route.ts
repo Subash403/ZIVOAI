@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyReceiptToken, getAdminSession, getCustomerSession } from '@/lib/auth';
+import { publicOrderLookupWhere, resolvePublicOrderId } from '@/lib/order-lookup';
 import {
   isR2Configured,
   generatePrivatePresignedDownloadUrl,
@@ -21,17 +22,20 @@ export async function GET(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = await params;
+    const { orderId: rawOrderId } = await params;
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
+    const orderId = rawOrderId ? resolvePublicOrderId(rawOrderId) : '';
 
     if (!orderId) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
     }
 
-    // 1. Fetch order and project details
-    const order = await prisma.order.findUnique({
-      where: { orderId: orderId.toUpperCase() },
+    // 1. Fetch order and project details.
+    // Order IDs are stored as `ORD-<timestamp>-<lowercase hex>` — do not uppercase
+    // the lookup key or Prisma will miss the unique `orderId` and return 404.
+    const order = await prisma.order.findFirst({
+      where: publicOrderLookupWhere(orderId),
       include: { project: true },
     });
 

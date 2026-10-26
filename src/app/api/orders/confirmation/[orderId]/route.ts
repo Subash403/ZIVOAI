@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession, getCustomerSession, verifyReceiptToken } from '@/lib/auth';
+import { publicOrderLookupWhere, resolvePublicOrderId } from '@/lib/order-lookup';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = await params;
+    const { orderId: rawOrderId } = await params;
+    const orderId = rawOrderId ? resolvePublicOrderId(rawOrderId) : '';
     if (!orderId) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
     }
@@ -16,9 +18,7 @@ export async function GET(
     const token = searchParams.get('token') || request.headers.get('x-receipt-token') || '';
 
     const order = await prisma.order.findFirst({
-      where: {
-        OR: [{ orderId: orderId }, { id: orderId }],
-      },
+      where: publicOrderLookupWhere(orderId),
     });
 
     if (!order) {

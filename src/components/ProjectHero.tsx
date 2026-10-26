@@ -20,7 +20,7 @@ interface ProjectHeroProps {
 
 export default function ProjectHero({ settings }: ProjectHeroProps = {}) {
   return (
-    <section className="relative flex flex-col justify-center overflow-hidden border-b border-slate-200/80 bg-transparent px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+    <section className="relative overflow-hidden border-b border-slate-200/80 bg-transparent px-4 pb-12 pt-4 sm:px-6 sm:pb-14 sm:pt-5 lg:px-8 lg:pb-16 lg:pt-6">
       {/* Background Subtle Tech Ambient Glow */}
       <div className="absolute inset-0 bg-radial-[at_50%_30%] from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
 

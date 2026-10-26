@@ -194,7 +194,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-3">
+      <div className="zivo-page flex min-h-[70vh] flex-col items-center justify-center space-y-3 px-4 pt-28 pb-10">
         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
         <p className="text-xs text-slate-500 font-medium">Loading your account...</p>
       </div>
@@ -202,7 +202,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="zivo-page mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
+    <div className="zivo-page mx-auto max-w-7xl space-y-8 px-4 pb-10 pt-28 sm:px-6 lg:px-8">
       {/* Account Hero Bar */}
       <div className="zivo-surface zivo-reveal flex flex-col justify-between gap-6 rounded-3xl p-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
@@ -360,7 +360,7 @@ export default function AccountPage() {
                     <div className="flex flex-wrap items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
                       {isPaid && (
                         <a
-                          href={`/api/orders/download/${order.orderId}?token=${order.receiptToken}`}
+                          href={`/api/orders/download/${encodeURIComponent(order.orderId)}?token=${encodeURIComponent(order.receiptToken)}`}
                           className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all"
                         >
                           <Download className="w-3.5 h-3.5" />

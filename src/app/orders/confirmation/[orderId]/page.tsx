@@ -246,7 +246,7 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             {order.paymentStatus === 'PAID' && (
               <a
-                href={`/api/orders/download/${order.orderId}${token ? `?token=${encodeURIComponent(token)}` : ''}`}
+                href={`/api/orders/download/${encodeURIComponent(order.orderId)}${token ? `?token=${encodeURIComponent(token)}` : ''}`}
                 className="w-full sm:w-auto px-6 py-3.5 rounded-xl glow-gradient text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 hover:opacity-95 transition-all"
               >
                 <Download className="w-4 h-4" /> Download Project Materials
