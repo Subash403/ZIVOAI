@@ -124,7 +124,7 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
   };
 
   return (
-    <div className="zivo-page flex min-h-[85vh] items-center justify-center bg-transparent px-4 py-16 sm:px-6 lg:px-8">
+    <div className="zivo-page flex min-h-[85vh] items-center justify-center bg-transparent px-4 pt-24 sm:pt-28 pb-16 sm:px-6 lg:px-8">
       <div className="zivo-reveal w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -133,20 +133,22 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
             <img
               src={logoUrl}
               alt="Zivo AI Logo"
-              className="h-16 w-auto object-contain mix-blend-multiply transition-transform group-hover:scale-[1.02] sm:h-20"
+              className="h-14 w-auto object-contain mix-blend-multiply transition-transform group-hover:scale-[1.02] sm:h-16"
             />
           </Link>
-          <h1 className="zivo-display text-3xl font-bold text-slate-900">
+          <h1 className="zivo-display text-3xl font-extrabold text-slate-900 tracking-tight">
             {mode === 'login' ? 'Sign In to Your Account' : 'Create Your Account'}
           </h1>
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 font-normal">
             {mode === 'login'
               ? 'Sign in to access your purchased projects, instant downloads, and custom project tracking'
               : 'Join to explore verified AI models, production-ready codebases, and 1-on-1 architecture setup'}
           </p>
         </div>
 
-        {/* Notices */}
+        {/* Glass Card Container */}
+        <div className="glass-panel rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xl space-y-5">
+          {/* Notices */}
         {noticeParam === 'auth_required' && (
           <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-900 flex items-start gap-2 shadow-xs">
             <AlertCircle className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
@@ -448,6 +450,7 @@ export function LoginFormContent({ defaultMode }: { defaultMode?: 'login' | 'reg
             </button>
           </form>
         )}
+        </div>
 
         {/* Footer info */}
         <p className="text-[11px] text-center text-slate-500">

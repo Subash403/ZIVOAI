@@ -194,7 +194,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-3">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-3 pt-28 sm:pt-32">
         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
         <p className="text-xs text-slate-500 font-medium">Loading your account...</p>
       </div>
@@ -202,9 +202,9 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="zivo-page mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
+    <main className="zivo-page min-h-screen mx-auto max-w-7xl space-y-8 px-4 pt-28 sm:pt-32 xl:pt-36 pb-20 sm:px-6 lg:px-8 text-slate-900">
       {/* Account Hero Bar */}
-      <div className="zivo-surface zivo-reveal flex flex-col justify-between gap-6 rounded-3xl p-6 md:flex-row md:items-center">
+      <div className="glass-panel zivo-reveal flex flex-col justify-between gap-6 rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xs md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl glow-gradient flex items-center justify-center text-white font-black text-2xl shadow-md shrink-0">
             {user?.name ? user.name[0].toUpperCase() : 'U'}
@@ -656,6 +656,6 @@ export default function AccountPage() {
           </form>
         </div>
       )}
-    </div>
+    </main>
   );
 }

@@ -42,19 +42,19 @@ export default function WishlistPage() {
   }, []);
 
   return (
-    <main className="zivo-page min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+    <main className="zivo-page min-h-screen pt-20 sm:pt-24 pb-20 px-4 sm:px-6 lg:px-8 text-slate-900">
       <div className="mx-auto max-w-7xl space-y-8">
-      <div className="zivo-reveal flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center">
+      <div className="zivo-reveal flex flex-col justify-between gap-4 border-b border-slate-200/80 pb-6 sm:flex-row sm:items-center">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-pink-600 bg-pink-50 px-2.5 py-1 rounded-full mb-2">
-            <Heart className="w-3.5 h-3.5 fill-pink-500" />
-            Saved for Later
+          <div className="zivo-eyebrow mb-2">
+            <Heart className="w-3.5 h-3.5 fill-pink-500 text-pink-500" />
+            <span>Saved for Later</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="zivo-display text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             My Wishlist ({projects.length})
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Keep track of projects you are shortlisting for your final semester review.
+          <p className="text-xs sm:text-sm text-slate-600 font-normal mt-1">
+            Keep track of projects you are shortlisting for your development or evaluation.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export default function WishlistPage() {
           href="/projects"
           className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all self-start sm:self-auto"
         >
-          Explore More Projects
+          <span>Explore More Projects</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -70,16 +70,16 @@ export default function WishlistPage() {
       {loading ? (
         <div className="py-24 text-center space-y-3">
           <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Loading your saved projects...</p>
+          <p className="text-xs text-slate-500 font-mono">Loading your saved projects...</p>
         </div>
       ) : projects.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto space-y-5">
-          <div className="w-14 h-14 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center mx-auto shadow-xs">
+        <div className="glass-panel rounded-3xl border border-slate-200/80 p-10 sm:p-12 text-center max-w-md mx-auto space-y-5 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center mx-auto shadow-2xs border border-pink-100">
             <Heart className="w-7 h-7" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-900">Your wishlist is empty</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+            <p className="text-xs text-slate-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
               Click the heart icon on any project card to save it here for easy access and side-by-side evaluation.
             </p>
           </div>

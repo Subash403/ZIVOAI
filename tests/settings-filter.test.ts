@@ -61,6 +61,8 @@ test('Public Settings Filtering & Sensitive Data Exposure Prevention', async (t)
       supportEmail: 'admin@example.com',
       phoneNumber: '+91 8220303164',
       githubUrl: 'https://github.com/example',
+      linkedinUrl: '',
+      youtubeUrl: '',
       showStatsSection: false,
       footerDescription: 'A safe footer description',
       footerCopyright: 'Built with care',
@@ -69,7 +71,10 @@ test('Public Settings Filtering & Sensitive Data Exposure Prevention', async (t)
     assert.equal(settings.supportEmail, 'admin@example.com');
     assert.equal(settings.showStatsSection, 'false');
     assert.equal(settings.footerCopyright, 'Built with care');
+    assert.equal(settings.linkedinUrl, '');
+    assert.equal(settings.youtubeUrl, '');
   });
+
 
   await t.test('validateSettingPayload rejects unsafe or malformed values', () => {
     assert.throws(() => validateSettingPayload({ supportEmail: 'not-an-email' }), /Invalid support email/);

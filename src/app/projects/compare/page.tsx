@@ -52,42 +52,43 @@ export default function ProjectComparePage() {
 
   if (loading) {
     return (
-      <div className="py-24 text-center space-y-3">
+      <main className="zivo-page min-h-screen pt-24 sm:pt-28 pb-20 text-center flex flex-col items-center justify-center space-y-3">
         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
-        <p className="text-xs text-slate-500 font-medium">Loading project comparison tool...</p>
-      </div>
+        <p className="text-xs text-slate-500 font-mono">Loading project comparison tool...</p>
+      </main>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full mb-2">
-            <Scale className="w-3.5 h-3.5" />
-            Side-by-Side Evaluation
+    <main className="zivo-page min-h-screen pt-20 sm:pt-24 pb-20 text-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
+          <div>
+            <div className="zivo-eyebrow mb-2">
+              <Scale className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Side-by-Side Evaluation</span>
+            </div>
+            <h1 className="zivo-display text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Compare Project Architectures
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600 font-normal mt-1">
+              Compare features, difficulty levels, technology stacks, and deliverables for up to 3 projects.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Compare Final Year Projects
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Compare features, difficulty levels, technology stacks, and deliverables for up to 3 projects.
-          </p>
+
+          <Link
+            href="/projects"
+            className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-200 bg-white/90 hover:bg-white text-slate-700 shadow-2xs transition-all self-start sm:self-auto"
+          >
+            <span>Browse All Projects</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
-        <Link
-          href="/projects"
-          className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-xs transition-all self-start sm:self-auto"
-        >
-          Browse All Projects
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-
-      {/* Comparison Grid */}
-      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
-        <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+        {/* Comparison Grid */}
+        <div className="glass-panel rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs overflow-x-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100 min-w-[700px] md:min-w-0">
           {/* Attributes Column */}
           <div className="p-6 bg-slate-50/50 hidden md:block space-y-8 text-xs font-bold text-slate-500 uppercase tracking-wider">
             <div className="h-44 flex items-end font-black text-slate-900 text-sm">Project Details</div>
@@ -306,5 +307,6 @@ export default function ProjectComparePage() {
         </div>
       )}
     </div>
+  </main>
   );
 }

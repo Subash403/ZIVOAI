@@ -163,7 +163,7 @@ export default function PurchasingCheckoutPage({ params }: { params: Promise<{ p
   const materialsList = project.includedMaterials || ['Source Code', 'Documentation', 'PPT', 'Research Paper', 'Dataset', 'Installation Guide'];
 
   return (
-    <main className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+    <main className="zivo-page min-h-screen pt-28 sm:pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 text-slate-900">
       {/* Top Back Navigation Bar */}
       <div className="flex items-center justify-between">
         <Link

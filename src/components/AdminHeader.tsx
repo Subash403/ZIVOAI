@@ -40,7 +40,7 @@ export default function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps)
   };
 
   return (
-    <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-2xs">
+    <header className="h-16 bg-white/85 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-2xs">
       <div className="flex items-center gap-3">
         {onToggleMobileSidebar && (
           <button

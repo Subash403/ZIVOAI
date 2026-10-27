@@ -128,13 +128,13 @@ export default function ProjectFinderPage() {
   };
 
   return (
-    <main className="zivo-page min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+    <main className="zivo-page min-h-screen pt-20 sm:pt-24 pb-20 px-4 sm:px-6 lg:px-8 text-slate-900">
       <div className="mx-auto max-w-6xl space-y-10">
       {/* Header */}
       <div className="zivo-reveal mx-auto max-w-2xl space-y-3 text-center">
         <div className="zivo-eyebrow">
-          <Sparkles className="w-3.5 h-3.5" />
-          AI-Powered Project & Architecture Advisor
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <span>AI-Powered Project & Architecture Advisor</span>
         </div>
         <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">
           Find Your Ideal Software & AI Architecture
@@ -145,7 +145,7 @@ export default function ProjectFinderPage() {
       </div>
 
       {/* Stepper Progress Bar */}
-      <div className="zivo-surface rounded-3xl p-4 sm:p-5">
+      <div className="glass-panel rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
         <div className="grid grid-cols-5 gap-2 text-center">
           {STEPS.map((s) => {
             const isCompleted = step > s.id;

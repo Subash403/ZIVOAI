@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     const serverVerifiedPrice = project.price;
 
     // 5. Generate unique Order ID
-    const orderId = `ORD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const orderId = `ORD-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
     // 6. Create Razorpay order using server-side database price
     const razorpayResult = await createRazorpayOrder({

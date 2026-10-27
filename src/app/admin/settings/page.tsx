@@ -189,7 +189,7 @@ export default function AdminSettingsPage() {
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 isActive
                   ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  : 'glass-panel border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -200,7 +200,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Forms by Tab */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+      <div className="glass-panel rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
         {/* Tab 1: Branding & Theme */}
         {activeTab === 'branding' && (
           <div className="space-y-6">

@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { Prisma } from '@prisma/client';
-import { verifyPrivateUploadFinalizationToken } from '@/lib/storage';
+import {
+  verifyPrivateUploadFinalizationToken,
+  deletePublicAsset,
+  deletePrivateAsset,
+} from '@/lib/storage';
 
 export async function GET(
   request: Request,
@@ -189,17 +193,126 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
-    await prisma.project.delete({ where: { id } });
+    if (!id) {
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
+    }
 
-    return NextResponse.json({ success: true, message: 'Project deleted successfully' });
+    const project = await prisma.project.findFirst({
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
+      include: {
+        _count: {
+          select: {
+            orders: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Safety rule: if historical purchases/orders exist, DO NOT hard-delete.
+    // Instead, retire/archive the project to preserve customer entitlements, receipts, and downloads.
+    const orderCount = project._count?.orders ?? 0;
+    if (orderCount > 0) {
+      const retired = await prisma.project.update({
+        where: { id: project.id },
+        data: {
+          available: false,
+          published: false,
+          featured: false,
+        },
+      });
+
+      // Clear from user wishlists since it is no longer for sale
+      try {
+        await prisma.wishlistItem.deleteMany({
+          where: { projectId: project.id },
+        });
+      } catch (wishlistErr) {
+        console.warn('Failed to clean wishlists during project retirement:', wishlistErr);
+      }
+
+      console.info(`[Admin] Project retired due to existing orders: ${project.id} (${project.title}) - ${orderCount} order(s)`);
+
+      return NextResponse.json({
+        success: true,
+        action: 'archived',
+        message: `Project "${project.title}" has ${orderCount} customer order(s). It has been retired and removed from the public catalog while preserving customer purchase records.`,
+        project: retired,
+      });
+    }
+
+    // If no orders exist, permanently clean up storage assets and delete project record
+    const publicAssetsToDelete: string[] = [];
+    if (project.mainImage) publicAssetsToDelete.push(project.mainImage);
+    if (project.architectureImage) publicAssetsToDelete.push(project.architectureImage);
+
+    if (project.gallery) {
+      try {
+        const galleryItems = JSON.parse(project.gallery);
+        if (Array.isArray(galleryItems)) {
+          galleryItems.forEach((item) => {
+            if (typeof item === 'string' && item) {
+              publicAssetsToDelete.push(item);
+            }
+          });
+        }
+      } catch {
+        // Ignored
+      }
+    }
+
+    for (const assetUrl of publicAssetsToDelete) {
+      try {
+        await deletePublicAsset(assetUrl);
+      } catch (assetErr) {
+        console.warn('Non-fatal error cleaning public project asset:', assetUrl, assetErr);
+      }
+    }
+
+    if (project.downloadFileUrl) {
+      try {
+        await deletePrivateAsset(project.downloadFileUrl);
+      } catch (delivErr) {
+        console.warn('Non-fatal error cleaning private project deliverable:', project.downloadFileUrl, delivErr);
+      }
+    }
+
+    // Clean wishlists
+    try {
+      await prisma.wishlistItem.deleteMany({
+        where: { projectId: project.id },
+      });
+    } catch (wishlistErr) {
+      console.warn('Non-fatal error cleaning wishlists during project deletion:', wishlistErr);
+    }
+
+    await prisma.project.delete({
+      where: { id: project.id },
+    });
+
+    console.info(`[Admin] Project permanently deleted: ${project.id} (${project.title})`);
+
+    return NextResponse.json({
+      success: true,
+      action: 'deleted',
+      message: `Project "${project.title}" and its storage deliverables were permanently deleted.`,
+      projectId: project.id,
+    });
   } catch (error: unknown) {
-    console.error('Error deleting project:', error);
-    return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
+    const errorMsg = error instanceof Error ? error.message : 'Failed to delete project';
+    console.error('Error deleting project:', errorMsg);
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
+

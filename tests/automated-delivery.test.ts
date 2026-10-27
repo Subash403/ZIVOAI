@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { prisma } from '../src/lib/prisma';
 import { createReceiptToken, verifyReceiptToken } from '../src/lib/auth';
 import { sendOrderConfirmationNotification } from '../src/lib/notifications';
+import { GET as downloadRoute } from '../src/app/api/orders/download/[orderId]/route';
+import { uploadPrivateAsset } from '../src/lib/storage';
 
 test('Automated Delivery & Payment Fulfillment Idempotency', async (t) => {
   const testOrderId = `TEST_DELIV_${Date.now()}`;
@@ -161,4 +163,83 @@ test('Automated Delivery & Payment Fulfillment Idempotency', async (t) => {
     assert.equal(isExpired, true);
     assert.equal(isNotExpired, false);
   });
+
+  await t.test('Customer download lookup succeeds for lowercase hex orderId, uppercase orderId, and id', async () => {
+    // Create an asset so file exists
+    const asset = await uploadPrivateAsset({
+      buffer: Buffer.from('test-download-bytes'),
+      originalName: 'test-case-dl.zip',
+      mimeType: 'application/zip',
+    });
+
+    const lowercaseHexOrderId = `ORD-${Date.now()}-abc123def456`;
+    const dlProject = await prisma.project.create({
+      data: {
+        title: 'Download Resolution Project',
+        slug: `dl-res-${Date.now()}`,
+        shortDescription: 'Desc',
+        fullDescription: 'Full Desc',
+        category: 'Artificial Intelligence',
+        technologies: JSON.stringify(['Python']),
+        difficulty: 'Beginner',
+        projectType: 'Mini',
+        mainImage: '/test.png',
+        downloadFileName: 'test-case-dl.zip',
+        downloadFileUrl: asset.key,
+        available: true,
+        published: true,
+        price: 1999,
+      },
+    });
+
+    const paidOrder = await prisma.order.create({
+      data: {
+        orderId: lowercaseHexOrderId,
+        studentName: 'DL Student',
+        email: 'dl.student@example.com',
+        phone: '9988776655',
+        projectId: dlProject.id,
+        projectName: dlProject.title,
+        amount: 1999,
+        currency: 'INR',
+        paymentStatus: 'PAID',
+        deliveryStatus: 'PENDING',
+      },
+    });
+
+    const receiptToken = createReceiptToken(paidOrder.orderId);
+
+    // 1. Download via exact lowercase hex orderId
+    const reqExact = new Request(
+      `http://localhost:3000/api/orders/download/${lowercaseHexOrderId}?token=${receiptToken}`
+    );
+    const resExact = await downloadRoute(reqExact, {
+      params: Promise.resolve({ orderId: lowercaseHexOrderId }),
+    });
+    // Should NOT be 404
+    assert.notEqual(resExact.status, 404);
+
+    // 2. Download via uppercase transformed orderId
+    const reqUpper = new Request(
+      `http://localhost:3000/api/orders/download/${lowercaseHexOrderId.toUpperCase()}?token=${receiptToken}`
+    );
+    const resUpper = await downloadRoute(reqUpper, {
+      params: Promise.resolve({ orderId: lowercaseHexOrderId.toUpperCase() }),
+    });
+    assert.notEqual(resUpper.status, 404);
+
+    // 3. Download via database cuid id
+    const reqId = new Request(
+      `http://localhost:3000/api/orders/download/${paidOrder.id}?token=${receiptToken}`
+    );
+    const resId = await downloadRoute(reqId, {
+      params: Promise.resolve({ orderId: paidOrder.id }),
+    });
+    assert.notEqual(resId.status, 404);
+
+    // Clean up
+    await prisma.order.delete({ where: { id: paidOrder.id } });
+    await prisma.project.delete({ where: { id: dlProject.id } });
+  });
 });
+

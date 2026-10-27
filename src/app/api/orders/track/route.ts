@@ -13,13 +13,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const session = await getAuthSession();
-    const queryId = String(orderId).trim().toUpperCase();
+    const session = await getAuthSession(request);
+    const rawId = String(orderId).trim();
+    const queryId = rawId.toUpperCase();
     const queryEmail = email ? String(email).trim().toLowerCase() : session?.email?.toLowerCase();
 
     // 1. Check fixed-price order first
-    const order = await prisma.order.findUnique({
-      where: { orderId: queryId },
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [
+          { orderId: rawId },
+          { orderId: queryId },
+          { orderId: rawId.toLowerCase() },
+          { id: rawId },
+        ],
+      },
       include: {
         project: {
           select: {
@@ -67,8 +75,10 @@ export async function POST(request: Request) {
     const enquiry = await prisma.enquiry.findFirst({
       where: {
         OR: [
+          { leadId: rawId },
           { leadId: queryId },
           { leadId: queryId.replace(/^ORD-/, 'LD-') },
+          { id: rawId },
           { id: queryId },
         ],
       },

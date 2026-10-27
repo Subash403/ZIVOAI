@@ -433,3 +433,40 @@ export async function privateAssetExists(key: string): Promise<boolean> {
   const localFileName = path.basename(key);
   return fs.existsSync(path.join(process.cwd(), 'storage', 'private-downloads', localFileName));
 }
+
+/**
+ * Deletes a private deliverable from Cloudflare R2 private bucket or local filesystem.
+ */
+export async function deletePrivateAsset(key: string): Promise<boolean> {
+  if (!key) return false;
+
+  if (isR2Configured() && key.includes('/')) {
+    try {
+      const client = getR2Client();
+      await client.send(
+        new DeleteObjectCommand({
+          Bucket: getPrivateBucketName(),
+          Key: key,
+        })
+      );
+      return true;
+    } catch (err) {
+      console.error('Failed to delete private R2 deliverable:', err);
+      return false;
+    }
+  }
+
+  try {
+    const localFileName = path.basename(key);
+    const localFilePath = path.join(process.cwd(), 'storage', 'private-downloads', localFileName);
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('Failed to delete local private deliverable:', err);
+    return false;
+  }
+}
+

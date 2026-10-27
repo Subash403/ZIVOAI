@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 pb-10 pt-8 text-slate-900 sm:px-6 sm:pt-12 lg:pt-16">
+    <main className="zivo-page min-h-screen px-4 pb-10 pt-12 text-slate-900 sm:px-6 sm:pt-16 lg:pt-20">
       <div className="mx-auto w-full max-w-md space-y-5">
         
         {/* Brand Logo Header */}
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+        <div className="glass-panel p-8 rounded-3xl border border-slate-200/80 shadow-2xl space-y-6">
           {error && (
             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />

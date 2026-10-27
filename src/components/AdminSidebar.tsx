@@ -112,7 +112,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   return (
     <>
       {/* Desktop Persistent Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col justify-between h-screen sticky top-0 shadow-xs shrink-0">
+      <aside className="w-64 bg-white/90 backdrop-blur-xl border-r border-slate-200/80 hidden lg:flex flex-col justify-between h-screen sticky top-0 shadow-xs shrink-0">
         {sidebarContent}
       </aside>
 

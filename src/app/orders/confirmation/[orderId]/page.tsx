@@ -151,10 +151,10 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20">
+    <main className="zivo-page min-h-screen pt-28 sm:pt-32 pb-20 text-slate-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Success Card */}
-        <div className="bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-xl text-center space-y-6">
+        <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-2xl text-center space-y-6">
           <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto">
             <CheckCircle2 className="w-12 h-12" />
           </div>

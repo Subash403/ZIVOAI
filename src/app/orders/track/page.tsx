@@ -177,7 +177,7 @@ function OrderTrackContent() {
   };
 
   return (
-    <div className="zivo-page relative isolate mx-auto min-h-[80vh] max-w-5xl overflow-hidden px-4 py-16 sm:px-6 lg:px-8">
+    <main className="zivo-page relative isolate mx-auto min-h-screen max-w-5xl overflow-hidden px-4 pt-28 sm:pt-32 pb-20 sm:px-6 lg:px-8 text-slate-900">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(99,102,241,0.11),transparent_34%),radial-gradient(circle_at_84%_72%,rgba(16,185,129,0.08),transparent_30%)]" />
         <div className="tracking-orb absolute -right-20 top-24 h-56 w-56 rounded-full bg-indigo-300/20 blur-3xl" />
@@ -475,7 +475,7 @@ function OrderTrackContent() {
         </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
 

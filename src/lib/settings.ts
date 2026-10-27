@@ -178,7 +178,7 @@ const URL_SETTING_KEYS = new Set([
   'youtubeUrl',
 ]);
 
-const EMAIL_SETTING_KEYS = new Set(['supportEmail']);
+// Email validation is handled inline in validateSettingPayload (supportEmail key)
 const PHONE_SETTING_KEYS = new Set(['phoneNumber', 'whatsappNumber']);
 const BOOLEAN_SETTING_KEYS = new Set([
   'heroBannerActive',
@@ -250,25 +250,28 @@ export function validateSettingPayload(payload: unknown): Record<string, string>
     if (sanitizedValue.length > maxLength) {
       throw new Error(`${key} exceeds the maximum allowed length`);
     }
-    if (EMAIL_SETTING_KEYS.has(key) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedValue)) {
-      throw new Error('Invalid support email');
-    }
-    if (PHONE_SETTING_KEYS.has(key) && !/^\+?[\d\s().-]{7,25}$/.test(sanitizedValue)) {
-      throw new Error(`Invalid ${key}`);
-    }
-    if (URL_SETTING_KEYS.has(key)) {
-      let parsed: URL;
-      try {
-        parsed = new URL(sanitizedValue);
-      } catch {
-        throw new Error(`Invalid URL for ${key}`);
+    if (key === 'supportEmail') {
+      if (!sanitizedValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedValue)) {
+        throw new Error('Invalid support email');
       }
-      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-        throw new Error(`Invalid URL protocol for ${key}`);
+    } else if (sanitizedValue !== '') {
+      if (PHONE_SETTING_KEYS.has(key) && !/^\+?[\d\s().-]{7,25}$/.test(sanitizedValue)) {
+        throw new Error(`Invalid ${key}`);
       }
-    }
-    if ((key === 'logoUrl' || key === 'faviconUrl') && !sanitizedValue.startsWith('/') && !/^https?:\/\//i.test(sanitizedValue)) {
-      throw new Error(`Invalid asset URL for ${key}`);
+      if (URL_SETTING_KEYS.has(key)) {
+        let parsed: URL;
+        try {
+          parsed = new URL(sanitizedValue);
+        } catch {
+          throw new Error(`Invalid URL for ${key}`);
+        }
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+          throw new Error(`Invalid URL protocol for ${key}`);
+        }
+      }
+      if ((key === 'logoUrl' || key === 'faviconUrl') && !sanitizedValue.startsWith('/') && !/^https?:\/\//i.test(sanitizedValue)) {
+        throw new Error(`Invalid asset URL for ${key}`);
+      }
     }
     validated[key] = sanitizedValue;
   }

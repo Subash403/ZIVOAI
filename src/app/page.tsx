@@ -98,7 +98,7 @@ export default function HomePage() {
   const cleanWhatsapp = rawWhatsapp.replace(/\D/g, '') || '918220303164';
 
   return (
-    <main className="min-h-screen bg-slate-50 pt-16 text-slate-900 pb-20 space-y-16 sm:pt-20 sm:space-y-20">
+    <main className="min-h-screen bg-transparent pt-24 sm:pt-28 lg:pt-32 text-slate-900 pb-20 space-y-10 sm:space-y-12">
       {/* Modals for Immediate Interaction */}
       <CheckoutModal
         isOpen={!!selectedBuyProject}
@@ -111,23 +111,13 @@ export default function HomePage() {
         project={selectedDiscussProject}
       />
 
-      <div>
-        {/* Dynamic Announcement Banner */}
-        {settings?.heroBannerActive && settings?.announcementNotice && (
-          <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-inner sm:text-sm">
-            <Zap className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-            <span>{settings.announcementNotice}</span>
-          </div>
-        )}
+      {/* 1. HERO SECTION */}
+      <ProjectHero settings={settings} />
 
-        {/* 1. HERO SECTION */}
-        <ProjectHero settings={settings} />
-      </div>
-
-      <nav aria-label="Homepage sections" className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-1 sm:px-6 lg:px-8">
+      <nav aria-label="Homepage sections" className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-1 sm:px-6 lg:px-8 no-scrollbar">
         {[
-          settings?.showFeaturedSection !== false && { href: '#featured-codebases', label: 'Featured Codebase' },
-          { href: '#delivery-track', label: 'Choose Your Delivery' },
+          settings?.showFeaturedSection !== false && { href: '#featured-codebases', label: 'Featured Codebases' },
+          { href: '#delivery-track', label: 'Choose Delivery Track' },
           settings?.showHowItWorksSection !== false && { href: '#how-it-works', label: 'How Zivo AI Works' },
           settings?.showTestimonialsSection !== false && { href: '#quality-standards', label: 'Quality Standards' },
           settings?.showFaqSection !== false && { href: '#faq', label: 'FAQ' },
@@ -135,7 +125,7 @@ export default function HomePage() {
           <a
             key={item.href}
             href={item.href}
-            className="shrink-0 rounded-full border border-slate-200 bg-white/85 px-3 py-2 text-xs font-semibold text-slate-600 shadow-2xs transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="shrink-0 rounded-full border border-slate-200/90 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-2xs backdrop-blur-md transition-all hover:border-indigo-300 hover:bg-indigo-50/90 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             {item.label}
           </a>
@@ -262,16 +252,16 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
           {/* TRACK 1: SEE AVAILABLE PROJECTS */}
-          <div className="group bg-white rounded-3xl p-8 border-2 border-indigo-100 hover:border-indigo-500 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform" />
+          <div className="group glass-card rounded-3xl p-8 border border-indigo-200/80 hover:border-indigo-500 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/70 rounded-bl-full -z-0 group-hover:scale-110 transition-transform" />
 
             <div className="relative space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
                 <FolderKanban className="w-7 h-7" />
               </div>
 
               <div>
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Track 01</span>
+                <span className="text-xs font-mono font-bold text-indigo-600 uppercase tracking-wider">Track 01</span>
                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
                   Ready-to-Deploy Catalog
                 </h3>
@@ -300,25 +290,25 @@ export default function HomePage() {
             <div className="relative pt-4">
               <Link
                 href="/projects"
-                className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-2xl glow-gradient text-white font-bold text-base shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="w-full flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl glow-gradient text-white font-bold text-sm sm:text-base shadow-lg shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                Explore Ready Projects
-                <ArrowRight className="w-5 h-5" />
+                <span>Explore Ready Projects</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
 
           {/* TRACK 2: CUSTOM ARCHITECTURE */}
-          <div className="group bg-white rounded-3xl p-8 border-2 border-purple-100 hover:purple-500 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform" />
+          <div className="group glass-card rounded-3xl p-8 border border-purple-200/80 hover:border-purple-500 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50/70 rounded-bl-full -z-0 group-hover:scale-110 transition-transform" />
 
             <div className="relative space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-105 transition-transform">
                 <Wrench className="w-7 h-7" />
               </div>
 
               <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">Track 02</span>
+                <span className="text-xs font-mono font-bold text-purple-600 uppercase tracking-wider">Track 02</span>
                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
                   Custom Architecture
                 </h3>
@@ -347,10 +337,10 @@ export default function HomePage() {
             <div className="relative pt-4">
               <Link
                 href="/projects/custom"
-                className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="w-full flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                <PhoneCall className="w-5 h-5 text-indigo-400" />
-                Request Custom Architecture
+                <PhoneCall className="w-4 h-4 text-indigo-400" />
+                <span>Request Custom Architecture</span>
               </Link>
             </div>
           </div>

@@ -29,9 +29,29 @@ export async function GET(
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
     }
 
-    // 1. Fetch order and project details
-    const order = await prisma.order.findUnique({
-      where: { orderId: orderId.toUpperCase() },
+    const rawOrderId = String(orderId).trim();
+    const rest = rawOrderId.length > 4 ? rawOrderId.slice(4) : rawOrderId;
+
+    const idVariants = Array.from(
+      new Set([
+        rawOrderId,
+        rawOrderId.toUpperCase(),
+        rawOrderId.toLowerCase(),
+        `ORD-${rest}`,
+        `ORD-${rest.toLowerCase()}`,
+        `ORD-${rest.toUpperCase()}`,
+        `ord-${rest.toLowerCase()}`,
+      ])
+    );
+
+    // 1. Fetch order and project details (case-insensitive and ID fallback)
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [
+          ...idVariants.map((val) => ({ orderId: val })),
+          { id: rawOrderId },
+        ],
+      },
       include: { project: true },
     });
 
@@ -40,10 +60,14 @@ export async function GET(
     }
 
     // 2. Authorization check: Valid receipt token, admin session, or authenticated customer owner
-    const isTokenValid = token ? verifyReceiptToken(order.orderId, token) : false;
-    const adminSession = await getAdminSession();
+    const isTokenValid = token
+      ? verifyReceiptToken(order.orderId, token) ||
+        verifyReceiptToken(rawOrderId, token) ||
+        verifyReceiptToken(order.id, token)
+      : false;
+    const adminSession = await getAdminSession(request);
     const isAdmin = Boolean(adminSession && adminSession.role === 'ADMIN');
-    const customerSession = await getCustomerSession();
+    const customerSession = await getCustomerSession(request);
     const isOwner = Boolean(
       customerSession &&
         ((order.userId && customerSession.userId === order.userId) ||

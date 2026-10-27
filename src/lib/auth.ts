@@ -74,7 +74,19 @@ export async function comparePassword(password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash);
 }
 
-export async function getAdminSession(): Promise<AdminPayload | null> {
+export async function getAdminSession(request?: Request): Promise<AdminPayload | null> {
+  if (request) {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const match = cookieHeader.match(new RegExp(`${ADMIN_TOKEN_COOKIE_NAME}=([^;]+)`));
+    if (match?.[1]) {
+      return verifyAdminToken(match[1]);
+    }
+    const authHeader = request.headers.get('authorization') || '';
+    if (authHeader.startsWith('Bearer ')) {
+      return verifyAdminToken(authHeader.slice(7));
+    }
+  }
+
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(ADMIN_TOKEN_COOKIE_NAME)?.value;
@@ -85,7 +97,24 @@ export async function getAdminSession(): Promise<AdminPayload | null> {
   }
 }
 
-export async function getCustomerSession(): Promise<AuthPayload | null> {
+export async function getCustomerSession(request?: Request): Promise<AuthPayload | null> {
+  if (request) {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const customerMatch = cookieHeader.match(new RegExp(`${CUSTOMER_TOKEN_COOKIE_NAME}=([^;]+)`));
+    if (customerMatch?.[1]) {
+      const payload = verifyAuthToken(customerMatch[1]);
+      if (payload) return payload;
+    }
+    const adminMatch = cookieHeader.match(new RegExp(`${ADMIN_TOKEN_COOKIE_NAME}=([^;]+)`));
+    if (adminMatch?.[1]) {
+      return verifyAuthToken(adminMatch[1]);
+    }
+    const authHeader = request.headers.get('authorization') || '';
+    if (authHeader.startsWith('Bearer ')) {
+      return verifyAuthToken(authHeader.slice(7));
+    }
+  }
+
   try {
     const cookieStore = await cookies();
     const customerToken = cookieStore.get(CUSTOMER_TOKEN_COOKIE_NAME)?.value;
@@ -103,9 +132,10 @@ export async function getCustomerSession(): Promise<AuthPayload | null> {
   }
 }
 
-export async function getAuthSession(): Promise<AuthPayload | null> {
-  return getCustomerSession();
+export async function getAuthSession(request?: Request): Promise<AuthPayload | null> {
+  return getCustomerSession(request);
 }
+
 
 export function setSessionCookie(response: NextResponse, payload: AuthPayload): void {
   const token = signAuthToken(payload);

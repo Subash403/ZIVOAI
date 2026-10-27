@@ -22,7 +22,7 @@ export default function PoliciesPage() {
   const businessName = settings?.businessName || 'Zivo AI';
 
   return (
-    <div className="zivo-page min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+    <main className="zivo-page min-h-screen pt-20 sm:pt-24 pb-20 px-4 sm:px-6 lg:px-8 text-slate-900">
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* Header */}
@@ -31,16 +31,16 @@ export default function PoliciesPage() {
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
             <span>Transparency & Trust</span>
           </div>
-          <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">
+          <h1 className="zivo-display text-4xl font-extrabold text-slate-900 sm:text-5xl tracking-tight">
             Customer Policies & Terms
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto font-normal">
             Review delivery terms, refund guarantees, code usage standards, and privacy commitments for {businessName}.
           </p>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-xs max-w-2xl mx-auto">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 glass-panel p-2 rounded-2xl border border-slate-200/80 shadow-xs max-w-2xl mx-auto">
           {[
             { id: 'refund' as const, label: 'Refund Policy', icon: ShieldCheck },
             { id: 'delivery' as const, label: 'Delivery Policy', icon: Truck },
@@ -56,7 +56,7 @@ export default function PoliciesPage() {
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -195,6 +195,6 @@ export default function PoliciesPage() {
         </div>
 
       </div>
-    </div>
+    </main>
   );
 }

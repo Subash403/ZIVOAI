@@ -35,7 +35,7 @@ export default function Footer() {
   const logoUrl = settings?.logoUrl || '/images/zivoai-logo.png';
 
   return (
-    <footer className="border-t border-slate-200 bg-slate-100/90 py-12 text-slate-600 sm:py-14">
+    <footer className="border-t border-slate-200/80 bg-white/75 backdrop-blur-xl py-12 text-slate-600 sm:py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-9 border-b border-slate-200/80 pb-9 md:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] lg:gap-x-10 lg:gap-y-8 lg:pb-10">
           
@@ -46,7 +46,7 @@ export default function Footer() {
               <img
                 src={logoUrl}
                 alt="Zivo AI Logo"
-                className="h-14 w-auto object-contain mix-blend-multiply"
+                className="h-12 w-auto object-contain mix-blend-multiply"
               />
             </Link>
             <p className="text-sm text-slate-600 max-w-sm leading-relaxed">

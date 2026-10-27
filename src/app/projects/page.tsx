@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Layers, Loader2, Frown } from 'lucide-react';
+import { Layers, Frown } from 'lucide-react';
 import ProjectCard from '@/components/ProjectCard';
 import ProjectFilters from '@/components/ProjectFilters';
 import RequirementModal from '@/components/RequirementModal';
@@ -112,26 +112,45 @@ function ProjectsContent() {
 
       {/* Project Grid */}
       {loading ? (
-        <div className="py-20 text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500">Loading projects...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="zivo-card rounded-3xl overflow-hidden p-6 space-y-4 animate-pulse">
+              <div className="aspect-[16/10] bg-slate-200/80 rounded-2xl w-full" />
+              <div className="h-4 bg-slate-200 rounded w-3/4" />
+              <div className="h-3 bg-slate-100 rounded w-full" />
+              <div className="flex gap-2 pt-2">
+                <div className="h-6 w-16 bg-slate-200 rounded-md" />
+                <div className="h-6 w-16 bg-slate-200 rounded-md" />
+              </div>
+              <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+                <div className="h-6 w-24 bg-slate-200 rounded" />
+                <div className="h-9 w-28 bg-slate-200 rounded-xl" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : projects.length === 0 ? (
-        <div className="py-16 text-center bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4 max-w-md mx-auto">
-          <Frown className="w-12 h-12 text-slate-400 mx-auto" />
+        <div className="py-16 px-6 text-center glass-panel rounded-3xl border border-slate-200 shadow-sm space-y-4 max-w-md mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+            <Frown className="w-6 h-6" />
+          </div>
           <h3 className="text-lg font-bold text-slate-900">No projects found matching your filters</h3>
-          <p className="text-xs text-slate-500">Try clearing some search terms or resetting the filter options.</p>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Try adjusting your search keywords, switching categories, or resetting the filter options.
+          </p>
           <button
             onClick={handleResetFilters}
-            className="px-4 py-2 rounded-xl glow-gradient text-white text-xs font-semibold shadow-md"
+            className="px-5 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md hover:opacity-95 transition-all"
           >
             Reset All Filters
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="text-xs text-slate-600 font-medium">
-            Showing <span className="text-slate-900 font-bold">{projects.length}</span> available project{projects.length !== 1 ? 's' : ''}
+        <div className="space-y-5">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
+            <span>
+              Showing <strong className="text-slate-900 font-bold">{projects.length}</strong> available architecture{projects.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -152,8 +171,8 @@ function ProjectsContent() {
 
 export default function ProjectsPage() {
   return (
-    <main className="zivo-page min-h-screen text-slate-900 pb-20 pt-28">
-      <Suspense fallback={<div className="text-center py-20 text-slate-500">Loading Marketplace...</div>}>
+    <main className="zivo-page min-h-screen text-slate-900 pb-20 pt-20 sm:pt-24">
+      <Suspense fallback={<div className="text-center py-20 text-slate-500 font-mono text-xs">Loading Marketplace...</div>}>
         <ProjectsContent />
       </Suspense>
     </main>

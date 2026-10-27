@@ -215,7 +215,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         )}
 
         {/* 1. Basic Information */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600">
               1. Basic Project Metadata
@@ -332,7 +332,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         </div>
 
         {/* 2. Availability, Pricing & Purchase Controls */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600 pb-3 border-b border-slate-100">
             2. Availability, Pricing & Status Controls
           </h3>
@@ -422,7 +422,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         </div>
 
         {/* 3. Digital Asset Upload & Download Delivery */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600 pb-3 border-b border-slate-100 flex items-center gap-2">
             <Package className="w-4 h-4" />
             3. Downloadable Project Assets (Private Storage)
@@ -432,7 +432,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
             Attach the compiled project ZIP file (source code, datasets, reports). This file is stored in private backend storage and is only accessible via cryptographic expiring tokens to verified paying students.
           </p>
 
-          <div className="p-5 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center text-center space-y-3">
+          <div className="p-5 rounded-2xl border-2 border-dashed border-slate-200/80 bg-slate-50/50 flex flex-col items-center justify-center text-center space-y-3">
             <Upload className="w-8 h-8 text-indigo-600" />
             <div>
               <label className="cursor-pointer text-xs font-bold text-indigo-600 hover:underline">
@@ -483,7 +483,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         </div>
 
         {/* 4. Setup, Prerequisites & Technical Deliverables */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600 pb-3 border-b border-slate-100 flex items-center gap-2">
             <Wrench className="w-4 h-4" />
             4. Execution Setup & Prerequisites
@@ -545,7 +545,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         </div>
 
         {/* 5. Media & Visual Assets */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-8 shadow-xs">
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-8 shadow-xs">
           <div className="pb-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600">
               5. Media & Visual Assets

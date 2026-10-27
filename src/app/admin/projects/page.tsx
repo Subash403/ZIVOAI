@@ -76,15 +76,27 @@ export default function AdminProjectsPage() {
     setDeletingId(id);
     try {
       const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
-      if (res.ok) {
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        alert(data?.error || 'Failed to delete project.');
+        return;
+      }
+
+      if (data?.action === 'archived') {
+        alert(data.message);
+        fetchProjects();
+      } else {
         setProjects((prev) => prev.filter((p) => p.id !== id));
       }
     } catch (err) {
       console.error('Delete failed:', err);
+      alert('A network error occurred while deleting the project.');
     } finally {
       setDeletingId(null);
     }
   };
+
 
   // Duplicate Project Handler calling dedicated duplicate endpoint
   const handleDuplicate = async (project: Project) => {
@@ -132,7 +144,7 @@ export default function AdminProjectsPage() {
       </div>
 
       {/* Filter Controls */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -140,7 +152,7 @@ export default function AdminProjectsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs"
           />
         </div>
 
@@ -148,7 +160,7 @@ export default function AdminProjectsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+            className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs cursor-pointer"
           >
             <option value="All">All Categories</option>
             <option value="Artificial Intelligence">Artificial Intelligence</option>
@@ -162,7 +174,7 @@ export default function AdminProjectsPage() {
           <select
             value={salesTypeFilter}
             onChange={(e) => setSalesTypeFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+            className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs cursor-pointer"
           >
             <option value="All">All Sales Types</option>
             <option value="fixed">Fixed Price</option>
@@ -172,7 +184,7 @@ export default function AdminProjectsPage() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="glass-panel rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-3">
             <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />

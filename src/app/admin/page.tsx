@@ -157,7 +157,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Recent Enquiries / Leads */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <MessageSquareText className="w-4 h-4 text-purple-600" /> Recent Client Enquiries
@@ -172,7 +172,7 @@ export default function AdminDashboardPage() {
           ) : (
             <div className="space-y-3">
               {data.recentEnquiries.map((enq: DashboardEnquiry) => (
-                <div key={enq.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                <div key={enq.id} className="p-3.5 rounded-xl bg-white/70 border border-slate-200/80 flex items-center justify-between text-xs shadow-2xs">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900">{enq.studentName}</span>
@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-emerald-600" /> Recent Orders & Transactions

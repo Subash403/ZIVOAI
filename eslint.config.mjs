@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "src/generated/**",
+    // Skill/agent scripts use Node.js CommonJS (require()) — not Next.js app code
+    ".agents/**",
+    ".codex/**",
   ]),
 ]);
 

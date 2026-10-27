@@ -152,7 +152,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
   ];
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20">
+    <main className="zivo-page min-h-screen text-slate-900 pt-20 sm:pt-24 pb-20">
       {/* Modals */}
       <RequirementModal
         isOpen={isDiscussOpen}
@@ -436,7 +436,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
 
           {/* Right Column: Commercial & Action Sidebar */}
           <div className="space-y-6">
-            <div className="sticky top-28 bg-white p-6 rounded-3xl border border-slate-200 space-y-6 shadow-xl">
+            <div className="sticky top-24 glass-panel p-6 sm:p-7 rounded-3xl border border-slate-200/80 space-y-6 shadow-lg backdrop-blur-2xl">
               {/* Commercial Heading */}
               <div className="space-y-2 pb-4 border-b border-slate-100">
                 <span className="text-xs font-bold text-slate-500 block uppercase tracking-wider">Project Purchase</span>

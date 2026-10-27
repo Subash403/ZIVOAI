@@ -8,6 +8,7 @@ import {
   uploadPublicAsset,
   deletePublicAsset,
   uploadPrivateAsset,
+  deletePrivateAsset,
   generatePrivatePresignedDownloadUrl,
   getPrivateAssetBuffer,
 } from '../src/lib/storage';
@@ -62,7 +63,12 @@ test('Cloudflare R2 & Storage Architecture', async (t) => {
     assert.ok(result.fileName.endsWith('.zip'));
     assert.equal(result.sizeBytes, zipBuffer.length);
     assert.ok(['local', 'r2'].includes(result.storage));
+
+    // Test private deliverable cleanup
+    const deleted = await deletePrivateAsset(result.key);
+    assert.equal(deleted, true);
   });
+
 
   await t.test('Presigned URL generator returns null in local fallback or valid URL with R2 credentials', async () => {
     const presigned = await generatePrivatePresignedDownloadUrl(

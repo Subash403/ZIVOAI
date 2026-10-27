@@ -120,7 +120,7 @@ export default function CustomProjectPage() {
   };
 
   return (
-    <main className="zivo-page min-h-screen text-slate-900 pb-20 pt-28">
+    <main className="zivo-page min-h-screen text-slate-900 pb-20 pt-20 sm:pt-24">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Back Link */}
@@ -188,7 +188,7 @@ export default function CustomProjectPage() {
         )}
 
         {/* Form Container */}
-        <div className="zivo-surface rounded-3xl p-6 sm:p-10">
+        <div className="glass-panel rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-md">
           {successLeadId ? (
             <div className="text-center py-10 space-y-6">
               <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto">

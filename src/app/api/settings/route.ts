@@ -41,29 +41,36 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized admin access' }, { status: 401 });
     }
 
     const settings = validateSettingPayload(await request.json());
 
-    await prisma.$transaction(async (tx) => {
-      for (const [key, value] of Object.entries(settings)) {
-        await tx.setting.upsert({
-          where: { key },
-          update: { value },
-          create: { key, value },
-        });
-      }
-    });
+    const upsertOperations = Object.entries(settings).map(([key, value]) =>
+      prisma.setting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value },
+      })
+    );
+
+    await prisma.$transaction(upsertOperations);
 
     return NextResponse.json({ success: true, message: 'Settings saved successfully' });
   } catch (error: unknown) {
-    if (error instanceof Error && (error.message.startsWith('Invalid') || error.message.startsWith('Unsupported') || error.message.includes('exceeds'))) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    const errorMsg = error instanceof Error ? error.message : 'Failed to update settings';
     console.error('Error updating settings:', error);
-    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+    const isClientError =
+      error instanceof Error &&
+      (error.message.startsWith('Invalid') ||
+        error.message.startsWith('Unsupported') ||
+        error.message.includes('exceeds'));
+    return NextResponse.json(
+      { error: errorMsg },
+      { status: isClientError ? 400 : 500 }
+    );
   }
 }
+

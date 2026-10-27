@@ -113,7 +113,7 @@ export default function AdminCustomersPage() {
 
         <button
           onClick={fetchCustomers}
-          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs transition-colors self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl glass-panel hover:bg-white text-slate-700 border border-slate-200/80 text-xs font-bold shadow-xs transition-colors self-start sm:self-auto"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh List
         </button>
@@ -121,7 +121,7 @@ export default function AdminCustomersPage() {
 
       {/* Summary KPI Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs">
+        <div className="p-4 rounded-2xl glass-panel border border-slate-200/80 flex items-center justify-between shadow-xs">
           <div>
             <span className="text-xs font-bold text-slate-500 block">Total Accounts</span>
             <span className="text-2xl font-black text-slate-900">{totalRegistered}</span>
@@ -131,7 +131,7 @@ export default function AdminCustomersPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs">
+        <div className="p-4 rounded-2xl glass-panel border border-slate-200/80 flex items-center justify-between shadow-xs">
           <div>
             <span className="text-xs font-bold text-slate-500 block">Purchasing Customers</span>
             <span className="text-2xl font-black text-emerald-600">{totalPaying}</span>
@@ -141,7 +141,7 @@ export default function AdminCustomersPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs">
+        <div className="p-4 rounded-2xl glass-panel border border-slate-200/80 flex items-center justify-between shadow-xs">
           <div>
             <span className="text-xs font-bold text-slate-500 block">Total Customer Spend</span>
             <span className="text-2xl font-black text-indigo-600">{formatCurrency(totalCustomerRevenue)}</span>
@@ -153,7 +153,7 @@ export default function AdminCustomersPage() {
       </div>
 
       {/* Toolbar Search & Filter */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -161,7 +161,7 @@ export default function AdminCustomersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email, phone, college..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
           />
         </div>
 
@@ -170,7 +170,7 @@ export default function AdminCustomersPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as 'ALL' | 'CUSTOMER' | 'ADMIN')}
-            className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-medium focus:outline-none focus:border-indigo-600"
+            className="px-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-800 text-xs font-medium focus:outline-none focus:border-indigo-600"
           >
             <option value="ALL">All Accounts</option>
             <option value="CUSTOMER">Customers Only</option>
@@ -186,7 +186,7 @@ export default function AdminCustomersPage() {
           <p className="text-xs text-slate-500 font-medium">Loading customer directory...</p>
         </div>
       ) : filteredCustomers.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+        <div className="glass-panel rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
           <Users className="w-10 h-10 text-slate-300 mx-auto" />
           <h3 className="text-base font-bold text-slate-800">No accounts found</h3>
           <p className="text-xs text-slate-500">Try modifying your search query or role filter.</p>
@@ -196,7 +196,7 @@ export default function AdminCustomersPage() {
           {filteredCustomers.map((customer) => (
             <div
               key={customer.id}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-indigo-200 transition-all space-y-4"
+              className="glass-panel rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:border-indigo-200/90 transition-all space-y-4"
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-3">
