@@ -83,8 +83,16 @@ export default function AdminSettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const SECTION_KEYS: Record<'branding' | 'hero' | 'sections' | 'social' | 'policies' | 'integrations', (keyof SiteSettings)[]> = {
+    branding: ['businessName', 'logoUrl', 'themeColor', 'supportEmail', 'footerDescription', 'footerCopyright'],
+    hero: ['announcementNotice', 'heroBadgeText', 'heroHeading', 'heroSubheading', 'heroPrimaryButtonText', 'heroSecondaryButtonText', 'heroBannerActive'],
+    sections: ['showFeaturedSection', 'showHowItWorksSection', 'showTestimonialsSection', 'showFaqSection', 'showStatsSection'],
+    social: ['whatsappNumber', 'phoneNumber', 'githubUrl', 'linkedinUrl', 'instagramUrl', 'youtubeUrl', 'showInstagram', 'showGithub', 'showLinkedin', 'showYoutube', 'address'],
+    policies: ['refundPolicy', 'deliveryPolicy', 'termsConditions', 'privacyPolicy'],
+    integrations: ['razorpayKeyId', 'googleSheetId'],
+  };
+
+  const savePayload = async (payload: Partial<SiteSettings>, label: string) => {
     setSaving(true);
     setSuccessMsg(null);
     setErrorMsg(null);
@@ -93,7 +101,7 @@ export default function AdminSettingsPage() {
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -101,13 +109,27 @@ export default function AdminSettingsPage() {
         throw new Error(data.error || 'Failed to save settings');
       }
 
-      setSuccessMsg('Settings updated successfully! Changes are now active across the website.');
+      setSuccessMsg(`${label} saved successfully! Changes are audit-logged and active across the website.`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'An error occurred while saving settings';
       setErrorMsg(msg);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await savePayload(settings, 'All settings');
+  };
+
+  const handleSaveCurrentSection = async () => {
+    const keys = SECTION_KEYS[activeTab];
+    const partial: Partial<SiteSettings> = {};
+    for (const k of keys) {
+      (partial as Record<string, unknown>)[k] = settings[k];
+    }
+    await savePayload(partial, `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} section`);
   };
 
   const handleChange = (key: keyof SiteSettings, value: unknown) => {
@@ -136,23 +158,35 @@ export default function AdminSettingsPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleSubmit}
-          disabled={saving}
-          className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all self-start sm:self-auto disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Save All Settings
-            </>
-          )}
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={handleSaveCurrentSection}
+            disabled={saving}
+            className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 shadow-xs transition-all disabled:opacity-50"
+          >
+            <Save className="w-3.5 h-3.5 text-indigo-600" />
+            Save This Section
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save All Settings
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Alert Notices */}

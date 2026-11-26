@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Menu,
   X,
-  MessageSquare,
   ArrowRight,
   Compass,
   Heart,
   User,
-  Search,
+  Scale,
+  ChevronDown,
+  ShoppingBag,
 } from 'lucide-react';
 import { SiteSettings } from '@/types';
 import { AUTH_STATE_CHANGED_EVENT } from '@/lib/auth-client';
@@ -19,28 +20,32 @@ import { AUTH_STATE_CHANGED_EVENT } from '@/lib/auth-client';
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<{ name: string; role: string } | null>(null);
+  const toolsRef = useRef<HTMLDivElement>(null);
+
   const [settings, setSettings] = useState<Partial<SiteSettings>>({
     phoneNumber: '+91 8220303164',
     whatsappNumber: '918220303164',
     businessName: 'Zivo AI',
-    announcementNotice: '100% Verified Production AI & Full-Stack Projects with Full Source Code & 1-on-1 Setup Support',
+    announcementNotice: 'Ready-to-run AI & full-stack codebases with documented setup and secure dashboard delivery.',
     heroBannerActive: true,
     logoUrl: '/images/zivoai-logo.png',
   });
 
   useEffect(() => {
-    const loadUser = () => fetch('/api/auth/me', { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.authenticated && data.user) {
-          setUser({ name: data.user.name, role: data.user.role });
-        } else {
-          setUser(null);
-        }
-      })
-      .catch(() => setUser(null));
+    const loadUser = () =>
+      fetch('/api/auth/me', { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.authenticated && data.user) {
+            setUser({ name: data.user.name, role: data.user.role });
+          } else {
+            setUser(null);
+          }
+        })
+        .catch(() => setUser(null));
 
     fetch('/api/settings', { cache: 'no-store' })
       .then((res) => res.json())
@@ -59,184 +64,205 @@ export default function Navbar() {
     };
     window.addEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
 
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 15);
+    const handleScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+        setToolsOpen(false);
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setToolsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  const navLinks = [
-    { name: 'Projects', href: '/projects' },
-    { name: 'Custom Architecture', href: '/projects/custom' },
-    { name: 'AI Finder', href: '/projects/finder', icon: Compass },
-    { name: 'Compare', href: '/projects/compare' },
-    { name: 'Track Order', href: '/orders/track' },
-    { name: 'Policies', href: '/policies' },
-  ];
-
-  // Do not render public navbar inside /admin routes
   if (pathname?.startsWith('/admin')) {
     return null;
   }
 
-  const waNumber = settings.whatsappNumber || '918220303164';
+  const primaryLinks = [
+    { name: 'Projects', href: '/projects' },
+    { name: 'Custom Builds', href: '/projects/custom' },
+    { name: 'How It Works', href: '/#how-it-works' },
+  ];
+
+  const toolLinks = [
+    { name: 'AI Project Finder', href: '/projects/finder', desc: 'Guided stack & budget matcher', icon: Compass },
+    { name: 'Compare Projects', href: '/projects/compare', desc: 'Side-by-side spec comparison', icon: Scale },
+  ];
+
   const showBanner = settings.heroBannerActive && settings.announcementNotice;
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200 ${
         scrolled
-          ? 'border-b border-slate-200/80 bg-white/85 shadow-sm backdrop-blur-2xl'
-          : 'border-b border-slate-200/50 bg-white/70 backdrop-blur-xl'
+          ? 'border-b border-slate-200/90 bg-white/95 shadow-xs backdrop-blur-lg'
+          : 'border-b border-slate-200/70 bg-white/85 backdrop-blur-md'
       }`}
     >
-      {/* Dynamic Global Announcement Banner */}
+      {/* Concise Factual Announcement Bar (ZAI-042, ZAI-043 — no pulsing dot) */}
       {showBanner && (
-        <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-4 py-2 text-center text-xs font-medium text-slate-200 border-b border-indigo-500/20">
+        <div className="bg-slate-950 px-4 py-1.5 text-center text-[11px] font-medium text-slate-200 border-b border-slate-800">
           <div className="mx-auto flex max-w-7xl items-center justify-center gap-2">
-            <span className="flex h-2 w-2 relative shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-            </span>
             <span className="line-clamp-1">{settings.announcementNotice}</span>
             <Link
               href="/projects"
-              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300 hover:text-white transition-colors underline underline-offset-2 ml-1"
+              className="hidden sm:inline-flex items-center gap-1 font-bold text-indigo-300 hover:text-white underline underline-offset-2 ml-1 shrink-0"
             >
-              Explore Now <ArrowRight className="w-3 h-3" />
+              Browse Catalog <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
         </div>
       )}
 
-      <div className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8 2xl:px-10">
-        <div className="grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 sm:gap-4 xl:h-18 xl:gap-5">
-          {/* Brand Logo & Subtitle */}
-          <Link href="/" className="flex shrink-0 items-center gap-3 group">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 xl:h-20 items-center justify-between gap-4">
+          {/* Brand Logo */}
+          <Link href="/" className="flex shrink-0 items-center gap-2.5 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={settings.logoUrl || '/images/zivoai-logo.png'}
               alt="Zivo AI Logo"
-              className="h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02] sm:h-10 xl:h-11 mix-blend-multiply"
+              className="h-9 w-auto object-contain sm:h-10 mix-blend-multiply"
             />
-            <div className="hidden shrink-0 flex-col xl:flex">
-              <span className="whitespace-nowrap text-[11px] font-mono font-bold tracking-wider uppercase text-slate-500">
-                AI Engineering Studio
-              </span>
-            </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden min-w-0 items-center justify-center gap-1 lg:flex xl:gap-1.5" aria-label="Main Navigation">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
-              const Icon = link.icon;
+          {/* Streamlined Desktop Navigation (ZAI-041, ZAI-093, ZAI-110) */}
+          <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
+            {primaryLinks.map((link) => {
+              const isActive =
+                link.href === '/projects'
+                  ? pathname === '/projects'
+                  : link.href !== '/' && !link.href.startsWith('/#') && pathname.startsWith(link.href);
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold transition-all duration-150 hover:bg-slate-100/80 hover:text-indigo-600 xl:h-10 xl:px-3 xl:text-[13px] ${
+                  className={`flex h-10 items-center whitespace-nowrap rounded-xl px-3.5 text-sm font-semibold transition-colors ${
                     isActive
-                      ? 'bg-indigo-50/90 text-indigo-600 shadow-2xs font-bold'
-                      : 'text-slate-600'
+                      ? 'bg-indigo-50 text-indigo-700 font-bold'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-700'
                   }`}
                 >
-                  {Icon && <Icon className="w-3.5 h-3.5" />}
                   {link.name}
                 </Link>
               );
             })}
+
+            {/* Grouped Secondary Tools Dropdown */}
+            <div ref={toolsRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setToolsOpen((o) => !o)}
+                aria-expanded={toolsOpen}
+                aria-haspopup="menu"
+                className={`flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 text-sm font-semibold transition-colors ${
+                  pathname.startsWith('/projects/finder') || pathname.startsWith('/projects/compare')
+                    ? 'bg-indigo-50 text-indigo-700 font-bold'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-700'
+                }`}
+              >
+                <span>Discovery Tools</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${toolsOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {toolsOpen && (
+                <div
+                  role="menu"
+                  className="absolute left-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+                >
+                  {toolLinks.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        role="menuitem"
+                        onClick={() => setToolsOpen(false)}
+                        className="flex items-start gap-3 rounded-xl p-3 hover:bg-indigo-50/70 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="block text-xs font-bold text-slate-900">{item.name}</span>
+                          <span className="block text-[11px] text-slate-500">{item.desc}</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
 
-          {/* Action Buttons */}
-          <div className="hidden shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
-            <Link
-              href="/projects"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white/80 text-slate-600 shadow-2xs transition-all hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-600 xl:h-10 xl:w-10"
-              title="Search Catalog"
-              aria-label="Search Projects"
-            >
-              <Search className="w-4 h-4" />
-            </Link>
-
+          {/* Desktop Utilities & Single Dominant CTA */}
+          <div className="hidden lg:flex items-center gap-2">
             <Link
               href="/wishlist"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white/80 text-slate-600 shadow-2xs transition-all hover:border-pink-300 hover:bg-pink-50/50 hover:text-pink-600 xl:h-10 xl:w-10"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600"
               title="Saved Wishlist"
               aria-label="Saved Wishlist"
             >
               <Heart className="w-4 h-4" />
             </Link>
 
-            <a
-              href={`https://wa.me/${waNumber}?text=Hi%2C%20I%20am%20interested%20in%20exploring%20Zivo%20AI%20projects`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl border border-emerald-200/80 bg-emerald-50/90 px-2.5 text-xs font-semibold text-emerald-800 shadow-2xs transition-all hover:bg-emerald-100 hover:border-emerald-300 xl:h-10 xl:gap-2 xl:px-3"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>WhatsApp</span>
-            </a>
-
             {user ? (
               <Link
                 href={user.role === 'ADMIN' ? '/admin' : '/account'}
-                className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl border border-indigo-200 bg-indigo-50/90 px-3 text-xs font-bold text-indigo-700 shadow-2xs transition-all hover:bg-indigo-100 xl:h-10 xl:gap-2 xl:px-3.5"
+                className="flex h-10 items-center gap-2 whitespace-nowrap rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-100"
               >
-                <User className="w-3.5 h-3.5" />
-                <span>{user.name.split(' ')[0]}</span>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>{user.role === 'ADMIN' ? 'Admin Panel' : `My Orders (${user.name.split(' ')[0]})`}</span>
               </Link>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <Link
-                  href="/login"
-                  className="flex h-9 items-center gap-1 whitespace-nowrap rounded-xl border border-slate-200/90 bg-white/80 px-2.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:bg-slate-100 xl:h-10 xl:gap-1.5 xl:px-3"
-                >
-                  <User className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Sign In</span>
-                </Link>
-                <Link
-                  href="/register"
-                  className="flex h-9 items-center gap-1 whitespace-nowrap rounded-xl border border-indigo-200/90 bg-indigo-50/80 px-2.5 text-xs font-bold text-indigo-700 shadow-2xs transition-all hover:bg-indigo-100 xl:h-10 xl:gap-1.5 xl:px-3"
-                >
-                  <span>Sign Up</span>
-                </Link>
-              </div>
+              <Link
+                href="/login"
+                className="flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                <User className="w-3.5 h-3.5 text-slate-500" />
+                <span>Sign In</span>
+              </Link>
             )}
 
             <Link
-              href="/projects/custom"
-              className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-xs font-bold text-white shadow-md shadow-indigo-500/20 transition-all glow-gradient hover:scale-[1.02] hover:opacity-95 xl:h-10 xl:gap-2 xl:px-4"
+              href="/projects"
+              className="flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-4 text-xs font-bold text-white shadow-md shadow-indigo-500/20 transition-opacity glow-gradient hover:opacity-95"
             >
-              <span>Custom Project</span>
+              <span>Browse Projects</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="col-start-3 ml-auto flex items-center gap-1.5 lg:hidden">
-            <Link
-              href="/projects"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/90 text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
-              aria-label="Search"
-            >
-              <Search className="w-4 h-4" />
-            </Link>
+          {/* Mobile Controls — 44x44px minimum touch targets (ZAI-094) */}
+          <div className="flex items-center gap-1.5 lg:hidden">
             <Link
               href="/wishlist"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/90 text-slate-600 transition-colors hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600"
-              aria-label="Wishlist"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-pink-600"
+              aria-label="Saved Wishlist"
             >
               <Heart className="w-4 h-4" />
             </Link>
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/90 text-slate-700 transition-colors hover:bg-slate-100"
-              aria-label="Toggle menu"
+              type="button"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-navigation"
             >
@@ -248,34 +274,51 @@ export default function Navbar() {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div id="mobile-navigation" className="space-y-3 border-b border-slate-200 bg-white/95 px-5 pb-6 pt-3 shadow-xl backdrop-blur-2xl lg:hidden">
-          {navLinks.map((link) => (
+        <div
+          id="mobile-navigation"
+          className="space-y-2 border-b border-slate-200 bg-white px-4 pb-6 pt-3 shadow-xl lg:hidden"
+        >
+          <Link
+            href="/projects"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl glow-gradient text-sm font-bold text-white shadow-md mb-2"
+          >
+            <span>Browse Projects</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          {[
+            { name: 'Custom Builds', href: '/projects/custom' },
+            { name: 'AI Project Finder', href: '/projects/finder' },
+            { name: 'Compare Projects', href: '/projects/compare' },
+            { name: 'Policies & Licensing', href: '/policies' },
+          ].map((link) => (
             <Link
-              key={link.name}
+              key={link.href}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block whitespace-nowrap border-b border-slate-100 py-2.5 text-sm font-semibold text-slate-700 hover:text-indigo-600"
+              className="flex min-h-[44px] items-center border-b border-slate-100 px-2 text-sm font-semibold text-slate-700 hover:text-indigo-600"
             >
               {link.name}
             </Link>
           ))}
 
-          <div className="pt-2 flex flex-col gap-2.5">
+          <div className="pt-3 flex flex-col gap-2">
             {user ? (
               <Link
                 href={user.role === 'ADMIN' ? '/admin' : '/account'}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700"
+                className="flex min-h-[44px] items-center justify-center gap-2 text-xs font-bold rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700"
               >
-                <User className="w-4 h-4" />
-                My Account ({user.name})
+                <ShoppingBag className="w-4 h-4" />
+                {user.role === 'ADMIN' ? 'Admin Panel' : `My Dashboard & Orders (${user.name})`}
               </Link>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs"
+                  className="flex min-h-[44px] items-center justify-center gap-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white text-slate-700"
                 >
                   <User className="w-3.5 h-3.5" />
                   Sign In
@@ -283,31 +326,12 @@ export default function Navbar() {
                 <Link
                   href="/register"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl bg-indigo-600 text-white shadow-2xs"
+                  className="flex min-h-[44px] items-center justify-center text-xs font-bold rounded-xl bg-slate-900 text-white"
                 >
-                  Sign Up
+                  Create Account
                 </Link>
               </div>
             )}
-
-            <a
-              href={`https://wa.me/${waNumber}?text=Hi%2C%20I%20am%20interested%20in%20exploring%20Zivo%20AI%20projects`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200"
-            >
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
-              WhatsApp Help ({settings.phoneNumber || '+91 8220303164'})
-            </a>
-
-            <Link
-              href="/projects/custom"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-xl glow-gradient text-white shadow-md"
-            >
-              Request Custom Project
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         </div>
       )}

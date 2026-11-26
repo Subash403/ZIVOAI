@@ -74,14 +74,15 @@ export default function ProjectFinderPage() {
 
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [results, setResults] = useState<Project[]>([]);
 
   const handleSearch = async () => {
     setSearching(true);
     setHasSearched(true);
+    setSearchError(null);
 
     try {
-      // Map domain or department to category
       let category = 'Artificial Intelligence';
       if (domain.includes('Web')) category = 'Web Development';
       else if (domain.includes('Cloud')) category = 'Cloud & DevOps';
@@ -100,13 +101,12 @@ export default function ProjectFinderPage() {
       });
 
       const data = await res.json();
-      if (data.success && Array.isArray(data.projects)) {
-        setResults(data.projects);
-      } else {
-        setResults([]);
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Recommendation engine is temporarily unavailable.');
       }
+      setResults(Array.isArray(data.projects) ? data.projects : []);
     } catch (err: unknown) {
-      console.error('Project finder error:', err);
+      setSearchError(err instanceof Error ? err.message : 'Unable to fetch recommendations right now.');
       setResults([]);
     } finally {
       setSearching(false);
@@ -348,7 +348,27 @@ export default function ProjectFinderPage() {
           {searching ? (
             <div className="py-20 text-center space-y-3">
               <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
-              <p className="text-xs text-slate-500 font-medium">Scanning catalog for syllabus matches...</p>
+              <p className="text-xs text-slate-500 font-medium">Scanning catalog for matching projects...</p>
+            </div>
+          ) : searchError ? (
+            <div role="alert" className="bg-white rounded-3xl border border-red-200 p-10 text-center max-w-xl mx-auto space-y-4">
+              <h3 className="text-lg font-bold text-slate-900">Finder temporarily unavailable</h3>
+              <p className="text-xs text-slate-600">{searchError}</p>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="px-5 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700"
+                >
+                  Retry Finder
+                </button>
+                <Link
+                  href="/projects"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs font-bold hover:bg-slate-50"
+                >
+                  Browse Full Catalog Manually
+                </Link>
+              </div>
             </div>
           ) : results.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

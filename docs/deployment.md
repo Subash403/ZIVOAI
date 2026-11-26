@@ -1,49 +1,128 @@
-# Deployment and database setup
+# Zivo AI — Deployment, Operations & Release Readiness Guide
 
-## Production PostgreSQL
+This guide covers safe deployment on **Vercel** with **Neon PostgreSQL**, **Cloudflare R2**, **Razorpay**, and **Nodemailer (SMTP)**.
 
-Production must run the migration gate before serving application traffic:
+> **Safety Rule:** Never run local development commands (`db:push:sqlite`, `npm test`) against production Neon credentials, and never execute live Razorpay charges or refunds during verification.
 
-```bash
-npm ci
-npm run db:migrate:postgres:predeploy
-npm run build
-```
+---
 
-The gate requires both `DATABASE_URL` and `DIRECT_URL` to be PostgreSQL URLs. It runs `prisma migrate deploy --schema prisma/schema.postgresql.prisma` and exits nonzero on missing configuration, migration discovery errors, connection errors, or failed SQL. Do not replace it with `prisma db push`, and do not put migrations inside `next build`.
+## 1. Environment Variable Inventory (Vercel)
 
-For Vercel, configure the project’s **Build Command** to run:
+Run `npm run env:check` locally (or `npm run env:check -- --strict` in CI) to validate configuration without exposing secret values.
+
+| Category | Variable | Preview / Staging | Production | Notes |
+| --- | --- | --- | --- | --- |
+| Database | `DATABASE_URL` | Neon Staging pooled URL | Neon Prod pooled URL (`sslmode=require`) | PostgreSQL URL only in Vercel |
+| Database | `DIRECT_URL` | Neon Staging direct URL | Neon Prod direct URL | Required by `prisma migrate deploy` |
+| Auth | `JWT_SECRET` | Unique 32+ char secret | Unique 32+ char secret | Never reuse dev/staging secrets |
+| App | `NEXT_PUBLIC_APP_URL` | Staging HTTPS origin | Production HTTPS origin | Used for OAuth callbacks & links |
+| Payments | `RAZORPAY_KEY_ID` | `rzp_test_*` | `rzp_live_*` | Server-only; never mix Test & Live |
+| Payments | `RAZORPAY_KEY_SECRET` | Test secret | Live secret | Server-only |
+| Payments | `RAZORPAY_WEBHOOK_SECRET` | Test webhook secret | Live webhook secret | Separate endpoint per environment |
+| Storage | `R2_ACCOUNT_ID` | Staging/Prod R2 account | Prod R2 account | Cloudflare R2 |
+| Storage | `R2_ACCESS_KEY_ID` | Scoped R2 key | Scoped R2 key | Least-privilege bucket permissions |
+| Storage | `R2_SECRET_ACCESS_KEY` | Scoped R2 secret | Scoped R2 secret | Server-only |
+| Storage | `R2_BUCKET_PRIVATE` | Staging private bucket | Prod private bucket | Keep **non-public**; presigned GET only |
+| Storage | `R2_BUCKET_PUBLIC` | Staging public bucket | Prod public bucket | Public thumbnails/gallery images |
+| Storage | `R2_PUBLIC_BASE_URL` | Public bucket CDN URL | Public bucket CDN URL | HTTPS base URL |
+| Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Test/sandbox SMTP | Verified domain SMTP | Required in prod; missing SMTP fails closed |
+| Ops / Cron | `CRON_SECRET` | Random 32+ char secret | Random 32+ char secret | Bearer token for `POST /api/cron/notifications` |
+| OAuth (Optional) | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional | Optional | Google button auto-hides when unset |
+
+---
+
+## 2. Vercel Build & Pre-Deploy Migration Gate
+
+Configure the Vercel **Build Command** to run the PostgreSQL migration predeploy gate before building:
 
 ```bash
 npm run db:migrate:postgres:predeploy && npm run build
 ```
 
-Set `DATABASE_URL` and `DIRECT_URL` in the Vercel Production environment. The migration gate must use a direct, migration-capable PostgreSQL connection for `DIRECT_URL`; never use the local SQLite URL. A separate CI job may run the same gate before allowing the Vercel deployment to proceed. If the gate fails, the deployment must be blocked rather than serving the new application code.
+- `scripts/predeploy-postgres.mjs` verifies both `DATABASE_URL` and `DIRECT_URL` are PostgreSQL URLs, then executes `prisma migrate deploy --schema prisma/schema.postgresql.prisma`.
+- Never replace `migrate deploy` with `prisma db push` in staging or production.
+- See [migration-and-rollback.md](./migration-and-rollback.md) for the exact Neon migration, backup, and rollback runbook.
 
-Before launch, configure the production values named in `.env.example`: `JWT_SECRET`, `NEXT_PUBLIC_APP_URL`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PRIVATE`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`. Configure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` when Google login is enabled. The Google callback is `/api/auth/google/callback` on the deployed origin.
+---
 
-## Razorpay test mode
+## 3. Razorpay Configuration (Test vs Live Isolation)
 
-The server requires `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`; the key ID is returned only as Checkout configuration after the server creates a real provider order. Use a matching Test key pair for Test Mode and a separate matching Live pair for Live Mode. Do not set or rely on `NEXT_PUBLIC_RAZORPAY_KEY_ID` for payment creation.
+1. **Test Mode (Preview/Staging):**
+   - Set `RAZORPAY_KEY_ID=rzp_test_...`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`.
+   - Configure Razorpay Test webhook URL: `https://<staging-origin>/api/payments/webhook`.
+   - Subscribe to events: `payment.captured`, `order.paid`, `payment.failed`, `refund.created`, `refund.processed`.
+2. **Live Mode (Production):**
+   - Configure a separate Live webhook URL: `https://<prod-origin>/api/payments/webhook` with its own `RAZORPAY_WEBHOOK_SECRET`.
+   - Enable Razorpay **auto-capture** so authorized payments transition cleanly to `captured`.
+   - Keep `NEXT_PUBLIC_RAZORPAY_KEY_ID` unset or strictly aligned; checkout reads the server-validated key returned from `POST /api/payments/create-order`.
 
-Configure a separate Test Mode webhook at `https://<test-origin>/api/payments/webhook` with its Test Mode secret in `RAZORPAY_WEBHOOK_SECRET`. Subscribe to `payment.captured`, `order.paid`, and `payment.failed`. Configure the equivalent webhook and distinct secret again in Live Mode. Enable Razorpay auto-capture: authorized payments remain pending until a verified captured event arrives.
+---
 
-## Private deliverable uploads
+## 4. Cloudflare R2 Security & Lifecycle
 
-Private deliverables are uploaded directly from the authenticated admin browser to the private R2 bucket using a ten-minute presigned `PUT`; application routes never receive the file body. Finalization performs a `HeadObject` check for the exact key, size, content type, and signed metadata before the project route accepts the short-lived proof.
+- Keep `R2_BUCKET_PRIVATE` strictly private (no public bucket policy).
+- Production downloads issue **1-hour presigned R2 GET URLs** only after server-side ownership/token, payment (`PAID`), expiry, and download-limit checks pass.
+- Configure R2 bucket CORS on `R2_BUCKET_PRIVATE` with exact admin origin (never `*`), method `PUT`, and headers: `content-type`, `x-amz-meta-original-name`, `x-amz-meta-upload-kind`.
+- Add an R2 lifecycle rule to purge orphaned uploads under `deliverables/` that were never finalized.
 
-Configure R2 bucket CORS with the exact admin application origin (for example `https://admin.example.com`), method `PUT`, and headers `content-type`, `x-amz-meta-original-name`, and `x-amz-meta-upload-kind`. Do not use `*` for origins, do not expose R2 API credentials, and do not make the private bucket public. The current single-PUT flow deliberately supports files up to 2 GB; add R2 multipart presigned-part handling only when resumable uploads or files above that limit are required. Unfinalized objects are harmless but should be removed with an R2 lifecycle rule for the `deliverables/` prefix after a suitable retention window.
+---
 
-## Local SQLite development
+## 5. Email Deliverability & Retry Worker
 
-The SQLite client is generated during install. After changing `prisma/schema.prisma`, synchronize only the local development database with:
+- In development/test without SMTP, notification logs record status `SIMULATED` and **never** mark `Order.notificationSent = true`.
+- In production without SMTP, sends fail closed as `FAILED` and queue for retry in `OrderNotification`.
+- **DNS Checklist (Manual Verification Required before Launch):**
+  - Verify `SPF` TXT record authorizes the SMTP provider.
+  - Verify `DKIM` CNAME/TXT keys are active and passing.
+  - Verify `DMARC` TXT record (`v=DMARC1; p=quarantine;` or `p=none` during warmup) is published for the `SMTP_FROM` domain.
+  - Send a test order confirmation and lead acknowledgement to Gmail and Outlook to confirm inbox placement.
+- **Scheduled Retry & Stock Reservation Expiry Worker:**
+  - Trigger `POST https://<origin>/api/cron/notifications` every 5–15 minutes using Vercel Cron (Pro) or an external scheduler (GitHub Actions / Cloudflare Cron Trigger / UptimeRobot) with header:
+    ```
+    Authorization: Bearer <CRON_SECRET>
+    ```
+  - This processes due `FAILED` order notifications (with exponential backoff) and expires stale 15-minute `StockReservation` locks.
+
+---
+
+## 6. Monitoring, Health Checks & Alerting
+
+- **Admin Health Endpoint:** `GET /api/admin/health` (requires authenticated `ADMIN` session). Returns:
+  - Redacted environment readiness & Razorpay mode (`test` vs `live`).
+  - Database connectivity status.
+  - Pending operational alerts:
+    - Orders in `RECONCILIATION_REQUIRED` (`STOCK_CONFLICT`, `ASSET_MISSING`).
+    - Failed `OrderNotification` outbox items.
+    - Failed `PaymentWebhookEvent` records.
+    - Active vs expired `StockReservation` counts.
+- **Admin Dashboard:** `/admin` surfaces an Operational Alerts banner whenever reconciliation orders, failed emails, or failed webhooks are greater than zero.
+- **Recommended External Alerts:**
+  1. Synthetic uptime monitor on `GET /` and `GET /projects`.
+  2. Vercel Log Drain / error alerting for HTTP `5xx` spikes on `/api/payments/*` and `/api/orders/download/*`.
+  3. Scheduled check on `POST /api/cron/notifications` response payload (alert if `failedCount > 0`).
+
+---
+
+## 7. Staging Smoke Test Checklist (Pre-Production Sign-Off)
+
+Execute on a Preview/Staging deployment using **Razorpay Test Mode** before promoting to Production:
+
+1. **Public Catalog & Visibility:** Confirm unpublished/unavailable projects return `404` on `/api/projects/[id]`, `call` projects mask `price: 0`, and no `downloadFileUrl` appears in public JSON.
+2. **Auth & Account Takeover Protection:** Confirm registering an existing email returns `409`, login works, password change / "Sign out all devices" invalidates old cookies.
+3. **Razorpay Test Checkout:** Complete a test purchase; verify `PAID` status, `ASSET_READY` delivery status, email receipt, and automatic appearance inside `/account`.
+4. **Download Security:** Verify owner downloads succeed inside `/account` (`200`/redirect to 1-hour presigned R2 URL, `downloadCount` increments, transitions to `DELIVERED`), while non-owners receive `403`.
+5. **OTP Order Tracking:** Verify `POST /api/orders/track` requires 6-digit email OTP for unauthenticated lookups and rate-limits repeated attempts (`429`).
+6. **Refund & Access Revocation:** Record a test refund in `/admin/orders`; verify `paymentStatus: 'REFUNDED'`, `AdminAuditLog` entry created, and subsequent download attempt returns `402`.
+7. **Admin Authorization:** Verify anonymous and `CUSTOMER` sessions receive `401` on `/api/admin/dashboard`, `/api/admin/customers`, `/api/admin/health`, `/api/orders`, and `/api/settings` (`PUT`).
+8. **Build Warnings Note (ZAI-072):** Two upstream Prisma Client dynamic-tracing warnings (`src/generated/postgresql/index.js` and `runtime/library.js`) are known Next.js 16 Turbopack + Prisma 6.19 artifacts and do not affect runtime execution.
+
+---
+
+## 8. Local SQLite Development
 
 ```bash
 npm run db:push:sqlite
+npm run dev
 ```
 
-This command is for local SQLite development only. It is not a production migration and must not be pointed at Neon.
-
-## Private downloads
-
-Production private downloads require Cloudflare R2 presigned URLs. Application-level buffering of private objects is disabled in production. If R2 presigning fails, the download route returns a safe temporary-unavailable response instead of reading the object into application memory.
+Never point `db:push:sqlite` at Neon PostgreSQL.

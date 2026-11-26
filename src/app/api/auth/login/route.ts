@@ -7,9 +7,21 @@ import {
   ADMIN_TOKEN_COOKIE_NAME,
   CUSTOMER_TOKEN_COOKIE_NAME,
 } from '@/lib/auth';
+import { checkRateLimit, getClientIp, rateLimitExceededResponse } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const ipLimit = checkRateLimit(clientIp, {
+      keyPrefix: 'auth:login:ip',
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 20,
+      cooldownMs: 5 * 60 * 1000,
+    });
+    if (!ipLimit.allowed) {
+      return rateLimitExceededResponse(ipLimit, 'Too many login attempts. Please wait and try again.');
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
@@ -19,7 +31,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const trimmedEmail = email.toLowerCase().trim();
+    const trimmedEmail = String(email).toLowerCase().trim();
+    const emailLimit = checkRateLimit(trimmedEmail, {
+      keyPrefix: 'auth:login:email',
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 10,
+      cooldownMs: 5 * 60 * 1000,
+    });
+    if (!emailLimit.allowed) {
+      return rateLimitExceededResponse(emailLimit, 'Too many failed sign-in attempts for this account. Please wait.');
+    }
     let user = await prisma.user.findUnique({
       where: { email: trimmedEmail },
     });
@@ -93,6 +114,7 @@ export async function POST(request: Request) {
       email: user.email,
       role: userRole,
       name: user.name,
+      tokenVersion: user.tokenVersion,
     });
 
     const cookieName = userRole === 'ADMIN' ? ADMIN_TOKEN_COOKIE_NAME : CUSTOMER_TOKEN_COOKIE_NAME;

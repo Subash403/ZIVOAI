@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ProjectHero from '@/components/ProjectHero';
 import CapabilitiesBento from '@/components/CapabilitiesBento';
@@ -11,7 +11,6 @@ import { PublicSettings } from '@/lib/settings';
 import { Project } from '@/types';
 import {
   ArrowRight,
-  ShieldCheck,
   FolderKanban,
   Wrench,
   CheckCircle2,
@@ -19,24 +18,44 @@ import {
   MessageSquare,
   HelpCircle,
   ChevronDown,
-  Zap,
   Sparkles,
   Layers,
-  Server,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function HomePage() {
   const [settings, setSettings] = useState<PublicSettings | null>(null);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const [selectedBuyProject, setSelectedBuyProject] = useState<Project | null>(null);
   const [selectedDiscussProject, setSelectedDiscussProject] = useState<Project | null>(null);
 
+  const loadFeatured = useCallback(async () => {
+    setLoadingFeatured(true);
+    setFeaturedError(null);
+    try {
+      const res = await fetch('/api/projects?featured=true&limit=6');
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Could not load featured projects right now.');
+      }
+      setFeaturedProjects(Array.isArray(data.projects) ? data.projects : []);
+    } catch (err: unknown) {
+      setFeaturedError(
+        err instanceof Error ? err.message : 'Featured projects are temporarily unavailable.'
+      );
+    } finally {
+      setLoadingFeatured(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetch('/api/settings')
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.settings) {
           setSettings(data.settings);
@@ -44,41 +63,32 @@ export default function HomePage() {
       })
       .catch(() => {});
 
-    fetch('/api/projects?featured=true&limit=6')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.projects && Array.isArray(data.projects)) {
-          setFeaturedProjects(data.projects);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingFeatured(false));
-  }, []);
+    const timer = window.setTimeout(() => {
+      void loadFeatured();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadFeatured]);
 
   const defaultFaqs = [
     {
-      q: 'How do I browse and purchase a project?',
-      a: 'Browse the project catalog, review the project details and deliverables, then choose a fixed-price project to open secure checkout. You need an account so your order and downloads can be linked to you.',
+      q: 'How do I browse and purchase a ready-to-run project?',
+      a: 'Browse the project catalog, inspect the included deliverables, tech stack, and setup prerequisites on the project page, then open secure Razorpay checkout. You sign in first so your receipt and downloads are automatically linked to your account.',
     },
     {
-      q: 'Which payment methods can I use, and when is payment confirmed?',
-      a: 'Payment options are presented by Razorpay Checkout for the current order. An order is completed only after the payment signature and the captured payment details are verified on the server.',
+      q: 'When is payment confirmed and how do downloads work?',
+      a: 'Orders are confirmed only after Razorpay payment signatures and captured payment amounts are verified server-side. Once verified, fixed-price project downloads become available directly in your Customer Dashboard via short-lived 1-hour private cloud links.',
     },
     {
-      q: 'How are purchased files delivered and downloaded?',
-      a: 'After a fixed-price payment is verified, the order confirmation and your account provide access to a protected, time-limited download link for the deliverable attached to that project.',
+      q: 'Where do I track my purchases and custom project milestones?',
+      a: 'Sign in to your Customer Dashboard (/account) to view fixed-price receipts, download allowances, and your custom project’s 8-stage engineering timeline — no manual order ID entry is required.',
     },
     {
-      q: 'Where can I find my purchases or track an order?',
-      a: 'Sign in to your customer dashboard to see linked purchases. You can also use the Track Order page with your order or custom-project reference and billing email.',
+      q: 'What deliverables are included with each project?',
+      a: 'Deliverables vary by project and are listed explicitly on every project detail page (such as source code, setup instructions, documentation, or presentation slides). Only items marked included on a project page are part of that package.',
     },
     {
-      q: 'How do I get technical support?',
-      a: 'Use the configured WhatsApp or support email shown in the footer for help with a project, setup, or custom requirement. Include your order or project reference where available.',
-    },
-    {
-      q: 'What are the refund and cancellation terms?',
-      a: 'Refund, delivery, and license terms are published on the policies page. Please review those terms before purchase and contact support if you need help with an order.',
+      q: 'How do I request technical support or a refund?',
+      a: 'Contact us via the WhatsApp or support email listed in the footer with your Order ID or Custom Reference. Review our full Refund, Delivery, and License terms on the Policies page before purchase.',
     },
   ];
 
@@ -98,8 +108,7 @@ export default function HomePage() {
   const cleanWhatsapp = rawWhatsapp.replace(/\D/g, '') || '918220303164';
 
   return (
-    <main className="min-h-screen bg-transparent pt-24 sm:pt-28 lg:pt-32 text-slate-900 pb-20 space-y-10 sm:space-y-12">
-      {/* Modals for Immediate Interaction */}
+    <main className="min-h-screen bg-transparent pt-24 sm:pt-28 text-slate-900 pb-16 space-y-14 sm:space-y-16">
       <CheckoutModal
         isOpen={!!selectedBuyProject}
         onClose={() => setSelectedBuyProject(null)}
@@ -114,90 +123,27 @@ export default function HomePage() {
       {/* 1. HERO SECTION */}
       <ProjectHero settings={settings} />
 
-      <nav aria-label="Homepage sections" className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-1 sm:px-6 lg:px-8 no-scrollbar">
-        {[
-          settings?.showFeaturedSection !== false && { href: '#featured-codebases', label: 'Featured Codebases' },
-          { href: '#delivery-track', label: 'Choose Delivery Track' },
-          settings?.showHowItWorksSection !== false && { href: '#how-it-works', label: 'How Zivo AI Works' },
-          settings?.showTestimonialsSection !== false && { href: '#quality-standards', label: 'Quality Standards' },
-          settings?.showFaqSection !== false && { href: '#faq', label: 'FAQ' },
-        ].filter((item): item is { href: string; label: string } => Boolean(item)).map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            className="shrink-0 rounded-full border border-slate-200/90 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-2xs backdrop-blur-md transition-all hover:border-indigo-300 hover:bg-indigo-50/90 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
-
-      {/* TRUST INDICATORS BAR */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="zivo-card rounded-2xl p-6 sm:p-8 bg-white border border-slate-200/90 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div className="space-y-0.5">
-              <h4 className="text-sm font-bold text-slate-900">100% Tested Runtimes</h4>
-              <p className="text-xs text-slate-500 leading-relaxed">Every project tested against fixed dependency requirements with clear setup steps.</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div className="space-y-0.5">
-              <h4 className="text-sm font-bold text-slate-900">1-3 Hour Delivery</h4>
-              <p className="text-xs text-slate-500 leading-relaxed">Instant Razorpay verification with automated download links delivered to your inbox.</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div className="space-y-0.5">
-              <h4 className="text-sm font-bold text-slate-900">Architecture & Docs</h4>
-              <p className="text-xs text-slate-500 leading-relaxed">Complete IEEE report docs, database schemas, presentation decks, and flowcharts.</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-              <PhoneCall className="w-5 h-5" />
-            </div>
-            <div className="space-y-0.5">
-              <h4 className="text-sm font-bold text-slate-900">1-on-1 Remote Setup</h4>
-              <p className="text-xs text-slate-500 leading-relaxed">Direct WhatsApp support and Screen Share guidance to run the codebase locally.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. FEATURED PROJECTS SHOWCASE */}
+      {/* 2. FEATURED PROJECTS FIRST (ZAI-036, ZAI-095 — catalog prioritized above marketing narrative) */}
       {settings?.showFeaturedSection !== false && (
-        <section id="featured-codebases" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <section id="featured-codebases" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider">
-                <Sparkles className="w-4 h-4" /> Curated Architectures
+                <Sparkles className="w-4 h-4" /> Featured Marketplace Catalog
               </div>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                Featured Production Codebases
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Ready-to-Run Software &amp; AI Projects
               </h2>
               <p className="text-sm text-slate-600 max-w-xl">
-                Pre-tested, fully documented software solutions with instant automated checkout and download access.
+                Compare stack, project type, deliverables, and transparent pricing before purchase.
               </p>
             </div>
 
             <Link
               href="/projects"
-              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors py-2"
+              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors py-1"
             >
-              Browse Complete Catalog ({featuredProjects.length > 0 ? `${featuredProjects.length}+` : 'View All'})
+              Browse Complete Catalog
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -205,8 +151,36 @@ export default function HomePage() {
           {loadingFeatured ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-96 rounded-2xl bg-slate-200/60 animate-pulse border border-slate-200" />
+                <div key={i} className="h-96 rounded-3xl bg-slate-200/60 animate-pulse border border-slate-200" />
               ))}
+            </div>
+          ) : featuredError ? (
+            <div
+              role="alert"
+              className="rounded-2xl border border-amber-200 bg-amber-50/90 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-amber-900"
+            >
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                <div>
+                  <p className="font-bold">Could not load featured projects right now</p>
+                  <p className="text-amber-800 mt-0.5">{featuredError}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={loadFeatured}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Retry
+                </button>
+                <Link
+                  href="/projects"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-amber-300 text-amber-900 font-bold hover:bg-amber-100"
+                >
+                  Open Catalog
+                </Link>
+              </div>
             </div>
           ) : featuredProjects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -222,168 +196,140 @@ export default function HomePage() {
           ) : (
             <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 p-8 space-y-3">
               <Layers className="w-10 h-10 text-slate-400 mx-auto" />
-              <h3 className="font-bold text-slate-900">Explore Available Projects</h3>
+              <h3 className="font-bold text-slate-900">Explore the Full Project Catalog</h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Visit the catalog to browse all available AI models, web apps, and IoT codebases.
+                Visit the catalog to browse all available AI models, web applications, and custom-scoped systems.
               </p>
               <Link
                 href="/projects"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md"
               >
-                Open Project Catalog
+                Browse Projects
               </Link>
             </div>
           )}
         </section>
       )}
 
-      {/* 3. CAPABILITIES BENTO GRID */}
-      <CapabilitiesBento showStats={settings?.showStatsSection !== false} />
-
-      {/* 4. GET STARTED OPTIONS (TWO CLEAR PATHWAYS) */}
-      <section id="delivery-track" className="scroll-mt-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center space-y-2">
-          <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Get Started</span>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Choose Your Delivery Track</h2>
-          <p className="text-sm text-slate-600 max-w-lg mx-auto">
-            Choose from ready-to-deploy verified codebases or collaborate directly with our engineers for custom architectures.
-          </p>
+      {/* 3. TWO CLEAR ENGAGEMENT TRACKS (ZAI-038 — explained once, concisely) */}
+      <section id="delivery-track" className="scroll-mt-24 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="text-center space-y-1.5">
+          <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Two Ways to Work With Us</span>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Ready-to-Run Catalog or Custom Development
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-          {/* TRACK 1: SEE AVAILABLE PROJECTS */}
-          <div className="group glass-card rounded-3xl p-8 border border-indigo-200/80 hover:border-indigo-500 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/70 rounded-bl-full -z-0 group-hover:scale-110 transition-transform" />
-
-            <div className="relative space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
-                <FolderKanban className="w-7 h-7" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="glass-card rounded-3xl p-7 border border-indigo-200/80 flex flex-col justify-between space-y-5">
+            <div className="space-y-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
+                <FolderKanban className="w-6 h-6" />
               </div>
-
-              <div>
-                <span className="text-xs font-mono font-bold text-indigo-600 uppercase tracking-wider">Track 01</span>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-                  Ready-to-Deploy Catalog
-                </h3>
-              </div>
-
+              <h3 className="text-xl font-extrabold text-slate-900">Fixed-Price Project Catalog</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Instant access to verified fixed-price codebases across Generative AI, Computer Vision, Full-Stack SaaS, and IoT with secure automated delivery.
+                Purchase verified codebases with transparent pricing, itemized deliverables, and secure private downloads in your Customer Dashboard.
               </p>
-
-              <ul className="space-y-2.5 pt-2 text-xs text-slate-700 font-medium">
+              <ul className="space-y-2 text-xs text-slate-700 font-medium">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  Instant download link immediately upon Razorpay confirmation
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  Server-verified Razorpay checkout with automatic account linking
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  Verified source code, architecture reports & PPT deck
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  Private signed download links accessible anytime in /account
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  Includes sample datasets and environment configuration guides
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  Exact deliverables, prerequisites &amp; setup steps shown before checkout
                 </li>
               </ul>
             </div>
 
-            <div className="relative pt-4">
-              <Link
-                href="/projects"
-                className="w-full flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl glow-gradient text-white font-bold text-sm sm:text-base shadow-lg shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <span>Explore Ready Projects</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+            <Link
+              href="/projects"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl glow-gradient text-white font-bold text-sm shadow-md hover:opacity-95 transition-opacity"
+            >
+              <span>Browse Projects</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
-          {/* TRACK 2: CUSTOM ARCHITECTURE */}
-          <div className="group glass-card rounded-3xl p-8 border border-purple-200/80 hover:border-purple-500 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50/70 rounded-bl-full -z-0 group-hover:scale-110 transition-transform" />
-
-            <div className="relative space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-105 transition-transform">
-                <Wrench className="w-7 h-7" />
+          <div className="glass-card rounded-3xl p-7 border border-slate-200 flex flex-col justify-between space-y-5">
+            <div className="space-y-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-md">
+                <Wrench className="w-6 h-6" />
               </div>
-
-              <div>
-                <span className="text-xs font-mono font-bold text-purple-600 uppercase tracking-wider">Track 02</span>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-                  Custom Architecture
-                </h3>
-              </div>
-
+              <h3 className="text-xl font-extrabold text-slate-900">Custom Software Development</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Have a specialized research paper, novel algorithm, or custom product requirement? Our senior software team will build it to your exact specifications.
+                Need a custom research implementation, tailored AI pipeline, or bespoke full-stack architecture? Submit a brief for a scoped quote.
               </p>
-
-              <ul className="space-y-2.5 pt-2 text-xs text-slate-700 font-medium">
+              <ul className="space-y-2 text-xs text-slate-700 font-medium">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  8-Stage transparent milestone tracking with public updates
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  8-stage milestone tracking directly inside your Customer Dashboard
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  Technical phone & WhatsApp consultation with lead engineers
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  Direct scope review and consultation within 1 business day
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  Bespoke dataset curation and complete environment deployment
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  Tailored stack, dataset integration, and walkthrough handoff
                 </li>
               </ul>
             </div>
 
-            <div className="relative pt-4">
-              <Link
-                href="/projects/custom"
-                className="w-full flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <PhoneCall className="w-4 h-4 text-indigo-400" />
-                <span>Request Custom Architecture</span>
-              </Link>
-            </div>
+            <Link
+              href="/projects/custom"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition-colors"
+            >
+              <PhoneCall className="w-4 h-4 text-indigo-300" />
+              <span>Custom Development</span>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* 5. HOW IT WORKS (4 STEPS) */}
+      {/* 4. CAPABILITIES BENTO GRID */}
+      <CapabilitiesBento showStats={settings?.showStatsSection !== false} />
+
+      {/* 5. HOW IT WORKS (Concise 4-step workflow — ZAI-038) */}
       {settings?.showHowItWorksSection !== false && (
-        <section id="how-it-works" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Engineering Workflow</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">How Zivo AI Works</h2>
-            <p className="text-sm text-slate-600">From discovery to local live execution in 4 streamlined steps</p>
+        <section id="how-it-works" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Workflow</span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">How Zivo AI Works</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               {
                 step: '01',
-                title: 'Discover & Benchmark',
-                desc: 'Explore pre-built projects with live specs, technology stacks, sample screenshots, and deliverables.',
+                title: 'Inspect & Compare',
+                desc: 'Filter by stack, category, or difficulty and review each project’s listed deliverables and prerequisites.',
               },
               {
                 step: '02',
-                title: 'Instant Secure Checkout',
-                desc: 'Complete payment via Razorpay. Transactions are verified server-side with HMAC security.',
+                title: 'Verified Checkout',
+                desc: 'Sign in and complete payment via Razorpay. Signatures, amounts, and stock are verified server-side.',
               },
               {
                 step: '03',
-                title: 'Automated Digital Delivery',
-                desc: 'Receive secure, expiring download links to source code repositories, IEEE documentation, and assets within 1 to 3 hours.',
+                title: 'Dashboard Download',
+                desc: 'Access private signed download links and verified receipts directly from your Customer Dashboard.',
               },
               {
                 step: '04',
-                title: '1-on-1 Remote Setup',
-                desc: 'Our engineers guide you through local environment configuration, dependency resolution, and execution.',
+                title: 'Setup Guidance',
+                desc: 'Follow the included setup guide or reach our support team on WhatsApp or email if you hit setup snags.',
               },
-            ].map((item, idx) => (
+            ].map((item) => (
               <div
-                key={idx}
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow space-y-4"
+                key={item.step}
+                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-3"
               >
-                <span className="text-3xl font-extrabold text-indigo-600/30 block font-mono">{item.step}</span>
+                <span className="text-2xl font-extrabold text-indigo-600/35 block font-mono">{item.step}</span>
                 <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
               </div>
@@ -392,67 +338,16 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 6. THE ZIVO AI STANDARD (BENEFITS & TRUST) */}
-      {settings?.showTestimonialsSection !== false && (
-        <section id="quality-standards" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-md space-y-10">
-            <div className="text-center max-w-2xl mx-auto space-y-3">
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                The Zivo AI Quality Standard
-              </h2>
-              <p className="text-sm text-slate-600">
-                Built by senior software developers with strict code hygiene, verified test suites, and clean documentation
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                  <CheckCircle2 className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-bold text-slate-900">100% Executable Code</h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Every codebase is tested against fixed runtime dependencies with deterministic setup instructions and verified outputs.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Comprehensive Blueprints</h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Includes complete architectural diagrams, database schema models, sequence workflows, and technical slide presentations.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
-                  <Server className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Automated Secure Delivery</h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Never wait for manual email transfers. Files are authorized and served via protected, expiring tokens right after payment.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 7. FAQ ACCORDION */}
+      {/* 6. FAQ ACCORDION */}
       {settings?.showFaqSection !== false && (
-        <section id="faq" className="scroll-mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="text-center space-y-3">
+        <section id="faq" className="scroll-mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider">
-              <HelpCircle className="w-4 h-4" /> Got Questions?
+              <HelpCircle className="w-4 h-4" /> FAQ
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Frequently Asked Questions
             </h2>
-            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600">
-              Clear answers about choosing a codebase, secure checkout, delivery access, support, and policies.
-            </p>
           </div>
 
           <div className="space-y-3">
@@ -461,21 +356,27 @@ export default function HomePage() {
               return (
                 <div
                   key={idx}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden transition-colors"
+                  className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden"
                 >
                   <button
+                    type="button"
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
                     aria-expanded={isOpen}
                     aria-controls={`faq-answer-${idx}`}
-                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 text-sm sm:text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 text-sm sm:text-base"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
-                      className={`w-5 h-5 text-indigo-600 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      className={`w-5 h-5 text-indigo-600 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
                   {isOpen && (
-                    <div id={`faq-answer-${idx}`} role="region" aria-label={faq.q} className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                    <div
+                      id={`faq-answer-${idx}`}
+                      role="region"
+                      aria-label={faq.q}
+                      className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3"
+                    >
                       {faq.a}
                     </div>
                   )}
@@ -486,33 +387,33 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 8. DIRECT WHATSAPP & SUPPORT CTA BANNER */}
+      {/* 7. SUPPORT CTA BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 p-8 sm:p-12 rounded-3xl text-center space-y-6 text-white shadow-xl relative overflow-hidden border border-slate-800">
-          <div className="max-w-2xl mx-auto space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Need Direct Technical Advice?
+        <div className="bg-slate-950 p-8 sm:p-10 rounded-3xl text-center space-y-5 text-white shadow-xl border border-slate-800">
+          <div className="max-w-2xl mx-auto space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+              Need Help Choosing a Project or Scoping a Custom Build?
             </h2>
             <p className="text-sm text-slate-300">
-              Speak directly with a senior engineer on WhatsApp for topic feasibility analysis, tech stack advice, and custom project quotes.
+              Message our engineering team on WhatsApp or use the AI Project Finder to narrow down your stack and budget.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/projects"
-              className="px-8 py-3.5 rounded-xl bg-white text-slate-950 font-bold text-sm shadow-md hover:bg-slate-100 transition-all"
+              className="px-7 py-3 rounded-xl bg-white text-slate-950 font-bold text-sm shadow-md hover:bg-slate-100 transition-colors"
             >
-              Browse All Projects
+              Browse Projects
             </Link>
 
             <a
               href={`https://wa.me/${cleanWhatsapp}?text=Hi%2C%20I%20would%20like%20to%20consult%20on%20a%20Zivo%20AI%20project`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold flex items-center gap-2 shadow-md transition-all"
+              className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold flex items-center gap-2 shadow-md transition-colors"
             >
-              <MessageSquare className="w-4 h-4" /> Chat on WhatsApp ({rawWhatsapp})
+              <MessageSquare className="w-4 h-4" /> Chat on WhatsApp
             </a>
           </div>
         </div>

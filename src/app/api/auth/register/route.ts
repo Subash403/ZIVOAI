@@ -3,11 +3,24 @@ import { prisma } from '@/lib/prisma';
 import {
   hashPassword,
   signAuthToken,
+  ADMIN_TOKEN_COOKIE_NAME,
   CUSTOMER_TOKEN_COOKIE_NAME,
 } from '@/lib/auth';
+import { checkRateLimit, getClientIp, rateLimitExceededResponse } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rl = checkRateLimit(clientIp, {
+      keyPrefix: 'auth:register',
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 10,
+      cooldownMs: 5 * 60 * 1000,
+    });
+    if (!rl.allowed) {
+      return rateLimitExceededResponse(rl, 'Too many registration attempts. Please try again shortly.');
+    }
+
     const body = await request.json();
     const { name, email, password, phone, college, department, year } = body;
 
@@ -18,93 +31,62 @@ export async function POST(request: Request) {
       );
     }
 
-    const trimmedName = name.trim();
-    const trimmedEmail = email.toLowerCase().trim();
+    const trimmedName = String(name).trim();
+    const trimmedEmail = String(email).toLowerCase().trim();
+
+    if (!trimmedName || trimmedName.length > 100) {
+      return NextResponse.json(
+        { error: 'Please enter a valid name.' },
+        { status: 400 }
+      );
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
+    if (!emailRegex.test(trimmedEmail) || trimmedEmail.length > 120) {
       return NextResponse.json(
         { error: 'Please enter a valid email address.' },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    if (typeof password !== 'string' || password.length < 8) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters long.' },
+        { error: 'Password must be at least 8 characters long.' },
         { status: 400 }
       );
     }
 
     const existingUser = await prisma.user.findUnique({
       where: { email: trimmedEmail },
+      select: { id: true, googleId: true },
     });
 
-    const hashedPassword = await hashPassword(password);
-
+    // Security: NEVER overwrite or attach a password to an existing account (prevents OAuth account takeover).
     if (existingUser) {
-      // If user signed up via Google earlier without a password, link password
-      if (!existingUser.password) {
-        const updated = await prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            password: hashedPassword,
-            name: trimmedName || existingUser.name,
-            phone: phone ? String(phone).trim() : existingUser.phone,
-            college: college ? String(college).trim() : existingUser.college,
-            department: department ? String(department).trim() : existingUser.department,
-            year: year ? String(year).trim() : existingUser.year,
-          },
-        });
-
-        const token = signAuthToken({
-          userId: updated.id,
-          email: updated.email,
-          role: (updated.role as 'ADMIN' | 'CUSTOMER') || 'CUSTOMER',
-          name: updated.name,
-        });
-
-        const response = NextResponse.json({
-          success: true,
-          message: 'Account linked successfully with password.',
-          user: {
-            id: updated.id,
-            name: updated.name,
-            email: updated.email,
-            role: updated.role,
-          },
-        });
-
-        response.cookies.set({
-          name: CUSTOMER_TOKEN_COOKIE_NAME,
-          value: token,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 60 * 60 * 24 * 7,
-        });
-
-        return response;
-      }
-
       return NextResponse.json(
-        { error: 'An account with this email already exists. Please log in.' },
+        {
+          error: existingUser.googleId
+            ? 'An account with this email already exists via Google sign-in. Please sign in with Google.'
+            : 'An account with this email already exists. Please sign in instead.',
+        },
         { status: 409 }
       );
     }
 
-    // Create fresh customer account
+    const hashedPassword = await hashPassword(password);
+
     const user = await prisma.user.create({
       data: {
         name: trimmedName,
         email: trimmedEmail,
         password: hashedPassword,
         role: 'CUSTOMER',
-        phone: phone ? String(phone).trim() : null,
-        college: college ? String(college).trim() : null,
-        department: department ? String(department).trim() : null,
-        year: year ? String(year).trim() : null,
+        emailVerified: false,
+        tokenVersion: 0,
+        phone: phone ? String(phone).trim().slice(0, 30) : null,
+        college: college ? String(college).trim().slice(0, 120) : null,
+        department: department ? String(department).trim().slice(0, 120) : null,
+        year: year ? String(year).trim().slice(0, 60) : null,
       },
     });
 
@@ -113,18 +95,24 @@ export async function POST(request: Request) {
       email: user.email,
       role: 'CUSTOMER',
       name: user.name,
+      tokenVersion: user.tokenVersion,
     });
 
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+    const response = NextResponse.json(
+      {
+        success: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          emailVerified: user.emailVerified,
+        },
       },
-    });
+      { status: 201 }
+    );
 
+    response.cookies.delete(ADMIN_TOKEN_COOKIE_NAME);
     response.cookies.set({
       name: CUSTOMER_TOKEN_COOKIE_NAME,
       value: token,
@@ -137,7 +125,7 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error: unknown) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error instanceof Error ? error.message : 'unknown');
     return NextResponse.json(
       { error: 'Internal server error during registration' },
       { status: 500 }

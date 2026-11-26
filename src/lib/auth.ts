@@ -34,6 +34,7 @@ export interface AuthPayload {
   email: string;
   role: 'ADMIN' | 'CUSTOMER';
   name?: string;
+  tokenVersion?: number;
 }
 
 export type AdminPayload = AuthPayload;
@@ -172,6 +173,10 @@ export function clearSessionCookie(response: NextResponse, role: 'ADMIN' | 'CUST
   }
 }
 
+export function hashSensitiveToken(rawToken: string): string {
+  return crypto.createHmac('sha256', getJwtSecret()).update(`hash:${rawToken}`).digest('hex');
+}
+
 export function createReceiptToken(orderId: string): string {
   const secret = getJwtSecret();
   return crypto.createHmac('sha256', secret).update(`receipt:${orderId}`).digest('hex');
@@ -190,4 +195,61 @@ export function verifyReceiptToken(orderId: string, token: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function createTimedReceiptToken(
+  orderId: string,
+  options: { expiresInMs?: number; version?: number } = {}
+): string {
+  const expiresAt = Date.now() + (options.expiresInMs ?? 7 * 24 * 60 * 60 * 1000);
+  const version = options.version ?? 1;
+  const nonce = crypto.randomBytes(12).toString('hex');
+  const payload = `${orderId}.${version}.${expiresAt}.${nonce}`;
+  const encoded = Buffer.from(payload, 'utf8').toString('base64url');
+  const sig = crypto.createHmac('sha256', getJwtSecret()).update(`timed-receipt:${encoded}`).digest('base64url');
+  return `v2.${encoded}.${sig}`;
+}
+
+export function verifyTimedReceiptToken(
+  orderId: string,
+  token: string,
+  expectedVersion?: number
+): boolean {
+  if (!orderId || !token || !token.startsWith('v2.')) return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const [, encoded, sig] = parts;
+    const expectedSig = crypto
+      .createHmac('sha256', getJwtSecret())
+      .update(`timed-receipt:${encoded}`)
+      .digest('base64url');
+    const expectedBuf = Buffer.from(expectedSig, 'utf8');
+    const sigBuf = Buffer.from(sig, 'utf8');
+    if (expectedBuf.length !== sigBuf.length || !crypto.timingSafeEqual(expectedBuf, sigBuf)) {
+      return false;
+    }
+    const decoded = Buffer.from(encoded, 'base64url').toString('utf8');
+    const [tokenOrderId, versionStr, expiresAtStr] = decoded.split('.');
+    const version = Number(versionStr);
+    const expiresAt = Number(expiresAtStr);
+    if (tokenOrderId !== orderId) return false;
+    if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
+    if (expectedVersion !== undefined && version !== expectedVersion) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function verifyAnyReceiptToken(
+  orderId: string,
+  token: string,
+  expectedVersion?: number
+): boolean {
+  if (!orderId || !token) return false;
+  if (token.startsWith('v2.')) {
+    return verifyTimedReceiptToken(orderId, token, expectedVersion);
+  }
+  return verifyReceiptToken(orderId, token);
 }

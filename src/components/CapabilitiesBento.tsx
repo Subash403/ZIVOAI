@@ -104,17 +104,19 @@ export default function CapabilitiesBento({ showStats = true }: { showStats?: bo
             </Link>
           </div>
 
-          {/* Quick Metrics Callout */}
-          {showStats && <div className="pt-6 border-t border-slate-200/80 grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">100%</div>
-              <div className="text-xs text-slate-500 font-medium mt-0.5">Verified Runtimes</div>
+          {/* Factual Platform Capabilities Callout (ZAI-058 — replaces unsupported 100%/1-3h claims) */}
+          {showStats && (
+            <div className="pt-6 border-t border-slate-200/80 grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-xl font-black text-slate-900 font-mono">Private R2</div>
+                <div className="text-xs text-slate-500 font-medium mt-0.5">Signed Dashboard Delivery</div>
+              </div>
+              <div>
+                <div className="text-xl font-black text-indigo-600 font-mono">8-Stage</div>
+                <div className="text-xs text-slate-500 font-medium mt-0.5">Custom Build Tracking</div>
+              </div>
             </div>
-            <div>
-              <div className="text-2xl font-black text-indigo-600 font-mono">1–3h</div>
-              <div className="text-xs text-slate-500 font-medium mt-0.5">Automated Delivery</div>
-            </div>
-          </div>}
+          )}
         </div>
 
         {/* Right Column: Asymmetric Bento Grid */}

@@ -1,10 +1,144 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createReceiptToken, getAuthSession } from '@/lib/auth';
+import {
+  createTimedReceiptToken,
+  getAdminSession,
+  getAuthSession,
+  hashSensitiveToken,
+} from '@/lib/auth';
+import { checkRateLimit, getClientIp, rateLimitExceededResponse } from '@/lib/rate-limit';
+import { sendTrackingOtpNotification } from '@/lib/notifications';
+import { safeErrorResponse } from '@/lib/security';
+
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const OTP_MAX_ATTEMPTS = 5;
+const TRACK_RECEIPT_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes short-lived access
+
+function generateNumericOtp(): string {
+  const num = crypto.randomInt(100000, 1000000);
+  return String(num);
+}
+
+function timingSafeHexEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Verifies mailbox ownership via OTP for unauthenticated guest tracking requests (ZAI-001).
+ * Never issues a receipt token from orderId + email alone.
+ */
+async function handleGuestOtpChallenge(lookupId: string, recipientEmail: string, suppliedOtp?: string) {
+  const normalizedEmail = recipientEmail.toLowerCase().trim();
+
+  if (!suppliedOtp) {
+    const otp = generateNumericOtp();
+    const otpHash = hashSensitiveToken(`${lookupId}:${normalizedEmail}:${otp}`);
+    await prisma.orderTrackingOtp.create({
+      data: {
+        lookupId,
+        email: normalizedEmail,
+        otpHash,
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      },
+    });
+
+    const mailResult = await sendTrackingOtpNotification({
+      lookupId,
+      email: normalizedEmail,
+      otp,
+      expiresMinutes: 10,
+    });
+
+    return NextResponse.json(
+      {
+        success: false,
+        requiresVerification: true,
+        verificationSent: mailResult.ok,
+        message:
+          'To protect your order, a 6-digit verification code has been sent to the email on file. Enter the code below or sign in to your Customer Dashboard.',
+      },
+      { status: 202 }
+    );
+  }
+
+  const trimmedOtp = String(suppliedOtp).trim();
+  const latestOtp = await prisma.orderTrackingOtp.findFirst({
+    where: {
+      lookupId,
+      email: normalizedEmail,
+      consumedAt: null,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!latestOtp) {
+    return NextResponse.json(
+      { error: 'No active verification code found. Please request a new verification code.' },
+      { status: 403 }
+    );
+  }
+
+  if (new Date() > latestOtp.expiresAt) {
+    return NextResponse.json(
+      { error: 'This verification code has expired. Please request a new code.' },
+      { status: 410 }
+    );
+  }
+
+  if (latestOtp.attempts >= OTP_MAX_ATTEMPTS) {
+    return NextResponse.json(
+      { error: 'Maximum verification attempts exceeded. Please request a new code later.' },
+      { status: 429 }
+    );
+  }
+
+  const candidateHash = hashSensitiveToken(`${lookupId}:${normalizedEmail}:${trimmedOtp}`);
+  if (!timingSafeHexEqual(latestOtp.otpHash, candidateHash)) {
+    const updated = await prisma.orderTrackingOtp.update({
+      where: { id: latestOtp.id },
+      data: { attempts: { increment: 1 } },
+    });
+    const remaining = Math.max(0, OTP_MAX_ATTEMPTS - updated.attempts);
+    return NextResponse.json(
+      {
+        error:
+          remaining > 0
+            ? `Invalid verification code. ${remaining} attempt(s) remaining.`
+            : 'Maximum verification attempts exceeded. Please request a new code.',
+      },
+      { status: remaining > 0 ? 403 : 429 }
+    );
+  }
+
+  await prisma.orderTrackingOtp.update({
+    where: { id: latestOtp.id },
+    data: { consumedAt: new Date() },
+  });
+
+  return null; // Verified!
+}
 
 export async function POST(request: Request) {
   try {
-    const { orderId, email } = await request.json();
+    const clientIp = getClientIp(request);
+    const ipLimit = checkRateLimit(clientIp, {
+      keyPrefix: 'orders:track:ip',
+      windowMs: 10 * 60 * 1000,
+      maxRequests: 25,
+      cooldownMs: 5 * 60 * 1000,
+    });
+    if (!ipLimit.allowed) {
+      return rateLimitExceededResponse(
+        ipLimit,
+        'Too many order tracking requests from this network. Please wait before trying again.'
+      );
+    }
+
+    const body = await request.json();
+    const { orderId, email, otp } = body || {};
 
     if (!orderId) {
       return NextResponse.json(
@@ -13,12 +147,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const session = await getAuthSession(request);
     const rawId = String(orderId).trim();
     const queryId = rawId.toUpperCase();
+    const orderLimit = checkRateLimit(`${clientIp}:${queryId}`, {
+      keyPrefix: 'orders:track:ref',
+      windowMs: 10 * 60 * 1000,
+      maxRequests: 10,
+      cooldownMs: 3 * 60 * 1000,
+    });
+    if (!orderLimit.allowed) {
+      return rateLimitExceededResponse(orderLimit, 'Too many lookup attempts for this reference. Please wait.');
+    }
+
+    const adminSession = await getAdminSession(request);
+    const isAdmin = Boolean(adminSession && adminSession.role === 'ADMIN');
+    const session = await getAuthSession(request);
     const queryEmail = email ? String(email).trim().toLowerCase() : session?.email?.toLowerCase();
 
-    // 1. Check fixed-price order first
+    // 1. Check fixed-price order
     const order = await prisma.order.findFirst({
       where: {
         OR: [
@@ -40,18 +186,40 @@ export async function POST(request: Request) {
     });
 
     if (order) {
-      const isAuthorized =
-        (queryEmail && order.email.toLowerCase() === queryEmail) ||
-        (session && (session.userId === order.userId || session.email.toLowerCase() === order.email.toLowerCase()));
+      const isAuthenticatedOwner = Boolean(
+        session &&
+          ((order.userId && session.userId === order.userId) ||
+            (session.email && session.email.toLowerCase() === order.email.toLowerCase()))
+      );
+      const emailMatches = Boolean(queryEmail && order.email.toLowerCase() === queryEmail);
 
-      if (!isAuthorized) {
-        return NextResponse.json(
-          { error: 'Please enter the email address used during purchase to track this order.' },
-          { status: 403 }
+      if (!isAdmin && !isAuthenticatedOwner) {
+        if (!emailMatches) {
+          return NextResponse.json(
+            { error: 'Please sign in to your account or enter the exact email address used during purchase.' },
+            { status: 403 }
+          );
+        }
+        // ZAI-001: Require mailbox OTP verification before releasing protected receipt token/details
+        const otpChallengeResponse = await handleGuestOtpChallenge(
+          order.orderId,
+          order.email,
+          typeof otp === 'string' ? otp : undefined
         );
+        if (otpChallengeResponse) {
+          return otpChallengeResponse;
+        }
       }
 
-      const receiptToken = createReceiptToken(order.orderId);
+      // Authenticated owners are directed to /account without leaking unnecessary tokens.
+      // OTP-verified guests receive a short-lived (15 min) version-bound timed receipt token.
+      const guestToken =
+        !isAuthenticatedOwner && !isAdmin
+          ? createTimedReceiptToken(order.orderId, {
+              expiresInMs: TRACK_RECEIPT_TOKEN_TTL_MS,
+              version: order.receiptTokenVersion,
+            })
+          : undefined;
 
       return NextResponse.json({
         success: true,
@@ -66,8 +234,10 @@ export async function POST(request: Request) {
         deliveryStatus: order.deliveryStatus,
         createdAt: order.createdAt,
         paidAt: order.paidAt,
-        receiptToken,
-        redirectUrl: `/orders/confirmation/${order.orderId}?token=${receiptToken}`,
+        ...(guestToken ? { receiptToken: guestToken } : {}),
+        redirectUrl: guestToken
+          ? `/orders/confirmation/${order.orderId}?token=${encodeURIComponent(guestToken)}`
+          : '/account',
       });
     }
 
@@ -90,18 +260,30 @@ export async function POST(request: Request) {
     });
 
     if (enquiry) {
-      const isAuthorized =
-        (queryEmail && enquiry.email.toLowerCase() === queryEmail) ||
-        (session && (session.userId === enquiry.userId || session.email.toLowerCase() === enquiry.email.toLowerCase()));
+      const isAuthenticatedOwner = Boolean(
+        session &&
+          ((enquiry.userId && session.userId === enquiry.userId) ||
+            (session.email && session.email.toLowerCase() === enquiry.email.toLowerCase()))
+      );
+      const emailMatches = Boolean(queryEmail && enquiry.email.toLowerCase() === queryEmail);
 
-      if (!isAuthorized) {
-        return NextResponse.json(
-          { error: 'Please enter the email address used during request submission to track this project.' },
-          { status: 403 }
+      if (!isAdmin && !isAuthenticatedOwner) {
+        if (!emailMatches) {
+          return NextResponse.json(
+            { error: 'Please sign in or enter the exact email address used during request submission.' },
+            { status: 403 }
+          );
+        }
+        const otpChallengeResponse = await handleGuestOtpChallenge(
+          enquiry.leadId,
+          enquiry.email,
+          typeof otp === 'string' ? otp : undefined
         );
+        if (otpChallengeResponse) {
+          return otpChallengeResponse;
+        }
       }
 
-      // Sanitize timeline to exclude internal admin notes
       const sanitizedTimeline = enquiry.timeline.map((t) => ({
         id: t.id,
         stage: t.stage,
@@ -142,26 +324,13 @@ export async function POST(request: Request) {
       { status: 404 }
     );
   } catch (error: unknown) {
-    console.error('Track order error:', error);
-    return NextResponse.json({ error: 'Failed to look up order or custom project' }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to look up order or custom project', 500, 'orders:track');
   }
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const ref = searchParams.get('ref') || searchParams.get('orderId');
-  const email = searchParams.get('email');
-
-  if (!ref) {
-    return NextResponse.json({ error: 'Reference ID is required' }, { status: 400 });
-  }
-
-  // Reuse POST logic
-  return POST(
-    new Request(request.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: ref, email }),
-    })
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Use POST /api/orders/track or sign in to /account to view your orders securely.' },
+    { status: 405 }
   );
 }

@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
+import { recordAdminAuditLog, safeErrorResponse } from '@/lib/security';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized admin access' }, { status: 401 });
     }
@@ -63,13 +64,21 @@ export async function POST(
       },
     });
 
+    await recordAdminAuditLog({
+      actor: session,
+      action: 'PROJECT_DUPLICATE',
+      resourceType: 'Project',
+      resourceId: duplicated.id,
+      metadata: { sourceProjectId: existing.id, slug: duplicated.slug },
+      request,
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Project duplicated successfully as draft',
       project: duplicated,
     });
   } catch (error: unknown) {
-    console.error('Duplicate project error:', error);
-    return NextResponse.json({ error: 'Failed to duplicate project' }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to duplicate project', 500, 'admin:projects:duplicate');
   }
 }

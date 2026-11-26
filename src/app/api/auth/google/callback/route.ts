@@ -113,11 +113,12 @@ export async function GET(request: Request) {
     let user = emailUser || googleUser;
 
     if (user) {
-      // Link Google ID and update avatar if not set
+      // Link Google ID and mark email verified (Google verified email_verified === true)
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
           googleId,
+          emailVerified: true,
           avatarUrl: user.avatarUrl || avatarUrl,
         },
       });
@@ -128,6 +129,8 @@ export async function GET(request: Request) {
           email,
           name,
           googleId,
+          emailVerified: true,
+          tokenVersion: 0,
           avatarUrl,
           role: 'CUSTOMER',
         },
@@ -139,6 +142,7 @@ export async function GET(request: Request) {
       email: user.email,
       role: (user.role as 'ADMIN' | 'CUSTOMER') || 'CUSTOMER',
       name: user.name,
+      tokenVersion: user.tokenVersion,
     });
 
     const response = NextResponse.redirect(new URL(targetUrl, request.url));

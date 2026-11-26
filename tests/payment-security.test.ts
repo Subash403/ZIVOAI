@@ -320,7 +320,7 @@ test('Download limit is atomic and filenames cannot inject headers', async () =>
   const key = `download-${suffix}.zip`;
   fs.writeFileSync(path.join(localDir, key), Buffer.from('zip'));
   const project = await prisma.project.create({ data: { title: 'Download Race', slug: `download-race-${suffix}`, shortDescription: 'x', fullDescription: 'x', category: 'x', technologies: '[]', difficulty: 'x', projectType: 'x', mainImage: '/x', price: 1, downloadFileUrl: key, downloadFileName: `evil\r\nInjected: true.zip` } });
-  const order = await prisma.order.create({ data: { orderId: `DOWNLOAD_${suffix}`, studentName: 'x', email: 'download@example.com', phone: '1', projectId: project.id, projectName: project.title, amount: 1, paymentStatus: 'PAID', downloadToken: createReceiptToken(`DOWNLOAD_${suffix}`), downloadLimit: 1 } });
+  const order = await prisma.order.create({ data: { orderId: `DOWNLOAD_${suffix}`, studentName: 'x', email: 'download@example.com', phone: '1', projectId: project.id, projectName: project.title, amount: 1, paymentStatus: 'PAID', downloadToken: createReceiptToken(`DOWNLOAD_${suffix}`), downloadTokenExpiry: new Date(Date.now() + 3600_000), downloadLimit: 1 } });
   try {
     const request = () => downloadOrder(new Request(`https://example.test/api/orders/download/${order.orderId}?token=${createReceiptToken(order.orderId)}`), { params: Promise.resolve({ orderId: order.orderId }) });
     const responses = await Promise.all([request(), request()]);
@@ -341,8 +341,12 @@ test('Notification outbox retries a failed delivery state', async () => {
   const order = await prisma.order.create({ data: { orderId: `NOTIFY_${suffix}`, studentName: 'x', email: 'notify@example.com', phone: '1', projectId: project.id, projectName: project.title, amount: 1, paymentStatus: 'PAID' } });
   await prisma.orderNotification.create({ data: { orderId: order.orderId, status: 'FAILED', nextAttemptAt: new Date(Date.now() - 1000), attemptCount: 1 } });
   try {
+    const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
     assert.equal(await processOrderNotification(order.orderId, 'https://example.test'), true);
-    assert.equal((await prisma.orderNotification.findUnique({ where: { orderId: order.orderId } }))?.status, 'SENT');
+    assert.equal(
+      (await prisma.orderNotification.findUnique({ where: { orderId: order.orderId } }))?.status,
+      smtpConfigured ? 'SENT' : 'SIMULATED'
+    );
   } finally {
     await prisma.notificationLog.deleteMany({ where: { orderId: order.orderId } });
     await prisma.orderNotification.delete({ where: { orderId: order.orderId } });

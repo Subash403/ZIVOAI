@@ -2,11 +2,25 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession, getAuthSession } from '@/lib/auth';
 import { syncEnquiryToGoogleSheets } from '@/lib/google-sheets';
+import { sendLeadConfirmationNotification } from '@/lib/notifications';
 import { validateEnquiryInput } from '@/lib/validation';
+import { checkRateLimit, getClientIp, rateLimitExceededResponse } from '@/lib/rate-limit';
+import { safeErrorResponse } from '@/lib/security';
 import { Prisma } from '@prisma/client';
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rl = checkRateLimit(clientIp, {
+      keyPrefix: 'enquiries:create',
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 10,
+      cooldownMs: 5 * 60 * 1000,
+    });
+    if (!rl.allowed) {
+      return rateLimitExceededResponse(rl, 'Too many enquiry submissions. Please wait before submitting again.');
+    }
+
     const body = await request.json();
 
     const validation = validateEnquiryInput(body);
@@ -83,7 +97,16 @@ export async function POST(request: Request) {
       },
     });
 
-    // 2. Attempt Google Sheet synchronization asynchronously
+    // 2.5 Send real lead confirmation email (ZAI-032)
+    const emailResult = await sendLeadConfirmationNotification({
+      leadId: enquiry.leadId,
+      studentName: enquiry.studentName,
+      email: enquiry.email,
+      projectName: enquiry.projectName || enquiry.domain,
+      phone: enquiry.phone,
+    });
+
+    // 3. Attempt Google Sheet synchronization asynchronously
     const submissionDate = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
     syncEnquiryToGoogleSheets({
@@ -133,34 +156,50 @@ export async function POST(request: Request) {
         message: 'Your custom project request has been received. Our team will review your requirements and update your project progress here.',
         leadId: enquiry.leadId,
         currentStage: enquiry.currentStage,
-        trackUrl: `/orders/track?ref=${enquiry.leadId}`,
+        emailConfirmationStatus: emailResult.status,
+        trackUrl: '/account',
       },
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error('Error submitting enquiry:', error);
-    return NextResponse.json(
-      { error: 'Could not submit your request. Please try again or contact us directly on WhatsApp.' },
-      { status: 500 }
+    return safeErrorResponse(
+      error,
+      'Could not submit your request. Please try again or contact us directly on WhatsApp.',
+      500,
+      'enquiries:POST'
     );
   }
 }
 
 export async function GET(request: Request) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const search = searchParams.get('search');
+    const search = searchParams.get('search')?.trim();
+    const archivedParam = searchParams.get('archived') || 'false';
+    const assignedTo = searchParams.get('assignedTo')?.trim();
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '25', 10) || 25));
 
     const whereClause: Prisma.EnquiryWhereInput = {};
 
+    if (archivedParam === 'false') {
+      whereClause.archived = false;
+    } else if (archivedParam === 'true') {
+      whereClause.archived = true;
+    }
+
     if (status && status !== 'ALL') {
       whereClause.status = status;
+    }
+
+    if (assignedTo && assignedTo !== 'ALL') {
+      whereClause.assignedTo = assignedTo;
     }
 
     if (search) {
@@ -174,20 +213,33 @@ export async function GET(request: Request) {
       ];
     }
 
-    const enquiries = await prisma.enquiry.findMany({
-      where: whereClause,
-      include: {
-        timeline: {
-          orderBy: { createdAt: 'desc' },
+    const [enquiries, totalCount] = await Promise.all([
+      prisma.enquiry.findMany({
+        where: whereClause,
+        include: {
+          timeline: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.enquiry.count({ where: whereClause }),
+    ]);
 
-    return NextResponse.json({ success: true, enquiries });
+    return NextResponse.json({
+      success: true,
+      enquiries,
+      pagination: {
+        page,
+        pageSize,
+        totalCount,
+        totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
+      },
+    });
   } catch (error: unknown) {
-    console.error('Error fetching enquiries:', error);
-    return NextResponse.json({ error: 'Failed to fetch enquiries' }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to fetch enquiries', 500, 'enquiries:GET');
   }
 }
 

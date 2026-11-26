@@ -21,27 +21,74 @@ import { formatCurrency } from '@/lib/utils';
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [salesTypeFilter, setSalesTypeFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkWorking, setBulkWorking] = useState(false);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchProjects = useCallback(() => {
-    fetch('/api/projects')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setProjects(data.projects);
-        }
-      })
-      .catch((err: unknown) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+  const fetchProjects = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('pageSize', '20');
+    params.set('sort', sortBy);
+    if (search.trim()) params.set('search', search.trim());
+    if (categoryFilter !== 'All') params.set('category', categoryFilter);
+    if (salesTypeFilter !== 'All') params.set('salesType', salesTypeFilter);
+
+    try {
+      const res = await fetch(`/api/projects?${params.toString()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to fetch projects.');
+      }
+      setProjects(data.projects || []);
+      if (data.pagination) {
+        setTotalPages(data.pagination.totalPages || 1);
+        setTotalCount(data.pagination.totalCount || 0);
+      }
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Unable to load catalog projects.');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, sortBy, search, categoryFilter, salesTypeFilter]);
 
   useEffect(() => {
-    fetchProjects();
+    const timer = window.setTimeout(() => {
+      void fetchProjects();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [fetchProjects]);
+
+  const handleBulkAction = async (action: 'publish' | 'unpublish' | 'available' | 'unavailable') => {
+    if (selectedIds.length === 0) return;
+    setBulkWorking(true);
+    try {
+      const res = await fetch('/api/admin/projects/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, projectIds: selectedIds }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Bulk update failed');
+      setSelectedIds([]);
+      await fetchProjects();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Bulk action failed');
+    } finally {
+      setBulkWorking(false);
+    }
+  };
 
 
   // Quick Toggle Handler (Available / Published / Featured)
@@ -143,6 +190,30 @@ export default function AdminProjectsPage() {
         </Link>
       </div>
 
+      {/* Error Banner */}
+      {errorMsg && (
+        <div role="alert" className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-3">
+          <span>{errorMsg}</span>
+          <button type="button" onClick={fetchProjects} className="px-3 py-1 rounded-lg bg-red-600 text-white font-bold">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Bulk Action Bar (ZAI-086) */}
+      {selectedIds.length > 0 && (
+        <div className="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span className="font-bold text-indigo-900">{selectedIds.length} project(s) selected</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('publish')} className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 font-bold text-indigo-700 hover:bg-indigo-100">Publish</button>
+            <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('unpublish')} className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 font-bold text-slate-700 hover:bg-slate-100">Unpublish</button>
+            <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('available')} className="px-3 py-1.5 rounded-lg bg-emerald-600 font-bold text-white hover:bg-emerald-700">Mark Available</button>
+            <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('unavailable')} className="px-3 py-1.5 rounded-lg bg-rose-600 font-bold text-white hover:bg-rose-700">Mark Unavailable</button>
+            <button type="button" onClick={() => setSelectedIds([])} className="px-2 py-1.5 text-slate-500 hover:text-slate-900">Clear</button>
+          </div>
+        </div>
+      )}
+
       {/* Filter Controls */}
       <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-80">
@@ -150,16 +221,39 @@ export default function AdminProjectsPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
             placeholder="Search projects..."
             className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs"
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           <select
+            aria-label="Sort projects"
+            value={sortBy}
+            onChange={(e) => {
+              setPage(1);
+              setSortBy(e.target.value);
+            }}
+            className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs font-medium shadow-2xs cursor-pointer"
+          >
+            <option value="newest">Newest First</option>
+            <option value="featured">Featured First</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="title_asc">Title: A–Z</option>
+          </select>
+
+          <select
+            aria-label="Filter by category"
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setCategoryFilter(e.target.value);
+            }}
             className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs cursor-pointer"
           >
             <option value="All">All Categories</option>
@@ -200,6 +294,16 @@ export default function AdminProjectsPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
                 <tr>
+                  <th className="p-4 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all projects on page"
+                      checked={filteredProjects.length > 0 && selectedIds.length === filteredProjects.length}
+                      onChange={(e) =>
+                        setSelectedIds(e.target.checked ? filteredProjects.map((p) => p.id) : [])
+                      }
+                    />
+                  </th>
                   <th className="p-4">Project</th>
                   <th className="p-4">Category & Tech</th>
                   <th className="p-4">Sales Type & Price</th>
@@ -212,6 +316,18 @@ export default function AdminProjectsPage() {
               <tbody className="divide-y divide-slate-100">
                 {filteredProjects.map((project) => (
                   <tr key={project.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${project.title}`}
+                        checked={selectedIds.includes(project.id)}
+                        onChange={(e) =>
+                          setSelectedIds((prev) =>
+                            e.target.checked ? [...prev, project.id] : prev.filter((id) => id !== project.id)
+                          )
+                        }
+                      />
+                    </td>
                     
                     {/* Title & Image */}
                     <td className="p-4">
@@ -343,6 +459,32 @@ export default function AdminProjectsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">
+              Page <strong>{page}</strong> of <strong>{totalPages}</strong> ({totalCount} projects)
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getAdminSession, getCustomerSession, verifyReceiptToken } from '@/lib/auth';
+import { getAdminSession, getCustomerSession, verifyAnyReceiptToken } from '@/lib/auth';
 import { publicOrderLookupWhere, resolvePublicOrderId } from '@/lib/order-lookup';
 
 export async function GET(
@@ -25,18 +25,20 @@ export async function GET(
       return NextResponse.json({ error: 'Order receipt not found' }, { status: 404 });
     }
 
-    // Verify access: Authenticated admin OR authenticated customer owner OR valid HMAC receipt token for this order
-    const adminSession = await getAdminSession();
+    // Verify access: Authenticated admin OR authenticated customer owner OR valid HMAC/timed receipt token for this order
+    const adminSession = await getAdminSession(request);
     const isAdmin = Boolean(adminSession && adminSession.role === 'ADMIN');
 
-    const customerSession = await getCustomerSession();
+    const customerSession = await getCustomerSession(request);
     const isOwner = Boolean(
       customerSession &&
         ((order.userId && customerSession.userId === order.userId) ||
           (customerSession.email && order.email.toLowerCase() === customerSession.email.toLowerCase()))
     );
 
-    const hasValidToken = token ? verifyReceiptToken(order.orderId, token) : false;
+    const hasValidToken = token
+      ? verifyAnyReceiptToken(order.orderId, token, order.receiptTokenVersion)
+      : false;
 
     if (!isAdmin && !isOwner && !hasValidToken) {
       return NextResponse.json(

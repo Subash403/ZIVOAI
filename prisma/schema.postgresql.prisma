@@ -12,22 +12,24 @@ datasource db {
 }
 
 model User {
-  id          String         @id @default(cuid())
-  name        String
-  email       String         @unique
-  password    String?        // Nullable for OAuth-only users
-  googleId    String?        @unique
-  avatarUrl   String?
-  role        String         @default("CUSTOMER") // ADMIN or CUSTOMER
-  phone       String?
-  college     String?
-  department  String?
-  year        String?
-  orders      Order[]
-  enquiries   Enquiry[]
-  wishlist    WishlistItem[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String?        // Nullable for OAuth-only users
+  googleId      String?        @unique
+  avatarUrl     String?
+  role          String         @default("CUSTOMER") // ADMIN or CUSTOMER
+  emailVerified Boolean        @default(false)
+  tokenVersion  Int            @default(0)
+  phone         String?
+  college       String?
+  department    String?
+  year          String?
+  orders        Order[]
+  enquiries     Enquiry[]
+  wishlist      WishlistItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Project {
@@ -65,8 +67,12 @@ model Project {
   downloadFileUrl   String?        // Internal private storage path or R2 object key
   wishlistItems     WishlistItem[]
   orders            Order[]
+  stockReservations StockReservation[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+
+  @@index([published, available, featured])
+  @@index([category])
 }
 
 model Enquiry {
@@ -92,6 +98,10 @@ model Enquiry {
   customerProgressMessage String?                 @default("Your custom project request has been received. Our team will review your requirements and update your project progress here.")
   estimatedCompletionDate String?
   adminNotes              String?
+  assignedTo              String?
+  nextFollowUpAt          DateTime?
+  archived                Boolean                 @default(false)
+  tags                    String?
   googleSheetSyncStatus   String                  @default("PENDING") // PENDING, SYNCED, FAILED
   googleSheetSyncError    String?
   userId                  String?
@@ -99,6 +109,10 @@ model Enquiry {
   timeline                CustomProjectTimeline[]
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
+
+  @@index([userId])
+  @@index([email])
+  @@index([status, archived])
 }
 
 model CustomProjectTimeline {
@@ -129,21 +143,31 @@ model Order {
   razorpayOrderId     String?
   razorpayPaymentId   String?
   razorpaySignature   String?
-  paymentStatus       String    @default("CREATED") // CREATED, PAID, FAILED, CANCELLED, REFUNDED
-  deliveryStatus      String    @default("PENDING") // PENDING, PROCESSING, DELIVERED, FAILED
-  paidAt              DateTime?
-  deliveredAt         DateTime?
-  adminNotes          String?
-  userId              String?
-  user                User?     @relation(fields: [userId], references: [id])
-  downloadToken       String?
-  downloadTokenExpiry DateTime?
-  downloadCount       Int       @default(0)
-  downloadLimit       Int       @default(5)
-  notificationSent    Boolean   @default(false)
-  notification        OrderNotification?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  paymentStatus        String             @default("CREATED") // CREATED, PAID, FAILED, CANCELLED, REFUNDED, RECONCILIATION_REQUIRED
+  deliveryStatus       String             @default("PENDING") // PENDING, ASSET_READY, PROCESSING, DELIVERED, FAILED, CANCELLED
+  reconciliationStatus String?            // NONE, STOCK_CONFLICT, ASSET_MISSING, REFUND_PENDING, RESOLVED
+  paidAt               DateTime?
+  deliveredAt          DateTime?
+  adminNotes           String?
+  userId               String?
+  user                 User?              @relation(fields: [userId], references: [id])
+  downloadToken        String?
+  downloadTokenExpiry  DateTime?
+  receiptTokenVersion  Int                @default(1)
+  downloadCount        Int                @default(0)
+  downloadLimit        Int                @default(5)
+  notificationSent     Boolean            @default(false)
+  notification         OrderNotification?
+  stockReservation     StockReservation?
+  downloadLogs         DownloadLog[]
+  refunds              Refund[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([email])
+  @@index([razorpayOrderId])
+  @@index([paymentStatus])
 }
 
 model WishlistItem {
@@ -158,14 +182,19 @@ model WishlistItem {
 }
 
 model NotificationLog {
-  id             String   @id @default(cuid())
-  recipientEmail String
-  subject        String
-  type           String   // ORDER_CONFIRMATION, DOWNLOAD_READY, LEAD_RECEIVED
-  status         String   // SENT, FAILED
-  error          String?
-  orderId        String?
-  createdAt      DateTime @default(now())
+  id                 String   @id @default(cuid())
+  recipientEmail     String
+  subject            String
+  type               String   // ORDER_CONFIRMATION, DOWNLOAD_READY, LEAD_RECEIVED, STAGE_UPDATE, TRACKING_OTP
+  status             String   // SENT, SIMULATED, SKIPPED, FAILED
+  providerMessageId  String?
+  rejectedRecipients String?
+  error              String?
+  orderId            String?
+  createdAt          DateTime @default(now())
+
+  @@index([orderId])
+  @@index([status])
 }
 
 model OrderNotification {
@@ -202,4 +231,84 @@ model Setting {
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model StockReservation {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  status    String   @default("ACTIVE") // ACTIVE, CONSUMED, RELEASED, EXPIRED
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, status, expiresAt])
+}
+
+model DownloadLog {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  actorType String   // OWNER, TOKEN, ADMIN
+  actorId   String?
+  reason    String?
+  status    String   // LINK_ISSUED, FILE_SERVED, DENIED, MISSING_ASSET
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model Refund {
+  id               String    @id @default(cuid())
+  orderId          String
+  order            Order     @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  razorpayRefundId String?   @unique
+  amount           Float
+  currency         String    @default("INR")
+  status           String    @default("REQUESTED") // REQUESTED, PROCESSING, PROCESSED, FAILED
+  reason           String
+  requestedBy      String
+  restoreStock     Boolean   @default(false)
+  revokeAccess     Boolean   @default(true)
+  notes            String?
+  processedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String
+  actorEmail   String
+  action       String
+  resourceType String
+  resourceId   String?
+  reason       String?
+  metadata     String?  // JSON string (never contains raw secrets)
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([resourceType, resourceId])
+}
+
+model OrderTrackingOtp {
+  id         String    @id @default(cuid())
+  lookupId   String
+  email      String
+  otpHash    String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([lookupId, email, createdAt])
 }

@@ -7,6 +7,8 @@ import {
   deletePublicAsset,
   deletePrivateAsset,
 } from '@/lib/storage';
+import { isProjectPubliclyVisible, toAdminProjectDTO, toPublicProjectDTO } from '@/lib/project-visibility';
+import { recordAdminAuditLog, safeErrorResponse } from '@/lib/security';
 
 export async function GET(
   request: Request,
@@ -14,10 +16,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     const isAdmin = session?.role === 'ADMIN';
 
-    // Search by ID or Slug
     const project = await prisma.project.findFirst({
       where: {
         OR: [{ id: id }, { slug: id }],
@@ -28,40 +29,17 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Public rule: Unavailable projects hidden from non-admin viewers
-    if (!isAdmin && !project.available) {
+    // Enforce published && available visibility policy for public viewers (ZAI-003, ZAI-004)
+    if (!isAdmin && !isProjectPubliclyVisible(project)) {
       return NextResponse.json({ error: 'Project not available' }, { status: 404 });
     }
 
-    let parsedTechs: string[] = [];
-    let parsedFeatures: string[] = [];
-    let parsedModules: string[] = [];
-    let parsedGallery: string[] = [];
-    let parsedMaterials: string[] = [];
-
-    try { parsedTechs = JSON.parse(project.technologies || '[]'); } catch { parsedTechs = []; }
-    try { parsedFeatures = JSON.parse(project.features || '[]'); } catch { parsedFeatures = []; }
-    try { parsedModules = JSON.parse(project.modules || '[]'); } catch { parsedModules = []; }
-    try { parsedGallery = JSON.parse(project.gallery || '[]'); } catch { parsedGallery = []; }
-    try { parsedMaterials = JSON.parse(project.includedMaterials || '[]'); } catch { parsedMaterials = []; }
-
-    const finalPrice = !isAdmin && project.salesType === 'call' ? 0 : project.price;
-
     return NextResponse.json({
       success: true,
-      project: {
-        ...project,
-        price: finalPrice,
-        technologies: parsedTechs,
-        features: parsedFeatures,
-        modules: parsedModules,
-        gallery: parsedGallery,
-        includedMaterials: parsedMaterials,
-      },
+      project: isAdmin ? toAdminProjectDTO(project) : toPublicProjectDTO(project),
     });
   } catch (error: unknown) {
-    console.error('Error fetching project:', error);
-    return NextResponse.json({ error: 'Failed to fetch project' }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to fetch project', 500, 'projects:[id]:GET');
   }
 }
 
@@ -70,7 +48,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -144,11 +122,18 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ success: true, project: updated });
+    await recordAdminAuditLog({
+      actor: session,
+      action: 'PROJECT_UPDATE',
+      resourceType: 'Project',
+      resourceId: updated.id,
+      metadata: { title: updated.title, deliverableChanged: changesPrivateDeliverable },
+      request,
+    });
+
+    return NextResponse.json({ success: true, project: toAdminProjectDTO(updated) });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update project';
-    console.error('Error updating project:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to update project', 500, 'projects:[id]:PUT');
   }
 }
 
@@ -157,7 +142,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -181,10 +166,18 @@ export async function PATCH(
       data: updateData,
     });
 
-    return NextResponse.json({ success: true, project: updated });
+    await recordAdminAuditLog({
+      actor: session,
+      action: 'PROJECT_STATUS_PATCH',
+      resourceType: 'Project',
+      resourceId: updated.id,
+      metadata: { available: updated.available, published: updated.published, featured: updated.featured },
+      request,
+    });
+
+    return NextResponse.json({ success: true, project: toAdminProjectDTO(updated) });
   } catch (error: unknown) {
-    console.error('Error toggling project status:', error);
-    return NextResponse.json({ error: 'Failed to update project status' }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to update project status', 500, 'projects:[id]:PATCH');
   }
 }
 
@@ -220,8 +213,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Safety rule: if historical purchases/orders exist, DO NOT hard-delete.
-    // Instead, retire/archive the project to preserve customer entitlements, receipts, and downloads.
     const orderCount = project._count?.orders ?? 0;
     if (orderCount > 0) {
       const retired = await prisma.project.update({
@@ -233,7 +224,6 @@ export async function DELETE(
         },
       });
 
-      // Clear from user wishlists since it is no longer for sale
       try {
         await prisma.wishlistItem.deleteMany({
           where: { projectId: project.id },
@@ -242,7 +232,15 @@ export async function DELETE(
         console.warn('Failed to clean wishlists during project retirement:', wishlistErr);
       }
 
-      console.info(`[Admin] Project retired due to existing orders: ${project.id} (${project.title}) - ${orderCount} order(s)`);
+      await recordAdminAuditLog({
+        actor: session,
+        action: 'PROJECT_ARCHIVE',
+        resourceType: 'Project',
+        resourceId: project.id,
+        reason: `Preserved ${orderCount} historical order(s)`,
+        metadata: { title: project.title, orderCount },
+        request,
+      });
 
       return NextResponse.json({
         success: true,
@@ -252,7 +250,6 @@ export async function DELETE(
       });
     }
 
-    // If no orders exist, permanently clean up storage assets and delete project record
     const publicAssetsToDelete: string[] = [];
     if (project.mainImage) publicAssetsToDelete.push(project.mainImage);
     if (project.architectureImage) publicAssetsToDelete.push(project.architectureImage);
@@ -280,15 +277,23 @@ export async function DELETE(
       }
     }
 
+    // ZAI-022 reference check: only delete private asset if no other project shares the same key
     if (project.downloadFileUrl) {
       try {
-        await deletePrivateAsset(project.downloadFileUrl);
+        const sharedCount = await prisma.project.count({
+          where: {
+            downloadFileUrl: project.downloadFileUrl,
+            id: { not: project.id },
+          },
+        });
+        if (sharedCount === 0) {
+          await deletePrivateAsset(project.downloadFileUrl);
+        }
       } catch (delivErr) {
         console.warn('Non-fatal error cleaning private project deliverable:', project.downloadFileUrl, delivErr);
       }
     }
 
-    // Clean wishlists
     try {
       await prisma.wishlistItem.deleteMany({
         where: { projectId: project.id },
@@ -301,7 +306,14 @@ export async function DELETE(
       where: { id: project.id },
     });
 
-    console.info(`[Admin] Project permanently deleted: ${project.id} (${project.title})`);
+    await recordAdminAuditLog({
+      actor: session,
+      action: 'PROJECT_DELETE',
+      resourceType: 'Project',
+      resourceId: project.id,
+      metadata: { title: project.title },
+      request,
+    });
 
     return NextResponse.json({
       success: true,
@@ -310,9 +322,6 @@ export async function DELETE(
       projectId: project.id,
     });
   } catch (error: unknown) {
-    const errorMsg = error instanceof Error ? error.message : 'Failed to delete project';
-    console.error('Error deleting project:', errorMsg);
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to delete project', 500, 'projects:[id]:DELETE');
   }
 }
-

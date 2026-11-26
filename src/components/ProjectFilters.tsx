@@ -65,9 +65,11 @@ export default function ProjectFilters({
     <div className="glass-panel space-y-4 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
       {/* Search Input Bar */}
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <Search aria-hidden="true" className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         <input
-          type="text"
+          id="catalog-search-input"
+          type="search"
+          aria-label="Search projects by title, architecture, tech stack, or domain"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by project title, architecture, tech stack, or domain..."
@@ -75,7 +77,9 @@ export default function ProjectFilters({
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => setSearchQuery('')}
+            aria-label="Clear search query"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-md transition-colors"
           >
             Clear
@@ -87,10 +91,11 @@ export default function ProjectFilters({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Category */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-category" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
             Category
           </label>
           <select
+            id="filter-category"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
@@ -105,10 +110,11 @@ export default function ProjectFilters({
 
         {/* Project Type */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-project-type" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
             Project Type
           </label>
           <select
+            id="filter-project-type"
             value={selectedProjectType}
             onChange={(e) => setSelectedProjectType(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
@@ -123,10 +129,11 @@ export default function ProjectFilters({
 
         {/* Difficulty */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-difficulty" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
             Complexity Level
           </label>
           <select
+            id="filter-difficulty"
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
@@ -141,10 +148,11 @@ export default function ProjectFilters({
 
         {/* Purchase Type */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-sales-type" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
             Purchase Type
           </label>
           <select
+            id="filter-sales-type"
             value={selectedSalesType}
             onChange={(e) => setSelectedSalesType(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
@@ -159,24 +167,27 @@ export default function ProjectFilters({
 
         {/* Featured Toggle & Reset */}
         <div className="flex items-end gap-2">
-          <label className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-xs text-slate-700 font-semibold cursor-pointer hover:border-indigo-300 w-full justify-center shadow-2xs transition-colors">
+          <label htmlFor="filter-featured-only" className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-xs text-slate-700 font-semibold cursor-pointer hover:border-indigo-300 w-full justify-center shadow-2xs transition-colors">
             <input
+              id="filter-featured-only"
               type="checkbox"
               checked={featuredOnly}
               onChange={(e) => setFeaturedOnly(e.target.checked)}
               className="accent-indigo-600 w-3.5 h-3.5 rounded"
             />
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <Sparkles aria-hidden="true" className="w-3.5 h-3.5 text-amber-500" />
             <span>Featured Only</span>
           </label>
 
           {hasActiveFilters && (
             <button
+              type="button"
               onClick={onReset}
               title="Reset Filters"
+              aria-label="Reset all catalog filters"
               className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors shrink-0"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw aria-hidden="true" className="w-4 h-4" />
             </button>
           )}
         </div>

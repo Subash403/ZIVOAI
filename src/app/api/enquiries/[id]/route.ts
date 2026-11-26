@@ -3,8 +3,19 @@ import { prisma } from '@/lib/prisma';
 import { getAdminSession, getAuthSession } from '@/lib/auth';
 import { sendCustomProjectProgressNotification } from '@/lib/notifications';
 import { CUSTOM_PROJECT_STAGES } from '@/types';
+import { recordAdminAuditLog, safeErrorResponse } from '@/lib/security';
 
-const ALLOWED_ENQUIRY_STATUSES = ['NEW', 'CONTACTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+const ALLOWED_ENQUIRY_STATUSES = [
+  'NEW',
+  'CONTACTED',
+  'DISCUSSING',
+  'FOLLOW_UP',
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'NOT_INTERESTED',
+  'CANCELLED',
+];
 const VALID_STAGES = [...CUSTOM_PROJECT_STAGES, 'On Hold', 'Cancelled'];
 
 export async function GET(
@@ -69,7 +80,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -84,6 +95,10 @@ export async function PATCH(
       estimatedCompletionDate,
       newAdminNote,
       confirmDelivered,
+      assignedTo,
+      nextFollowUpAt,
+      archived,
+      tags,
     } = body;
 
     const existing = await prisma.enquiry.findUnique({
@@ -136,6 +151,15 @@ export async function PATCH(
         currentStage: nextStage,
         customerProgressMessage: nextCustomerMessage,
         estimatedCompletionDate: nextEstimatedDate,
+        assignedTo: assignedTo !== undefined ? (assignedTo ? String(assignedTo).trim().slice(0, 100) : null) : existing.assignedTo,
+        nextFollowUpAt:
+          nextFollowUpAt !== undefined
+            ? nextFollowUpAt
+              ? new Date(nextFollowUpAt)
+              : null
+            : existing.nextFollowUpAt,
+        archived: archived !== undefined ? Boolean(archived) : existing.archived,
+        tags: tags !== undefined ? (typeof tags === 'string' ? tags.slice(0, 200) : null) : existing.tags,
         adminNotes:
           adminNotes !== undefined
             ? typeof adminNotes === 'string'
@@ -148,6 +172,20 @@ export async function PATCH(
           orderBy: { createdAt: 'desc' },
         },
       },
+    });
+
+    await recordAdminAuditLog({
+      actor: session,
+      action: 'ENQUIRY_UPDATE',
+      resourceType: 'Enquiry',
+      resourceId: existing.leadId,
+      metadata: {
+        status: status || existing.status,
+        stage: nextStage,
+        assignedTo: assignedTo !== undefined ? assignedTo : existing.assignedTo,
+        archived: archived !== undefined ? Boolean(archived) : existing.archived,
+      },
+      request,
     });
 
     // If stage changed or custom progress message updated, record a new timeline milestone
@@ -191,9 +229,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, enquiry: refreshed });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update enquiry';
-    console.error('Error updating enquiry:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to update enquiry', 500, 'enquiries:PATCH');
   }
 }
 

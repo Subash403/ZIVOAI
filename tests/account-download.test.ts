@@ -25,7 +25,7 @@ test('Account page layout clears the fixed navbar', () => {
 });
 
 test('Download lookup preserves mixed-case production order IDs from the account API', () => {
-  const publicOrderId = `ORD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const publicOrderId = `ORD-${Date.now()}-${crypto.randomBytes(3).toString('hex')}ab`;
   assert.match(publicOrderId, /[a-f]/, 'Production order IDs include lowercase hex');
   assert.notEqual(publicOrderId, publicOrderId.toUpperCase());
 

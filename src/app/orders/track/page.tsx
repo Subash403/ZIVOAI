@@ -57,28 +57,48 @@ function OrderTrackContent() {
 
   const [orderId, setOrderId] = useState(refParam);
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [requiresOtp, setRequiresOtp] = useState(false);
+  const [otpNotice, setOtpNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(refParam));
   const [error, setError] = useState<string | null>(null);
 
   const [trackedCustomProject, setTrackedCustomProject] = useState<CustomProjectData | null>(null);
 
   const trackReference = useCallback(
-    async (idToTrack: string, emailToTrack: string) => {
+    async (idToTrack: string, emailToTrack: string, otpCode?: string) => {
       if (!idToTrack) return;
       setLoading(true);
       setError(null);
+      setOtpNotice(null);
 
       try {
         const res = await fetch('/api/orders/track', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: idToTrack, email: emailToTrack }),
+          body: JSON.stringify({
+            orderId: idToTrack,
+            email: emailToTrack,
+            ...(otpCode ? { otp: otpCode } : {}),
+          }),
         });
 
         const data = await res.json();
+        if (res.status === 202 && data.requiresVerification) {
+          setRequiresOtp(true);
+          setOtpNotice(
+            data.message ||
+              'Enter the 6-digit verification code sent to your email, or sign in to your Customer Dashboard.'
+          );
+          return;
+        }
+
         if (!res.ok) {
           throw new Error(data.error || 'Failed to locate order or custom project');
         }
+
+        setRequiresOtp(false);
+        setOtp('');
 
         if (data.type === 'FIXED_ORDER' && data.redirectUrl) {
           router.push(data.redirectUrl);
@@ -154,7 +174,7 @@ function OrderTrackContent() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    trackReference(orderId, email);
+    trackReference(orderId, email, requiresOtp ? otp : undefined);
   };
 
   // Determine stage index
@@ -399,6 +419,13 @@ function OrderTrackContent() {
             </p>
           </div>
 
+          {otpNotice && (
+            <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-800 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+              <span>{otpNotice}</span>
+            </div>
+          )}
+
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
@@ -442,6 +469,25 @@ function OrderTrackContent() {
                 </div>
               </div>
 
+              {requiresOtp && (
+                <div>
+                  <label htmlFor="track-otp" className="block text-xs font-semibold text-slate-700 mb-1">
+                    6-Digit Email Verification Code <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="track-otp"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    required
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Enter 6-digit code"
+                    className="w-full px-3 py-2 text-xs font-mono tracking-widest rounded-xl border border-indigo-300 bg-indigo-50/40 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -450,11 +496,11 @@ function OrderTrackContent() {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Locating order & progress...
+                    {requiresOtp ? 'Verifying code...' : 'Locating order & progress...'}
                   </>
                 ) : (
                   <>
-                    Track Order & Progress
+                    {requiresOtp ? 'Verify Code & View Order' : 'Track Order & Progress'}
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}

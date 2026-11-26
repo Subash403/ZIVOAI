@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCustomerSession } from '@/lib/auth';
+import { isProjectPubliclyVisible, toPublicProjectDTO } from '@/lib/project-visibility';
+import { safeErrorResponse } from '@/lib/security';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getCustomerSession();
+    const session = await getCustomerSession(request);
     if (!session) {
       return NextResponse.json({ success: true, wishlist: [] });
     }
@@ -17,55 +19,65 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const projects = items.map((item) => ({
-      ...item.project,
-      technologies: JSON.parse(item.project.technologies || '[]'),
-      features: item.project.features ? JSON.parse(item.project.features) : [],
-    }));
+    // Only expose publicly visible projects through sanitized public DTO (ZAI-003, ZAI-004)
+    const projects = items
+      .filter((item) => isProjectPubliclyVisible(item.project))
+      .map((item) => toPublicProjectDTO(item.project));
 
     return NextResponse.json({ success: true, wishlist: projects });
   } catch (err: unknown) {
-    console.error('Wishlist GET error:', err);
-    return NextResponse.json({ error: 'Failed to fetch wishlist' }, { status: 500 });
+    return safeErrorResponse(err, 'Failed to fetch wishlist', 500, 'wishlist:GET');
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getCustomerSession();
+    const session = await getCustomerSession(request);
     if (!session) {
       return NextResponse.json({ error: 'Please sign in to save items to your wishlist' }, { status: 401 });
     }
 
-    const { projectId } = await request.json();
-    if (!projectId) {
+    const body = await request.json();
+    const projectIds: string[] = Array.isArray(body.projectIds)
+      ? body.projectIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0).slice(0, 50)
+      : typeof body.projectId === 'string' && body.projectId.trim()
+      ? [body.projectId.trim()]
+      : [];
+
+    if (projectIds.length === 0) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    await prisma.wishlistItem.upsert({
-      where: {
-        userId_projectId: {
-          userId: session.userId,
-          projectId,
-        },
-      },
-      create: {
-        userId: session.userId,
-        projectId,
-      },
-      update: {},
+    const validProjects = await prisma.project.findMany({
+      where: { id: { in: projectIds }, published: true, available: true },
+      select: { id: true },
     });
 
-    return NextResponse.json({ success: true, message: 'Added to wishlist' });
+    for (const p of validProjects) {
+      await prisma.wishlistItem.upsert({
+        where: {
+          userId_projectId: {
+            userId: session.userId,
+            projectId: p.id,
+          },
+        },
+        create: {
+          userId: session.userId,
+          projectId: p.id,
+        },
+        update: {},
+      });
+    }
+
+    return NextResponse.json({ success: true, message: 'Added to wishlist', syncedCount: validProjects.length });
   } catch (err: unknown) {
-    console.error('Wishlist POST error:', err);
-    return NextResponse.json({ error: 'Failed to update wishlist' }, { status: 500 });
+    return safeErrorResponse(err, 'Failed to update wishlist', 500, 'wishlist:POST');
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const session = await getCustomerSession();
+    const session = await getCustomerSession(request);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -84,7 +96,6 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true, message: 'Removed from wishlist' });
   } catch (err: unknown) {
-    console.error('Wishlist DELETE error:', err);
-    return NextResponse.json({ error: 'Failed to remove from wishlist' }, { status: 500 });
+    return safeErrorResponse(err, 'Failed to remove from wishlist', 500, 'wishlist:DELETE');
   }
 }

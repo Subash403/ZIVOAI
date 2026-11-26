@@ -8,6 +8,9 @@ import {
 } from '@/lib/razorpay';
 import { getCustomerSession } from '@/lib/auth';
 import { fulfillVerifiedOrder } from '@/lib/payment-fulfillment';
+import { releaseStockReservation } from '@/lib/stock-reservation';
+import { checkRateLimit, getClientIp, rateLimitExceededResponse } from '@/lib/rate-limit';
+import { safeErrorResponse } from '@/lib/security';
 
 interface PaymentVerifyPayload {
   internalOrderId: string;
@@ -18,6 +21,17 @@ interface PaymentVerifyPayload {
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rl = checkRateLimit(clientIp, {
+      keyPrefix: 'payments:verify:ip',
+      windowMs: 10 * 60 * 1000,
+      maxRequests: 30,
+      cooldownMs: 3 * 60 * 1000,
+    });
+    if (!rl.allowed) {
+      return rateLimitExceededResponse(rl, 'Too many payment verification attempts. Please wait.');
+    }
+
     const body: PaymentVerifyPayload = await request.json();
     const {
       internalOrderId,
@@ -42,7 +56,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order record not found' }, { status: 404 });
     }
 
-    // The provider order ID must have been created and stored by the server.
     if (!existingOrder.razorpayOrderId || existingOrder.razorpayOrderId !== razorpayOrderId) {
       return NextResponse.json(
         { error: 'Security mismatch: razorpayOrderId does not match original order record.' },
@@ -50,7 +63,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Guard against invalid status
     if (existingOrder.paymentStatus === 'CANCELLED' || existingOrder.paymentStatus === 'REFUNDED') {
       return NextResponse.json(
         { error: 'Order is no longer valid for payment processing.' },
@@ -58,7 +70,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify HMAC-SHA256 signature server-side using Razorpay Key Secret
     const isValid = verifyRazorpaySignature({
       razorpayOrderId,
       razorpayPaymentId,
@@ -70,6 +81,7 @@ export async function POST(request: Request) {
         where: { orderId: internalOrderId, paymentStatus: { in: ['CREATED', 'FAILED'] } },
         data: { paymentStatus: 'FAILED' },
       });
+      await releaseStockReservation(internalOrderId, 'RELEASED');
 
       return NextResponse.json(
         { error: 'Payment signature verification failed. If your account was debited, please contact support with Order ID.' },
@@ -97,17 +109,21 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!payment || !validateRazorpayPayment({
-      payment,
-      expectedOrderId: existingOrder.razorpayOrderId,
-      expectedAmount: existingOrder.amount,
-      expectedCurrency: existingOrder.currency,
-    })) {
+    if (
+      !payment ||
+      !validateRazorpayPayment({
+        payment,
+        expectedOrderId: existingOrder.razorpayOrderId,
+        expectedAmount: existingOrder.amount,
+        expectedCurrency: existingOrder.currency,
+      })
+    ) {
       if (existingOrder.paymentStatus !== 'PAID') {
         await prisma.order.updateMany({
           where: { id: existingOrder.id, paymentStatus: { in: ['CREATED', 'FAILED'] } },
           data: { paymentStatus: 'FAILED' },
         });
+        await releaseStockReservation(internalOrderId, 'RELEASED');
       }
       return NextResponse.json(
         { error: 'Payment could not be verified against the Razorpay order, amount, currency, or capture status.' },
@@ -115,8 +131,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if customer is currently logged in
-    const session = await getCustomerSession();
+    const session = await getCustomerSession(request);
     let linkedUserId = existingOrder.userId;
     if (!linkedUserId && session) {
       linkedUserId = session.userId;
@@ -133,15 +148,19 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Payment verified successfully!',
-      order: updatedOrder,
+      order: {
+        id: updatedOrder.id,
+        orderId: updatedOrder.orderId,
+        projectName: updatedOrder.projectName,
+        amount: updatedOrder.amount,
+        currency: updatedOrder.currency,
+        paymentStatus: updatedOrder.paymentStatus,
+        deliveryStatus: updatedOrder.deliveryStatus,
+        paidAt: updatedOrder.paidAt,
+      },
       receiptToken: updatedOrder.downloadToken,
     });
   } catch (error: unknown) {
-    console.error('Error verifying payment signature:', error);
-    const message = error instanceof Error ? error.message : 'Payment verification failed';
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return safeErrorResponse(error, 'Payment verification failed', 500, 'payments:verify');
   }
 }

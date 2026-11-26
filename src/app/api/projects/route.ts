@@ -4,11 +4,13 @@ import { getAdminSession } from '@/lib/auth';
 import { slugify } from '@/lib/utils';
 import { Prisma } from '@prisma/client';
 import { verifyPrivateUploadFinalizationToken } from '@/lib/storage';
+import { PUBLIC_PROJECT_WHERE, toAdminProjectDTO, toPublicProjectDTO } from '@/lib/project-visibility';
+import { recordAdminAuditLog, safeErrorResponse } from '@/lib/security';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     const isAdmin = session?.role === 'ADMIN';
 
     const featuredParam = searchParams.get('featured');
@@ -17,16 +19,18 @@ export async function GET(request: Request) {
     const projectType = searchParams.get('projectType');
     const difficulty = searchParams.get('difficulty');
     const salesType = searchParams.get('salesType');
-    const search = searchParams.get('search');
+    const search = searchParams.get('search')?.trim();
+    const sort = searchParams.get('sort') || 'newest';
     const limitParam = searchParams.get('limit');
+    const pageParam = searchParams.get('page');
+    const pageSizeParam = searchParams.get('pageSize');
 
     const whereClause: Prisma.ProjectWhereInput = {};
 
-    // PUBLIC FILTERING RULE:
-    // If request is public (non-admin), ONLY show available and published projects
+    // Centralized PUBLIC VISIBILITY POLICY (ZAI-003, ZAI-004):
+    // Non-admin viewers ONLY see projects that are BOTH published AND available.
     if (!isAdmin) {
-      whereClause.available = true;
-      whereClause.published = true;
+      Object.assign(whereClause, PUBLIC_PROJECT_WHERE);
     } else {
       const availableParam = searchParams.get('available');
       if (availableParam !== null) {
@@ -38,13 +42,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // FEATURED RULE:
-    // Available + Featured -> appears in Available AND Featured
-    // Unavailable + Featured -> must NOT appear in public sections
     if (featuredParam === 'true') {
       whereClause.featured = true;
       if (!isAdmin) {
-        whereClause.available = true;
+        Object.assign(whereClause, PUBLIC_PROJECT_WHERE);
       }
     }
 
@@ -78,50 +79,57 @@ export async function GET(request: Request) {
       whereClause.technologies = { contains: technology };
     }
 
-    const projectsRaw = await prisma.project.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' },
-      take: limitParam ? parseInt(limitParam, 10) : undefined,
+    let orderBy: Prisma.ProjectOrderByWithRelationInput | Prisma.ProjectOrderByWithRelationInput[] = { createdAt: 'desc' };
+    if (sort === 'price_asc') {
+      orderBy = [{ salesType: 'desc' }, { price: 'asc' }, { createdAt: 'desc' }];
+    } else if (sort === 'price_desc') {
+      orderBy = [{ salesType: 'desc' }, { price: 'desc' }, { createdAt: 'desc' }];
+    } else if (sort === 'featured') {
+      orderBy = [{ featured: 'desc' }, { createdAt: 'desc' }];
+    } else if (sort === 'title_asc') {
+      orderBy = { title: 'asc' };
+    }
+
+    const hasPagination = Boolean(pageParam || pageSizeParam);
+    const page = Math.max(1, parseInt(pageParam || '1', 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeParam || '12', 10) || 12));
+    const take = hasPagination
+      ? pageSize
+      : limitParam
+      ? Math.min(100, Math.max(1, parseInt(limitParam, 10) || 24))
+      : undefined;
+    const skip = hasPagination ? (page - 1) * pageSize : undefined;
+
+    const [projectsRaw, totalCount] = await Promise.all([
+      prisma.project.findMany({
+        where: whereClause,
+        orderBy,
+        skip,
+        take,
+      }),
+      prisma.project.count({ where: whereClause }),
+    ]);
+
+    const parsedProjects = projectsRaw.map((p) => (isAdmin ? toAdminProjectDTO(p) : toPublicProjectDTO(p)));
+
+    return NextResponse.json({
+      success: true,
+      projects: parsedProjects,
+      pagination: {
+        page: hasPagination ? page : 1,
+        pageSize: hasPagination ? pageSize : parsedProjects.length || 1,
+        totalCount,
+        totalPages: hasPagination ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1,
+      },
     });
-
-    const parsedProjects = projectsRaw.map((p) => {
-      let parsedTechs: string[] = [];
-      let parsedFeatures: string[] = [];
-      let parsedModules: string[] = [];
-      let parsedGallery: string[] = [];
-      let parsedMaterials: string[] = [];
-
-      try { parsedTechs = JSON.parse(p.technologies || '[]'); } catch { parsedTechs = []; }
-      try { parsedFeatures = JSON.parse(p.features || '[]'); } catch { parsedFeatures = []; }
-      try { parsedModules = JSON.parse(p.modules || '[]'); } catch { parsedModules = []; }
-      try { parsedGallery = JSON.parse(p.gallery || '[]'); } catch { parsedGallery = []; }
-      try { parsedMaterials = JSON.parse(p.includedMaterials || '[]'); } catch { parsedMaterials = []; }
-
-      // CRITICAL PRICING RULE:
-      // The website must NEVER expose pricing for call-based projects to non-admins!
-      const finalPrice = !isAdmin && p.salesType === 'call' ? 0 : p.price;
-
-      return {
-        ...p,
-        price: finalPrice,
-        technologies: parsedTechs,
-        features: parsedFeatures,
-        modules: parsedModules,
-        gallery: parsedGallery,
-        includedMaterials: parsedMaterials,
-      };
-    });
-
-    return NextResponse.json({ success: true, projects: parsedProjects });
   } catch (error: unknown) {
-    console.error('Error fetching projects:', error);
-    return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to fetch projects', 500, 'projects:GET');
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -213,10 +221,17 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, project: newProject }, { status: 201 });
+    await recordAdminAuditLog({
+      actor: session,
+      action: 'PROJECT_CREATE',
+      resourceType: 'Project',
+      resourceId: newProject.id,
+      metadata: { title: newProject.title, slug: newProject.slug, salesType: newProject.salesType },
+      request,
+    });
+
+    return NextResponse.json({ success: true, project: toAdminProjectDTO(newProject) }, { status: 201 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to create project';
-    console.error('Error creating project:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to create project', 500, 'projects:POST');
   }
 }

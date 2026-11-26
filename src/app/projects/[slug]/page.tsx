@@ -517,18 +517,20 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                 </div>
               </div>
 
-              {/* Trust & Guarantee Policies */}
+              {/* Trust, License & Support Boundaries (ZAI-047, ZAI-065, ZAI-097) */}
               <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-xs text-slate-700 space-y-2.5">
                 <div className="flex items-center gap-2 text-emerald-700 font-bold">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  100% Verified Production Quality
+                  Deliverables, License &amp; Support
                 </div>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Includes full source code, complete architecture documentation, PPT presentation slides, and 1-on-1 remote setup support.
+                  Only the items highlighted in green above are included with this project package. After Razorpay payment verification, download links become available in your Customer Dashboard (1-hour private signed cloud URLs, up to 5 link issuances).
                 </p>
-                <div className="pt-1 border-t border-indigo-100/80 flex items-center justify-between text-[11px] text-indigo-700 font-semibold">
-                  <span>⚡ 1-3 Hour Delivery</span>
-                  <span>🔒 Secure Razorpay Checkout</span>
+                <div className="pt-1.5 border-t border-indigo-100/80 flex items-center justify-between text-[11px] text-indigo-700 font-semibold">
+                  <span>Server-Verified Razorpay</span>
+                  <Link href="/policies" className="underline hover:text-indigo-900">
+                    License &amp; Refund Policy
+                  </Link>
                 </div>
               </div>
             </div>

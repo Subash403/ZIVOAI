@@ -114,11 +114,12 @@ export default function PoliciesPage() {
                     'Automated digital delivery for fixed-price packages occurs immediately following payment confirmation. Custom projects follow agreed milestone reviews.'}
                 </p>
                 
-                <h3 className="text-base font-bold text-slate-900 pt-2">Fulfillment Methods</h3>
+                <h3 className="text-base font-bold text-slate-900 pt-2">Fulfillment &amp; Download Policy</h3>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm text-slate-600">
-                  <li><strong>Fixed-Price Catalog Projects:</strong> Download link generated instantly on your Order Confirmation screen and securely accessible in your Customer Dashboard.</li>
-                  <li><strong>Custom Architectures:</strong> Delivered via encrypted repository or secure digital archives directly to your verified customer account after milestone review.</li>
-                  <li><strong>Physical Hardware/IoT Components:</strong> Dispatched via courier with tracking reference provided within 24-48 business hours.</li>
+                  <li><strong>Fixed-Price Catalog Projects:</strong> Once Razorpay payment signatures and captured amounts are verified server-side, download access is unlocked inside your signed-in Customer Dashboard (<code>/account</code>).</li>
+                  <li><strong>Secure Link Lifetimes:</strong> Confirmation emails contain a protected download link (not a ZIP attachment) valid for <strong>7 days</strong>. Clicking download generates a short-lived <strong>1-hour</strong> private cloud storage URL. Each paid order includes up to <strong>5 link issuances</strong>; signed-in owners can renew expired windows directly from their dashboard.</li>
+                  <li><strong>Refund Access Policy:</strong> When an order is refunded, associated download tokens are immediately revoked and download access is closed.</li>
+                  <li><strong>Custom Software Builds:</strong> Delivered per agreed milestones tracked across 8 stages inside your Customer Dashboard.</li>
                 </ul>
               </div>
             </div>

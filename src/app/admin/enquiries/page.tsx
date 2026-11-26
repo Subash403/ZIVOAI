@@ -19,11 +19,18 @@ import { formatDate } from '@/lib/utils';
 export default function AdminEnquiriesPage() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [archivedFilter, setArchivedFilter] = useState<'false' | 'true' | 'all'>('false');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const [adminNoteInput, setAdminNoteInput] = useState('');
+  const [assignedToInput, setAssignedToInput] = useState('');
+  const [nextFollowUpInput, setNextFollowUpInput] = useState('');
   const [updatingNote, setUpdatingNote] = useState(false);
   const [retryingSyncId, setRetryingSyncId] = useState<string | null>(null);
 
@@ -37,25 +44,54 @@ export default function AdminEnquiriesPage() {
   const [stageUpdateError, setStageUpdateError] = useState<string | null>(null);
   const [stageSuccessNotice, setStageSuccessNotice] = useState<string | null>(null);
 
-  const fetchEnquiries = useCallback(() => {
-    const url = '/api/enquiries';
+  const fetchEnquiries = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
     const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('pageSize', '20');
+    params.set('archived', archivedFilter);
     if (statusFilter !== 'ALL') params.set('status', statusFilter);
-    if (search) params.set('search', search);
+    if (search.trim()) params.set('search', search.trim());
 
-    fetch(`${url}?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setEnquiries(data.enquiries);
-        }
-      })
-      .catch((err: unknown) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [search, statusFilter]);
+    try {
+      const res = await fetch(`/api/enquiries?${params.toString()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to load enquiries.');
+      }
+      setEnquiries(data.enquiries || []);
+      if (data.pagination) {
+        setTotalPages(data.pagination.totalPages || 1);
+        setTotalCount(data.pagination.totalCount || 0);
+      }
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Unable to fetch enquiries.');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, statusFilter, archivedFilter, page]);
+
+  const handleToggleArchive = async (id: string, archive: boolean) => {
+    try {
+      const res = await fetch(`/api/enquiries/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: archive }),
+      });
+      if (!res.ok) throw new Error('Failed to update archive state');
+      await fetchEnquiries();
+      if (selectedEnquiry?.id === id) setSelectedEnquiry(null);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to update enquiry archive state.');
+    }
+  };
 
   useEffect(() => {
-    fetchEnquiries();
+    const timer = window.setTimeout(() => {
+      void fetchEnquiries();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [fetchEnquiries]);
 
 
@@ -85,7 +121,11 @@ export default function AdminEnquiriesPage() {
       const res = await fetch(`/api/enquiries/${selectedEnquiry.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminNotes: adminNoteInput }),
+        body: JSON.stringify({
+          adminNotes: adminNoteInput,
+          assignedTo: assignedToInput || null,
+          nextFollowUpAt: nextFollowUpInput || null,
+        }),
       });
 
       const data = await res.json();
@@ -195,6 +235,15 @@ export default function AdminEnquiriesPage() {
         </button>
       </div>
 
+      {errorMsg && (
+        <div role="alert" className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-3">
+          <span>{errorMsg}</span>
+          <button type="button" onClick={fetchEnquiries} className="px-3 py-1 rounded-lg bg-red-600 text-white font-bold">
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Filter Toolbar */}
       <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-80">
@@ -202,17 +251,38 @@ export default function AdminEnquiriesPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
             placeholder="Search by Lead ID, Student, Phone, College..."
             className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <select
+            aria-label="Filter archived enquiries"
+            value={archivedFilter}
+            onChange={(e) => {
+              setPage(1);
+              setArchivedFilter(e.target.value as 'false' | 'true' | 'all');
+            }}
+            className="px-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs font-medium"
+          >
+            <option value="false">Active Leads</option>
+            <option value="true">Archived Leads</option>
+            <option value="all">All Leads</option>
+          </select>
+
           <span className="text-xs text-slate-500 font-semibold">Status:</span>
           <select
+            aria-label="Filter by lead status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setStatusFilter(e.target.value);
+            }}
             className="px-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
           >
             <option value="ALL">All Statuses</option>
@@ -347,28 +417,66 @@ export default function AdminEnquiriesPage() {
 
                     {/* Actions */}
                     <td className="p-4">
-                      <button
-                        onClick={() => {
-                          setSelectedEnquiry(enquiry);
-                          setAdminNoteInput(enquiry.adminNotes || '');
-                          setStageInput(enquiry.currentStage || 'Request Received');
-                          setCustomerMessageInput(enquiry.customerProgressMessage || '');
-                          setEstimatedDateInput(enquiry.estimatedCompletionDate || '');
-                          setNewAdminNoteInput('');
-                          setConfirmDelivered(false);
-                          setStageUpdateError(null);
-                          setStageSuccessNotice(null);
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[11px] transition-colors whitespace-nowrap"
-                      >
-                        Manage Stage & Notes
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            const extended = enquiry as Enquiry & { assignedTo?: string | null; nextFollowUpAt?: string | null; archived?: boolean };
+                            setSelectedEnquiry(enquiry);
+                            setAdminNoteInput(enquiry.adminNotes || '');
+                            setAssignedToInput(extended.assignedTo || '');
+                            setNextFollowUpInput(extended.nextFollowUpAt ? extended.nextFollowUpAt.slice(0, 10) : '');
+                            setStageInput(enquiry.currentStage || 'Request Received');
+                            setCustomerMessageInput(enquiry.customerProgressMessage || '');
+                            setEstimatedDateInput(enquiry.estimatedCompletionDate || '');
+                            setNewAdminNoteInput('');
+                            setConfirmDelivered(false);
+                            setStageUpdateError(null);
+                            setStageSuccessNotice(null);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[11px] transition-colors whitespace-nowrap"
+                        >
+                          Manage Stage &amp; Notes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleArchive(enquiry.id, !(enquiry as Enquiry & { archived?: boolean }).archived)}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-[11px]"
+                        >
+                          {(enquiry as Enquiry & { archived?: boolean }).archived ? 'Restore' : 'Archive'}
+                        </button>
+                      </div>
                     </td>
 
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">
+              Page <strong>{page}</strong> of <strong>{totalPages}</strong> ({totalCount} enquiries)
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -600,8 +708,30 @@ export default function AdminEnquiriesPage() {
                 )}
               </div>
 
-              {/* General Internal Admin Notes Section */}
-              <div className="space-y-2 pt-4 border-t border-slate-200">
+              {/* General Internal Admin Notes & Lead Assignment Section */}
+              <div className="space-y-3 pt-4 border-t border-slate-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Lead Owner / Assignee</label>
+                    <input
+                      type="text"
+                      value={assignedToInput}
+                      onChange={(e) => setAssignedToInput(e.target.value)}
+                      placeholder="e.g. Lead Engineer / Operations"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Next Follow-Up Date</label>
+                    <input
+                      type="date"
+                      value={nextFollowUpInput}
+                      onChange={(e) => setNextFollowUpInput(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+
                 <span className="text-xs font-bold text-amber-800 uppercase tracking-wider block">
                   Overall Internal Admin Notes (Private)
                 </span>

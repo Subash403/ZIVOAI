@@ -114,8 +114,14 @@ export interface Enquiry {
   updatedAt: string;
 }
 
-export type PaymentStatus = 'CREATED' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
-export type DeliveryStatus = 'PENDING' | 'PROCESSING' | 'DELIVERED' | 'FAILED';
+export type PaymentStatus =
+  | 'CREATED'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED'
+  | 'RECONCILIATION_REQUIRED';
+export type DeliveryStatus = 'PENDING' | 'PROCESSING' | 'ASSET_READY' | 'DELIVERED' | 'FAILED' | 'CANCELLED';
 
 export interface Order {
   id: string;

@@ -141,7 +141,9 @@ test('Automated Delivery & Payment Fulfillment Idempotency', async (t) => {
     assert.ok(logs.length >= 1);
     assert.equal(logs[0].recipientEmail, 'test.student@example.com');
     assert.equal(logs[0].type, 'ORDER_CONFIRMATION');
-    assert.equal(logs[0].status, 'SENT');
+    // ZAI-024: Without configured SMTP in dev/test, logs must truthfully record SIMULATED (never SENT)
+    const expectedStatus = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD ? 'SENT' : 'SIMULATED';
+    assert.equal(logs[0].status, expectedStatus);
   });
 
   await t.test('Enforces download count limit and expiry checks', async () => {
@@ -203,7 +205,8 @@ test('Automated Delivery & Payment Fulfillment Idempotency', async (t) => {
         amount: 1999,
         currency: 'INR',
         paymentStatus: 'PAID',
-        deliveryStatus: 'PENDING',
+        deliveryStatus: 'ASSET_READY',
+        downloadTokenExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
 

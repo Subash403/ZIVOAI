@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { filterPublicSettings, validateSettingPayload } from '@/lib/settings';
+import { recordAdminAuditLog } from '@/lib/security';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(request);
     const isAdmin = Boolean(session && session.role === 'ADMIN');
 
     const settingsRaw = await prisma.setting.findMany();
@@ -48,6 +49,18 @@ export async function PUT(request: Request) {
 
     const settings = validateSettingPayload(await request.json());
 
+    const existingRows = await prisma.setting.findMany({
+      where: { key: { in: Object.keys(settings) } },
+    });
+    const previousMap: Record<string, string> = {};
+    for (const row of existingRows) {
+      previousMap[row.key] = row.value;
+    }
+
+    const changedKeys = Object.entries(settings)
+      .filter(([k, v]) => previousMap[k] !== v)
+      .map(([k]) => k);
+
     const upsertOperations = Object.entries(settings).map(([key, value]) =>
       prisma.setting.upsert({
         where: { key },
@@ -58,7 +71,24 @@ export async function PUT(request: Request) {
 
     await prisma.$transaction(upsertOperations);
 
-    return NextResponse.json({ success: true, message: 'Settings saved successfully' });
+    if (changedKeys.length > 0) {
+      await recordAdminAuditLog({
+        actor: session,
+        action: 'SETTINGS_UPDATE',
+        resourceType: 'Setting',
+        metadata: {
+          changedKeys,
+          previousValues: Object.fromEntries(changedKeys.map((k) => [k, previousMap[k] ?? null])),
+        },
+        request,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      changedKeys,
+      message: `Settings saved successfully (${changedKeys.length} field(s) updated).`,
+    });
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : 'Failed to update settings';
     console.error('Error updating settings:', error);

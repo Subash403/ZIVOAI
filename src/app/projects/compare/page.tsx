@@ -19,15 +19,19 @@ export default function ProjectComparePage() {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/projects')
-      .then((res) => res.json())
+    fetch('/api/projects?pageSize=100')
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load catalog for comparison.');
+        return data;
+      })
       .then((data) => {
-        if (data.success && Array.isArray(data.projects)) {
+        if (Array.isArray(data.projects)) {
           setAllProjects(data.projects);
-          // Pre-select first 2 projects by default if available
           if (data.projects.length >= 2) {
             setSelectedProjects([data.projects[0], data.projects[1]]);
           } else if (data.projects.length === 1) {
@@ -35,7 +39,9 @@ export default function ProjectComparePage() {
           }
         }
       })
-      .catch((err) => console.error('Failed to load projects for comparison:', err))
+      .catch((err: unknown) => {
+        setErrorMsg(err instanceof Error ? err.message : 'Unable to load projects for comparison.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -85,6 +91,13 @@ export default function ProjectComparePage() {
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
+
+        {errorMsg && (
+          <div role="alert" className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
 
         {/* Comparison Grid */}
         <div className="glass-panel rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs overflow-x-auto">
@@ -211,25 +224,19 @@ export default function ProjectComparePage() {
                   </div>
                 </div>
 
-                {/* Deliverables */}
+                {/* Deliverables (Actual per-project includedMaterials — ZAI-050, ZAI-065) */}
                 <div className="py-2 border-t border-slate-100 space-y-1 text-xs text-slate-600">
                   <span className="md:hidden text-xs text-slate-400 font-semibold block">Deliverables: </span>
-                  <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                    <Check className="w-3.5 h-3.5 shrink-0" />
-                    <span>Full Source Code</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                    <Check className="w-3.5 h-3.5 shrink-0" />
-                    <span>IEEE Report Documentation</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                    <Check className="w-3.5 h-3.5 shrink-0" />
-                    <span>PPT Presentation Slides</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                    <Check className="w-3.5 h-3.5 shrink-0" />
-                    <span>1-on-1 Setup Support</span>
-                  </div>
+                  {project.includedMaterials && project.includedMaterials.length > 0 ? (
+                    project.includedMaterials.map((item) => (
+                      <div key={item} className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                        <Check className="w-3.5 h-3.5 shrink-0" />
+                        <span>{item}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-slate-500 italic">See project detail page</span>
+                  )}
                 </div>
 
                 {/* Availability */}

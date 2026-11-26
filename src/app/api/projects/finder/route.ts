@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { PUBLIC_PROJECT_WHERE, toPublicProjectDTO } from '@/lib/project-visibility';
+import { safeErrorResponse } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { category, difficulty, technology, budgetMax } = body;
 
+    // Centralized PUBLIC VISIBILITY POLICY: both published AND available required (ZAI-003, ZAI-004)
     const where: Prisma.ProjectWhereInput = {
-      published: true,
+      ...PUBLIC_PROJECT_WHERE,
     };
 
     if (difficulty && difficulty !== 'Any') {
@@ -28,28 +31,15 @@ export async function POST(request: Request) {
 
     const projects = await prisma.project.findMany({
       where,
-      orderBy: [{ featured: 'desc' }, { available: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
       take: 12,
     });
 
-    // Parse technologies JSON
     const parsed = projects
-      .map((p) => {
-        let techArr: string[] = [];
-        try {
-          techArr = JSON.parse(p.technologies || '[]');
-        } catch {
-          techArr = [];
-        }
-        return {
-          ...p,
-          technologies: techArr,
-        };
-      })
+      .map((p) => toPublicProjectDTO(p))
       .filter((p) => {
-        // If a technology was selected, check if it matches in the tech array
         if (technology && technology !== 'Any') {
-          const needle = technology.toLowerCase();
+          const needle = String(technology).toLowerCase();
           const matches = p.technologies.some((t: string) => t.toLowerCase().includes(needle));
           return matches || p.fullDescription.toLowerCase().includes(needle);
         }
@@ -62,7 +52,6 @@ export async function POST(request: Request) {
       projects: parsed,
     });
   } catch (error: unknown) {
-    console.error('Project finder API error:', error);
-    return NextResponse.json({ error: 'Failed to find matching projects' }, { status: 500 });
+    return safeErrorResponse(error, 'Failed to find matching projects', 500, 'projects:finder');
   }
 }

@@ -11,17 +11,16 @@
     --primary-hover: #4338ca;
     --accent: #10b981;
     --ink-muted: #475569;
-    --glass-bg: rgba(255, 255, 255, 0.82);
-    --glass-border: rgba(226, 232, 240, 0.8);
-    --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.05);
+    --glass-bg: rgba(255, 255, 255, 0.88);
+    --glass-border: rgba(226, 232, 240, 0.85);
+    --glass-shadow: 0 8px 28px 0 rgba(15, 23, 42, 0.05);
+    --motion-fast: 150ms;
+    --motion-base: 240ms;
+    --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   body {
-    background:
-      radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.09), transparent 32rem),
-      radial-gradient(circle at 0% 30%, rgba(139, 92, 246, 0.07), transparent 28rem),
-      radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.05), transparent 30rem),
-      var(--background);
+    background-color: var(--background);
     color: var(--foreground);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     overflow-x: hidden;
@@ -36,74 +35,72 @@
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
   }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
 }
 
-/* Premium Glass & Surface Utilities */
+/* Shared Design System Surface Utilities (ZAI-063, ZAI-107) */
 .glass-surface {
-  background: rgba(255, 255, 255, 0.84);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 2px 8px -2px rgba(15, 23, 42, 0.03);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .dark-panel {
   background: #090d16;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 45px -15px rgba(2, 6, 23, 0.7);
+  box-shadow: 0 20px 45px -15px rgba(2, 6, 23, 0.65);
 }
 
 .dark-panel-glass {
-  background: rgba(10, 15, 29, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(10, 15, 29, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 20px 40px -15px rgba(2, 6, 23, 0.5);
 }
 
-/* Premium Light Theme Cards & Surfaces */
 .zivo-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02), 0 12px 28px -20px rgba(15, 23, 42, 0.12);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02), 0 10px 24px -18px rgba(15, 23, 42, 0.12);
+  transition: transform var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), box-shadow var(--motion-base) var(--motion-ease);
 }
 
 .zivo-card:hover {
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 20px 38px -18px rgba(79, 70, 229, 0.18), 0 6px 14px -6px rgba(15, 23, 42, 0.08);
-  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.42);
+  box-shadow: 0 16px 32px -16px rgba(79, 70, 229, 0.16), 0 4px 12px -6px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
 }
 
 .glass-card-hover {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), box-shadow var(--motion-base) var(--motion-ease);
 }
 
 .glass-card-hover:hover {
   transform: translateY(-2px);
   border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 16px 36px -6px rgba(79, 70, 229, 0.12), 0 4px 12px -2px rgba(79, 70, 229, 0.06);
+  box-shadow: 0 14px 30px -8px rgba(79, 70, 229, 0.12);
 }
 
-/* Refined Electric Indigo Brand Gradient */
+/* Brand Gradient */
 .glow-gradient {
   background: linear-gradient(135deg, #312e81 0%, #4f46e5 52%, #6366f1 100%);
 }
@@ -119,78 +116,55 @@
 }
 
 .glow-emerald {
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.18);
 }
 
 .glow-indigo {
-  box-shadow: 0 0 22px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.22);
 }
 
+/* Single clean page wrapper — removed duplicate 64px ::before grid to prevent moiré (ZAI-116) */
 .zivo-page {
   position: relative;
-  isolation: isolate;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent 26rem);
-}
-
-.zivo-page::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  opacity: 0.38;
-  background-image: linear-gradient(rgba(99, 102, 241, 0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.055) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: linear-gradient(to bottom, black, transparent 38rem);
-  content: '';
-  pointer-events: none;
 }
 
 .zivo-display {
   font-family: Georgia, 'Times New Roman', serif;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
 }
 
 .zivo-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  padding: 0.38rem 0.7rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.35rem 0.75rem;
   color: #4338ca;
   font-size: 0.7rem;
-  font-weight: 750;
-  letter-spacing: 0.11em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .zivo-surface {
-  border: 1px solid rgba(203, 213, 225, 0.86);
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 20px 50px -42px rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 16px 40px -32px rgba(15, 23, 42, 0.35);
 }
 
 .zivo-reveal {
-  animation: zivo-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: zivo-rise 0.45s var(--motion-ease) both;
 }
 
-.zivo-reveal-delay-1 { animation-delay: 0.08s; }
-.zivo-reveal-delay-2 { animation-delay: 0.16s; }
-.zivo-reveal-delay-3 { animation-delay: 0.24s; }
+.zivo-reveal-delay-1 { animation-delay: 0.06s; }
+.zivo-reveal-delay-2 { animation-delay: 0.12s; }
+.zivo-reveal-delay-3 { animation-delay: 0.18s; }
 
 @keyframes zivo-rise {
-  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-
-/* Accessible reduced-motion rules */
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }
 
 /* Custom Scrollbar */
@@ -209,115 +183,101 @@
   background: #94a3b8;
 }
 
-/* Spotlight Follow Background (bga-02) - Light Glassmorphism Adaptation */
+/* Restrained Spotlight Background (bga-02) — Pure CSS, single grid, calm on mobile & transactional pages (ZAI-113..ZAI-120) */
 @property --bga-02-mx {
   syntax: '<percentage>';
   inherits: true;
-  initial-value: 50%;
+  initial-value: 52%;
 }
 @property --bga-02-my {
   syntax: '<percentage>';
   inherits: true;
-  initial-value: 44%;
+  initial-value: 24%;
 }
 
 .bga-02 {
   --bga-02-bg: #f8fafc;
-  --bga-02-acc: #4f46e5;
-  --bga-02-acc2: #7c3aed;
-  --bga-02-r: clamp(260px, 34vw, 500px);
-  --bga-02-mx: 50%;
-  --bga-02-my: 44%;
-  background: var(--bga-02-bg);
-  transition: --bga-02-mx 0.45s cubic-bezier(0.16, 1, 0.3, 1), --bga-02-my 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  --bga-02-r: clamp(220px, 28vw, 420px);
+  --bga-02-mx: 52%;
+  --bga-02-my: 24%;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(99, 102, 241, 0.07), transparent 34rem),
+    radial-gradient(circle at 10% 35%, rgba(124, 58, 237, 0.05), transparent 28rem),
+    var(--bga-02-bg);
+  transition: --bga-02-mx 0.55s var(--motion-ease), --bga-02-my 0.55s var(--motion-ease);
+}
+
+.bga-02.is-calm {
+  transition: none;
 }
 
 .bga-02.is-idle {
-  animation: bga-02-orbit 16s ease-in-out infinite;
+  animation: bga-02-orbit 26s ease-in-out infinite;
 }
 
 @keyframes bga-02-orbit {
   0% {
-    --bga-02-mx: 26%;
-    --bga-02-my: 32%;
-  }
-  25% {
-    --bga-02-mx: 74%;
-    --bga-02-my: 26%;
+    --bga-02-mx: 36%;
+    --bga-02-my: 24%;
   }
   50% {
-    --bga-02-mx: 80%;
-    --bga-02-my: 74%;
-  }
-  75% {
-    --bga-02-mx: 22%;
-    --bga-02-my: 70%;
+    --bga-02-mx: 66%;
+    --bga-02-my: 44%;
   }
   100% {
-    --bga-02-mx: 26%;
-    --bga-02-my: 32%;
+    --bga-02-mx: 36%;
+    --bga-02-my: 24%;
   }
 }
 
 .bga-02__grid {
   position: absolute;
   inset: 0;
-  opacity: 0.6;
-  background-image: linear-gradient(rgba(99, 102, 241, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.12) 1px, transparent 1px);
-  background-size: 56px 56px;
-  pointer-events: none;
-}
-
-.bga-02__reveal {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(79, 70, 229, 0.25), rgba(124, 58, 237, 0.22)), linear-gradient(rgba(79, 70, 229, 0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(79, 70, 229, 0.25) 1px, transparent 1px);
-  background-size: 100% 100%, 56px 56px, 56px 56px;
-  -webkit-mask-image: radial-gradient(circle var(--bga-02-r) at var(--bga-02-mx) var(--bga-02-my), rgba(0, 0, 0, 1) 0 38%, transparent 74%);
-  mask-image: radial-gradient(circle var(--bga-02-r) at var(--bga-02-mx) var(--bga-02-my), rgba(0, 0, 0, 1) 0 38%, transparent 74%);
-  pointer-events: none;
-}
-
-.bga-02__photo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  opacity: 0.35;
-  mix-blend-mode: multiply;
+  opacity: 0.34;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.09) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 44rem);
   pointer-events: none;
 }
 
 .bga-02__beam {
   position: absolute;
   inset: 0;
-  mix-blend-mode: multiply;
-  background: radial-gradient(circle var(--bga-02-r) at var(--bga-02-mx) var(--bga-02-my), rgba(99, 102, 241, 0.25) 0%, rgba(124, 58, 237, 0.12) 42%, transparent 70%);
+  background: radial-gradient(
+    circle var(--bga-02-r) at var(--bga-02-mx) var(--bga-02-my),
+    rgba(79, 70, 229, 0.11) 0%,
+    rgba(124, 58, 237, 0.05) 42%,
+    transparent 72%
+  );
   pointer-events: none;
+}
+
+.bga-02.is-calm .bga-02__beam {
+  opacity: 0.45;
 }
 
 .bga-02__vig {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(130% 110% at 50% 40%, transparent 40%, rgba(248, 250, 252, 0.85) 100%);
+  background: radial-gradient(135% 115% at 50% 38%, transparent 48%, rgba(248, 250, 252, 0.88) 100%);
 }
 
-.tracking-orb {
-  animation: tracking-orb-drift 18s ease-in-out infinite alternate;
-}
-
-@keyframes tracking-orb-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
+@media (max-width: 1023px), (hover: none), (pointer: coarse) {
+  .bga-02 {
+    transition: none;
   }
-  to {
-    transform: translate3d(-2rem, 1.5rem, 0) scale(1.08);
+  .bga-02.is-idle {
+    animation: none;
+  }
+  .bga-02__beam {
+    opacity: 0.4;
   }
 }
 
+/* Single unified accessible reduced-motion rules (ZAI-061, ZAI-114, ZAI-120) */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -327,17 +287,10 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .bga-02 {
-    transition: none !important;
-  }
-  .bga-02.is-idle {
-    animation: none !important;
-  }
-  .tracking-orb {
-    animation: none !important;
-  }
+  .bga-02,
+  .bga-02.is-idle,
   .zivo-reveal {
     animation: none !important;
+    transition: none !important;
   }
 }
-

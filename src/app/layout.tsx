@@ -7,11 +7,11 @@ import SpotlightBackground from '@/components/SpotlightBackground';
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://zivo.ai'),
   title: {
-    default: 'Zivo AI — Modern AI & Full-Stack Projects Discovery & Delivery Platform',
+    default: 'Zivo AI — Ready-to-Run AI & Full-Stack Software Marketplace',
     template: '%s | Zivo AI',
   },
   description:
-    'Discover, benchmark, and deploy production-ready AI agents, computer vision pipelines, full-stack web applications, and verified engineering software with complete source code, architecture documentation, and instant digital delivery.',
+    'Discover and purchase ready-to-run AI agents, machine learning pipelines, full-stack web applications, and custom software architectures with source code, documentation, and guided setup.',
   keywords: [
     'Zivo AI',
     'AI projects',
@@ -19,8 +19,7 @@ export const metadata: Metadata = {
     'machine learning pipelines',
     'full stack web applications',
     'custom software architecture',
-    'verified source code',
-    'instant digital delivery',
+    'source code marketplace',
   ],
   icons: {
     icon: '/images/zivoai-logo.png',
@@ -28,8 +27,9 @@ export const metadata: Metadata = {
     apple: '/images/zivoai-logo.png',
   },
   openGraph: {
-    title: 'Zivo AI — Modern AI & Full-Stack Projects Platform',
-    description: 'Explore verified fixed-price codebases and bespoke custom architectures built for software engineers, startups, researchers, and technical builders.',
+    title: 'Zivo AI — Ready-to-Run AI & Full-Stack Software Marketplace',
+    description:
+      'Explore fixed-price ready-to-run codebases and bespoke custom software architectures with verified source code and guided setup.',
     type: 'website',
     images: [
       {
@@ -42,8 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Zivo AI — Modern AI & Full-Stack Projects Platform',
-    description: 'Explore verified fixed-price codebases and bespoke custom architectures built for software engineers, startups, researchers, and technical builders.',
+    title: 'Zivo AI — Ready-to-Run AI & Full-Stack Software Marketplace',
+    description:
+      'Explore fixed-price ready-to-run codebases and bespoke custom software architectures with verified source code and guided setup.',
     images: ['/images/zivoai-logo.png'],
   },
 };
@@ -55,11 +56,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white relative min-h-screen">
+      <body className="relative isolate min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo-600 focus:px-4 focus:py-2.5 focus:text-xs focus:font-bold focus:text-white focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <SpotlightBackground />
-        <Navbar />
-        {children}
-        <Footer />
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <Navbar />
+          <div id="main-content" className="flex-grow">
+            {children}
+          </div>
+          <Footer />
+        </div>
       </body>
     </html>
   );
