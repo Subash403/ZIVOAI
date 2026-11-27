@@ -108,10 +108,20 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
     setError(null);
 
     try {
+      const resolvedContentType =
+        file.type ||
+        (file.name.toLowerCase().endsWith('.zip')
+          ? 'application/zip'
+          : file.name.toLowerCase().endsWith('.tar.gz')
+          ? 'application/gzip'
+          : file.name.toLowerCase().endsWith('.pdf')
+          ? 'application/pdf'
+          : 'application/octet-stream');
+
       const initResponse = await fetch('/api/admin/projects/upload/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName: file.name, contentType: file.type, sizeBytes: file.size }),
+        body: JSON.stringify({ fileName: file.name, contentType: resolvedContentType, sizeBytes: file.size }),
       });
       const initData = await initResponse.json();
       if (!initResponse.ok) {
@@ -121,7 +131,11 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
       await new Promise<void>((resolve, reject) => {
         const upload = new XMLHttpRequest();
         upload.open('PUT', initData.uploadUrl);
-        Object.entries(initData.requiredHeaders as Record<string, string>).forEach(([name, value]) => upload.setRequestHeader(name, value));
+        if (initData.requiredHeaders) {
+          Object.entries(initData.requiredHeaders as Record<string, string>).forEach(([name, value]) =>
+            upload.setRequestHeader(name, value)
+          );
+        }
         upload.upload.onprogress = (event) => {
           if (event.lengthComputable) setUploadProgress(Math.round((event.loaded / event.total) * 100));
         };
@@ -160,6 +174,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
     } finally {
       setUploadingFile(false);
       setUploadProgress(null);
+      e.target.value = '';
     }
   };
 
@@ -439,7 +454,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                   type="file"
                   onChange={handleFileUpload}
                   className="hidden"
-                  accept=".zip,.tar.gz,.rar,.7z,.pdf,.docx,.txt"
+                  accept=".zip,.tar.gz,.rar,.7z,.pdf,.docx,.txt,application/zip,application/x-zip-compressed,application/octet-stream"
                 />
               </label>
               <p className="text-[11px] text-slate-400 mt-0.5">Secure direct upload to private storage. Maximum file size: 2GB.</p>

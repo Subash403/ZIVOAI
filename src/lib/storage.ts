@@ -15,7 +15,14 @@ import { getJwtSecret } from './auth';
 export const MAX_PRIVATE_DELIVERABLE_SIZE_BYTES = 2 * 1024 * 1024 * 1024;
 const PRIVATE_UPLOAD_TOKEN_TTL_MS = 15 * 60 * 1000;
 const ALLOWED_PRIVATE_DELIVERABLES: Record<string, string[]> = {
-  '.zip': ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'],
+  '.zip': [
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/octet-stream',
+    'application/x-zip',
+    'multipart/x-zip',
+    'application/compressed',
+  ],
   '.tar.gz': ['application/gzip', 'application/x-gzip', 'application/octet-stream'],
   '.rar': ['application/vnd.rar', 'application/x-rar-compressed', 'application/octet-stream'],
   '.7z': ['application/x-7z-compressed', 'application/octet-stream'],
@@ -30,9 +37,28 @@ export interface PrivateDeliverableUpload {
   sizeBytes: number;
 }
 
+export function inferDeliverableContentType(fileName: string, providedType?: string): string {
+  const normalizedType = (providedType || '').trim().toLowerCase();
+  const lowerName = fileName.trim().toLowerCase();
+
+  if (lowerName.endsWith('.zip')) {
+    if (normalizedType && ALLOWED_PRIVATE_DELIVERABLES['.zip'].includes(normalizedType)) {
+      return normalizedType;
+    }
+    return 'application/zip';
+  }
+  if (lowerName.endsWith('.tar.gz')) return normalizedType || 'application/gzip';
+  if (lowerName.endsWith('.rar')) return normalizedType || 'application/vnd.rar';
+  if (lowerName.endsWith('.7z')) return normalizedType || 'application/x-7z-compressed';
+  if (lowerName.endsWith('.pdf')) return normalizedType || 'application/pdf';
+  if (lowerName.endsWith('.docx')) return normalizedType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  if (lowerName.endsWith('.txt')) return normalizedType || 'text/plain';
+  return normalizedType || 'application/octet-stream';
+}
+
 export function validatePrivateDeliverableUpload({ fileName, contentType, sizeBytes }: PrivateDeliverableUpload): string | null {
   const normalizedName = fileName.trim();
-  const normalizedType = contentType.trim().toLowerCase();
+  const effectiveType = (contentType || inferDeliverableContentType(fileName)).trim().toLowerCase();
   const extension = Object.keys(ALLOWED_PRIVATE_DELIVERABLES).find((candidate) => normalizedName.toLowerCase().endsWith(candidate));
   if (!normalizedName || normalizedName.length > 180 || !extension) {
     return 'Unsupported deliverable file type.';
@@ -40,7 +66,7 @@ export function validatePrivateDeliverableUpload({ fileName, contentType, sizeBy
   if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > MAX_PRIVATE_DELIVERABLE_SIZE_BYTES) {
     return `Deliverables must be between 1 byte and ${MAX_PRIVATE_DELIVERABLE_SIZE_BYTES / (1024 * 1024 * 1024)} GB.`;
   }
-  if (!normalizedType || !ALLOWED_PRIVATE_DELIVERABLES[extension].includes(normalizedType)) {
+  if (!effectiveType || !ALLOWED_PRIVATE_DELIVERABLES[extension].includes(effectiveType)) {
     return 'The declared file type does not match an allowed deliverable format.';
   }
   return null;
@@ -130,45 +156,69 @@ export async function createPrivatePresignedUpload(upload: PrivateDeliverableUpl
 }> {
   const validationError = validatePrivateDeliverableUpload(upload);
   if (validationError) throw new Error(validationError);
-  if (!isR2Configured()) throw new Error('Private uploads require configured R2 storage.');
 
   const fileName = sanitizePrivateDeliverableName(upload.fileName);
   const key = createPrivateDeliverableKey(fileName);
+  const effectiveContentType = upload.contentType || inferDeliverableContentType(fileName);
+
+  if (isR2Configured()) {
+    const requiredHeaders = {
+      'content-type': effectiveContentType,
+      'x-amz-meta-original-name': fileName,
+      'x-amz-meta-upload-kind': 'private-deliverable',
+    };
+    const uploadUrl = await getSignedUrl(
+      getR2Client(),
+      new PutObjectCommand({
+        Bucket: getPrivateBucketName(),
+        Key: key,
+        ContentType: effectiveContentType,
+        Metadata: { 'original-name': fileName, 'upload-kind': 'private-deliverable' },
+      }),
+      { expiresIn: 10 * 60 }
+    );
+
+    return { key, uploadUrl, requiredHeaders, fileName };
+  }
+
+  // Local fallback when Cloudflare R2 is not configured
+  const uploadUrl = `/api/admin/projects/upload?key=${encodeURIComponent(key)}`;
   const requiredHeaders = {
-    'content-type': upload.contentType,
-    'x-amz-meta-original-name': fileName,
-    'x-amz-meta-upload-kind': 'private-deliverable',
+    'content-type': effectiveContentType,
   };
-  const uploadUrl = await getSignedUrl(
-    getR2Client(),
-    new PutObjectCommand({
-      Bucket: getPrivateBucketName(),
-      Key: key,
-      ContentType: upload.contentType,
-      Metadata: { 'original-name': fileName, 'upload-kind': 'private-deliverable' },
-    }),
-    { expiresIn: 10 * 60 }
-  );
 
   return { key, uploadUrl, requiredHeaders, fileName };
 }
 
 export async function verifyPrivatePresignedUpload(upload: PrivateDeliverableUpload & { key: string }): Promise<boolean> {
   const validationError = validatePrivateDeliverableUpload(upload);
-  if (validationError || !isR2Configured() || !upload.key.startsWith('deliverables/')) return false;
+  if (validationError || !upload.key.startsWith('deliverables/')) return false;
 
+  if (isR2Configured()) {
+    try {
+      const result = await getR2Client().send(
+        new HeadObjectCommand({ Bucket: getPrivateBucketName(), Key: upload.key })
+      );
+      return (
+        result.ContentLength === upload.sizeBytes &&
+        result.ContentType?.toLowerCase() === upload.contentType.toLowerCase() &&
+        result.Metadata?.['original-name'] === sanitizePrivateDeliverableName(upload.fileName) &&
+        result.Metadata?.['upload-kind'] === 'private-deliverable'
+      );
+    } catch (error) {
+      console.warn('Private upload finalization check failed:', error);
+      return false;
+    }
+  }
+
+  // Local filesystem fallback
   try {
-    const result = await getR2Client().send(
-      new HeadObjectCommand({ Bucket: getPrivateBucketName(), Key: upload.key })
-    );
-    return (
-      result.ContentLength === upload.sizeBytes &&
-      result.ContentType?.toLowerCase() === upload.contentType.toLowerCase() &&
-      result.Metadata?.['original-name'] === sanitizePrivateDeliverableName(upload.fileName) &&
-      result.Metadata?.['upload-kind'] === 'private-deliverable'
-    );
-  } catch (error) {
-    console.warn('Private upload finalization check failed:', error);
+    const localFileName = path.basename(upload.key);
+    const localFilePath = path.join(process.cwd(), 'storage', 'private-downloads', localFileName);
+    if (!fs.existsSync(localFilePath)) return false;
+    const stats = fs.statSync(localFilePath);
+    return stats.size === upload.sizeBytes;
+  } catch {
     return false;
   }
 }

@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   createPrivatePresignedUpload,
   createPrivateUploadFinalizationToken,
@@ -8,10 +10,12 @@ import {
   validatePrivateDeliverableUpload,
   verifyPrivatePresignedUpload,
   verifyPrivateUploadFinalizationToken,
+  inferDeliverableContentType,
 } from '../src/lib/storage';
-import { POST as legacyUpload } from '../src/app/api/admin/projects/upload/route';
+import { POST as legacyUpload, PUT as putUpload } from '../src/app/api/admin/projects/upload/route';
 import { POST as initiateUpload } from '../src/app/api/admin/projects/upload/initiate/route';
 import { POST as finalizeUpload } from '../src/app/api/admin/projects/upload/finalize/route';
+import { signAdminToken, ADMIN_TOKEN_COOKIE_NAME } from '../src/lib/auth';
 
 const validUpload = {
   key: 'deliverables/1234_test-project.zip',
@@ -91,5 +95,72 @@ test('presigned uploads are short-lived and successful object checks require exa
     else environment.R2_ACCESS_KEY_ID = previous.access;
     if (previous.secret === undefined) delete environment.R2_SECRET_ACCESS_KEY;
     else environment.R2_SECRET_ACCESS_KEY = previous.secret;
+  }
+});
+
+test('local fallback seamlessly handles ZIP uploads when R2 is not configured', async () => {
+  const adminCookie = `${ADMIN_TOKEN_COOKIE_NAME}=${signAdminToken({ userId: 'admin_test', email: 'admin@zivo.ai', role: 'ADMIN' })}`;
+  const sampleContent = Buffer.from('PK\x03\x04DummyZipContentForTesting');
+
+  // 1. Initiate upload without contentType (tests Windows browser empty MIME type fallback)
+  const initReq = new Request('https://example.test/api/admin/projects/upload/initiate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', cookie: adminCookie },
+    body: JSON.stringify({
+      fileName: 'my-source-code.zip',
+      contentType: '',
+      sizeBytes: sampleContent.length,
+    }),
+  });
+  const initRes = await initiateUpload(initReq);
+  assert.equal(initRes.status, 200);
+  const initData = await initRes.json();
+  assert.equal(initData.success, true);
+  assert.ok(initData.key.startsWith('deliverables/'));
+  assert.equal(initData.contentType, 'application/zip');
+  assert.match(initData.uploadUrl, /^\/api\/admin\/projects\/upload\?key=/);
+
+  // 2. Execute PUT to uploadUrl
+  const putReq = new Request(`https://example.test${initData.uploadUrl}`, {
+    method: 'PUT',
+    headers: { cookie: adminCookie },
+    body: sampleContent,
+  });
+  const putRes = await putUpload(putReq);
+  assert.equal(putRes.status, 200);
+  const putData = await putRes.json();
+  assert.equal(putData.success, true);
+
+  // 3. Finalize upload
+  const finReq = new Request('https://example.test/api/admin/projects/upload/finalize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', cookie: adminCookie },
+    body: JSON.stringify({
+      key: initData.key,
+      fileName: initData.fileName,
+      contentType: initData.contentType,
+      sizeBytes: initData.sizeBytes,
+    }),
+  });
+  const finRes = await finalizeUpload(finReq);
+  assert.equal(finRes.status, 200);
+  const finData = await finRes.json();
+  assert.equal(finData.success, true);
+  assert.ok(finData.uploadToken);
+  assert.equal(
+    verifyPrivateUploadFinalizationToken(finData.uploadToken, {
+      key: initData.key,
+      fileName: initData.fileName,
+      contentType: initData.contentType,
+      sizeBytes: initData.sizeBytes,
+    }),
+    true
+  );
+
+  // Clean up test file on disk
+  const localFileName = path.basename(initData.key);
+  const localFilePath = path.join(process.cwd(), 'storage', 'private-downloads', localFileName);
+  if (fs.existsSync(localFilePath)) {
+    fs.unlinkSync(localFilePath);
   }
 });
