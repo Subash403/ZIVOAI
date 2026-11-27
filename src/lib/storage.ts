@@ -153,6 +153,7 @@ export async function createPrivatePresignedUpload(upload: PrivateDeliverableUpl
   uploadUrl: string;
   requiredHeaders: Record<string, string>;
   fileName: string;
+  storageBackend: 'r2' | 'local';
 }> {
   const validationError = validatePrivateDeliverableUpload(upload);
   if (validationError) throw new Error(validationError);
@@ -178,16 +179,23 @@ export async function createPrivatePresignedUpload(upload: PrivateDeliverableUpl
       { expiresIn: 10 * 60 }
     );
 
-    return { key, uploadUrl, requiredHeaders, fileName };
+    return { key, uploadUrl, requiredHeaders, fileName, storageBackend: 'r2' };
   }
 
-  // Local fallback when Cloudflare R2 is not configured
+  // In production, local storage is strictly disallowed to prevent ephemeral data loss
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Cloudflare R2 private storage is not configured for production. Please configure R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_PRIVATE.'
+    );
+  }
+
+  // Local fallback when Cloudflare R2 is not configured (development/test only)
   const uploadUrl = `/api/admin/projects/upload?key=${encodeURIComponent(key)}`;
   const requiredHeaders = {
     'content-type': effectiveContentType,
   };
 
-  return { key, uploadUrl, requiredHeaders, fileName };
+  return { key, uploadUrl, requiredHeaders, fileName, storageBackend: 'local' };
 }
 
 export async function verifyPrivatePresignedUpload(upload: PrivateDeliverableUpload & { key: string }): Promise<boolean> {
@@ -211,7 +219,13 @@ export async function verifyPrivatePresignedUpload(upload: PrivateDeliverableUpl
     }
   }
 
-  // Local filesystem fallback
+  // Local filesystem fallback is strictly forbidden in production
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Cannot verify deliverable on local filesystem in production.');
+    return false;
+  }
+
+  // Local filesystem fallback (development/test only)
   try {
     const localFileName = path.basename(upload.key);
     const localFilePath = path.join(process.cwd(), 'storage', 'private-downloads', localFileName);

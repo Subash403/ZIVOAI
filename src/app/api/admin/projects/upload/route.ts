@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 import { getAdminSession } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   void request;
@@ -13,6 +17,13 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { error: 'Direct local upload is disabled in production. Cloudflare R2 storage is required.' },
+        { status: 403 }
+      );
+    }
+
     const session = await getAdminSession(request);
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized admin access' }, { status: 401 });
@@ -32,13 +43,21 @@ export async function PUT(request: Request) {
     const localFileName = path.basename(key);
     const targetFilePath = path.join(storageDir, localFileName);
 
-    const arrayBuffer = await request.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    fs.writeFileSync(targetFilePath, buffer);
+    if (!request.body) {
+      return NextResponse.json({ error: 'Empty file body' }, { status: 400 });
+    }
 
-    return NextResponse.json({ success: true, key, size: buffer.length });
+    // Stream directly to disk for low memory consumption and high performance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nodeStream = Readable.fromWeb(request.body as any);
+    const fileWriteStream = fs.createWriteStream(targetFilePath);
+    await pipeline(nodeStream, fileWriteStream);
+
+    const stats = fs.statSync(targetFilePath);
+    return NextResponse.json({ success: true, key, size: stats.size });
   } catch (error) {
     console.error('Local private upload failed:', error);
-    return NextResponse.json({ error: 'Failed to process deliverable upload.' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to process deliverable upload.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

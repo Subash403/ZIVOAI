@@ -164,3 +164,108 @@ test('local fallback seamlessly handles ZIP uploads when R2 is not configured', 
     fs.unlinkSync(localFilePath);
   }
 });
+
+test('production mode strictly requires Cloudflare R2 and forbids local disk fallback', async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const previousEnv = env.NODE_ENV;
+  const previousJwt = env.JWT_SECRET;
+  env.JWT_SECRET = 'production-test-jwt-secret-with-minimum-32-characters-length';
+  const adminCookie = `${ADMIN_TOKEN_COOKIE_NAME}=${signAdminToken({ userId: 'admin_test', email: 'admin@zivo.ai', role: 'ADMIN' })}`;
+  env.NODE_ENV = 'production';
+
+  try {
+    // 1. Initiate must fail with 503 when R2 is unconfigured in production
+    const initReq = new Request('https://example.test/api/admin/projects/upload/initiate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({
+        fileName: 'prod-release.zip',
+        contentType: 'application/zip',
+        sizeBytes: 1024,
+      }),
+    });
+    const initRes = await initiateUpload(initReq);
+    assert.equal(initRes.status, 503);
+    const initData = await initRes.json();
+    assert.match(initData.error, /Cloudflare R2 private storage is not configured for production/i);
+
+    // 2. PUT to local upload route must be rejected with 403 in production
+    const putReq = new Request('https://example.test/api/admin/projects/upload?key=deliverables/test.zip', {
+      method: 'PUT',
+      headers: { cookie: adminCookie },
+      body: Buffer.from('test data'),
+    });
+    const putRes = await putUpload(putReq);
+    assert.equal(putRes.status, 403);
+    const putData = await putRes.json();
+    assert.match(putData.error, /disabled in production/i);
+
+    // 3. verifyPrivatePresignedUpload returns false in production for local keys
+    const verified = await verifyPrivatePresignedUpload({
+      key: 'deliverables/test.zip',
+      fileName: 'test.zip',
+      contentType: 'application/zip',
+      sizeBytes: 9,
+    });
+    assert.equal(verified, false);
+  } finally {
+    env.NODE_ENV = previousEnv;
+    if (previousJwt !== undefined) env.JWT_SECRET = previousJwt;
+    else delete env.JWT_SECRET;
+  }
+});
+
+test('verifies complete upload lifecycle with small and larger ZIP archives in local development', async () => {
+  const adminCookie = `${ADMIN_TOKEN_COOKIE_NAME}=${signAdminToken({ userId: 'admin_test', email: 'admin@zivo.ai', role: 'ADMIN' })}`;
+
+  // Test with a larger 256KB ZIP payload
+  const largePayload = Buffer.concat([
+    Buffer.from('PK\x03\x04LargeZipHeader'),
+    Buffer.alloc(256 * 1024, 0x41), // 256KB of data
+  ]);
+
+  const initReq = new Request('https://example.test/api/admin/projects/upload/initiate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', cookie: adminCookie },
+    body: JSON.stringify({
+      fileName: 'large-deep-learning-model.zip',
+      contentType: 'application/zip',
+      sizeBytes: largePayload.length,
+    }),
+  });
+  const initRes = await initiateUpload(initReq);
+  assert.equal(initRes.status, 200);
+  const initData = await initRes.json();
+
+  const putReq = new Request(`https://example.test${initData.uploadUrl}`, {
+    method: 'PUT',
+    headers: { cookie: adminCookie },
+    body: largePayload,
+  });
+  const putRes = await putUpload(putReq);
+  assert.equal(putRes.status, 200);
+  const putData = await putRes.json();
+  assert.equal(putData.size, largePayload.length);
+
+  const finReq = new Request('https://example.test/api/admin/projects/upload/finalize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', cookie: adminCookie },
+    body: JSON.stringify({
+      key: initData.key,
+      fileName: initData.fileName,
+      contentType: initData.contentType,
+      sizeBytes: initData.sizeBytes,
+    }),
+  });
+  const finRes = await finalizeUpload(finReq);
+  assert.equal(finRes.status, 200);
+  const finData = await finRes.json();
+  assert.ok(finData.uploadToken);
+
+  // Clean up
+  const localFileName = path.basename(initData.key);
+  const localFilePath = path.join(process.cwd(), 'storage', 'private-downloads', localFileName);
+  if (fs.existsSync(localFilePath)) {
+    fs.unlinkSync(localFilePath);
+  }
+});

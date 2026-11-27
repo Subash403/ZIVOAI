@@ -128,6 +128,25 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         throw new Error(initData.error || 'Could not start secure upload');
       }
 
+      // Extract safe diagnostic target host without leaking signed tokens or secrets
+      let targetHost = 'secure storage';
+      let isCrossDomain = false;
+      try {
+        const parsedUrl = new URL(initData.uploadUrl, window.location.origin);
+        targetHost = parsedUrl.host;
+        isCrossDomain = parsedUrl.origin !== window.location.origin;
+      } catch {
+        targetHost = 'storage endpoint';
+      }
+
+      console.info('[Zivo Deliverable Upload]', {
+        destinationHost: targetHost,
+        isCrossDomain,
+        storageBackend: initData.storageBackend || 'unknown',
+        fileSize: file.size,
+        mimeType: resolvedContentType,
+      });
+
       await new Promise<void>((resolve, reject) => {
         const upload = new XMLHttpRequest();
         upload.open('PUT', initData.uploadUrl);
@@ -139,8 +158,81 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         upload.upload.onprogress = (event) => {
           if (event.lengthComputable) setUploadProgress(Math.round((event.loaded / event.total) * 100));
         };
-        upload.onerror = () => reject(new Error('Upload to secure storage failed.'));
-        upload.onload = () => (upload.status >= 200 && upload.status < 300 ? resolve() : reject(new Error('Upload to secure storage was rejected.')));
+
+        upload.onerror = () => {
+          if (upload.status === 0) {
+            if (isCrossDomain) {
+              reject(
+                new Error(
+                  `Upload blocked by browser connecting to ${targetHost}. If using Cloudflare R2, verify bucket CORS allows origin '${window.location.origin}' with method PUT and headers (Content-Type, x-amz-meta-*).`
+                )
+              );
+            } else {
+              reject(
+                new Error(`Network error transferring file to ${targetHost}. Please verify your connection and server status.`)
+              );
+            }
+            return;
+          }
+          reject(new Error(`Storage transfer failed with network error (HTTP ${upload.status} ${upload.statusText || ''})`));
+        };
+
+        upload.ontimeout = () => {
+          reject(new Error(`Upload connection timed out while transferring file to ${targetHost}.`));
+        };
+
+        upload.onload = () => {
+          if (upload.status >= 200 && upload.status < 300) {
+            resolve();
+            return;
+          }
+
+          let detail = '';
+          try {
+            const text = upload.responseText;
+            if (text) {
+              const codeMatch = text.match(/<Code>(.*?)<\/Code>/i);
+              const msgMatch = text.match(/<Message>(.*?)<\/Message>/i);
+              if (codeMatch?.[1] || msgMatch?.[1]) {
+                detail = ` [${codeMatch?.[1] || ''}: ${msgMatch?.[1] || ''}]`.trim();
+              } else if (text.startsWith('{')) {
+                const json = JSON.parse(text);
+                if (json.error) detail = ` (${json.error})`;
+              }
+            }
+          } catch {}
+
+          if (upload.status === 403) {
+            reject(
+              new Error(
+                `Storage authorization rejected (HTTP 403)${detail}. The presigned URL signature or required metadata headers were rejected by ${targetHost}.`
+              )
+            );
+          } else if (upload.status === 404) {
+            reject(
+              new Error(
+                `Storage target not found (HTTP 404)${detail}. Verify that the target R2 bucket exists in Cloudflare.`
+              )
+            );
+          } else if (upload.status === 413) {
+            reject(
+              new Error(`File size exceeds server or gateway payload limit (HTTP 413)${detail}. Maximum file size is 2GB.`)
+            );
+          } else if (upload.status === 401) {
+            reject(
+              new Error(`Administrator session expired (HTTP 401). Please refresh your admin session and retry.`)
+            );
+          } else if (upload.status >= 500) {
+            reject(
+              new Error(`Storage server error (HTTP ${upload.status})${detail} from ${targetHost}. Please retry in a few moments.`)
+            );
+          } else {
+            reject(
+              new Error(`Upload rejected by ${targetHost} with status ${upload.status} (${upload.statusText || 'Error'})${detail}.`)
+            );
+          }
+        };
+
         upload.send(file);
       });
 

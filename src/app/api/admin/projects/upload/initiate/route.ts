@@ -4,6 +4,8 @@ import {
   createPrivatePresignedUpload,
   validatePrivateDeliverableUpload,
   inferDeliverableContentType,
+  isR2Configured,
+  getPrivateBucketName,
 } from '@/lib/storage';
 
 export async function POST(request: Request) {
@@ -31,6 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       ...result,
+      bucket: isR2Configured() ? getPrivateBucketName() : 'local',
       sizeBytes: upload.sizeBytes,
       contentType: upload.contentType,
     });
