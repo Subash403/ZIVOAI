@@ -129,7 +129,7 @@ export default function ImageUploadField({
             onClick={() => setMode('upload')}
             className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 ${
               mode === 'upload'
-                ? 'bg-white text-indigo-600 shadow-xs'
+                ? 'bg-white text-[#0089CF] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -140,7 +140,7 @@ export default function ImageUploadField({
             onClick={() => setMode('url')}
             className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 ${
               mode === 'url'
-                ? 'bg-white text-indigo-600 shadow-xs'
+                ? 'bg-white text-[#0089CF] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -229,7 +229,7 @@ export default function ImageUploadField({
               >
                 {uploading ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0089CF]" />
                     <span>Replacing...</span>
                   </>
                 ) : (
@@ -255,7 +255,7 @@ export default function ImageUploadField({
         /* Empty State: Upload File or URL Input */
         <div className="space-y-3">
           {mode === 'upload' ? (
-            <div className="p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-500 bg-slate-50 hover:bg-indigo-50/20 transition-all flex flex-col items-center justify-center text-center space-y-3 cursor-pointer"
+            <div className="p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#0089CF] bg-slate-50 hover:bg-[#F0F9FF] transition-all flex flex-col items-center justify-center text-center space-y-3 cursor-pointer"
                  onClick={() => !uploading && fileInputRef.current?.click()}
             >
               <input
@@ -266,9 +266,9 @@ export default function ImageUploadField({
                 className="hidden"
               />
 
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+              <div className="w-12 h-12 rounded-2xl bg-[#F0F9FF] text-[#0089CF] flex items-center justify-center border border-[#BAE6FD]">
                 {uploading ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                  <Loader2 className="w-6 h-6 animate-spin text-[#0089CF]" />
                 ) : (
                   <Upload className="w-6 h-6" />
                 )}
@@ -286,7 +286,7 @@ export default function ImageUploadField({
               <button
                 type="button"
                 disabled={uploading}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-indigo-600 text-xs font-bold shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-[#0089CF] text-xs font-bold shadow-2xs"
                 onClick={(e) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();
@@ -301,14 +301,14 @@ export default function ImageUploadField({
               <div className="relative">
                 <input
                   type="url"
-                  placeholder={placeholderUrl || 'https://images.unsplash.com/... or /uploads/...'}
+                  placeholder={placeholderUrl || 'Enter an image URL or /uploads/... path'}
                   value={value}
                   onChange={(e) => onChange(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF] bg-white"
                 />
               </div>
               <p className="text-[11px] text-slate-400">
-                Paste an external CDN, Unsplash, or public image URL.
+                Paste a public image URL or upload an image file.
               </p>
             </div>
           )}

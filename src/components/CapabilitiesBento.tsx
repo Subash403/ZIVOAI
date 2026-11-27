@@ -20,6 +20,8 @@ interface CapabilityCard {
   category: string;
   icon: React.ElementType;
   tags: string[];
+  accentColor: string;
+  softBg: string;
   isFeatured?: boolean;
 }
 
@@ -27,44 +29,59 @@ const CAPABILITIES: CapabilityCard[] = [
   {
     id: 'gen-ai',
     title: 'Generative AI & LLMs',
-    description: 'Retrieval-augmented generation (RAG), autonomous multi-agent networks, prompt orchestration, and parameter-efficient fine-tuning on domain datasets.',
-    highlight: 'Flagship Core',
+    description:
+      'Retrieval-augmented generation (RAG), multi-agent orchestration, prompt workflows, and parameter-efficient fine-tuning on domain datasets.',
+    highlight: 'Flagship AI Core',
     category: 'Artificial Intelligence',
     icon: Cpu,
-    tags: ['RAG Pipelines', 'Autonomous Agents', 'Llama 3 & GPT-4', 'Fine-Tuning'],
+    tags: ['RAG Pipelines', 'AI Agents', 'LLM APIs', 'Fine-Tuning'],
+    accentColor: '#0089CF',
+    softBg: 'bg-[#F0F9FF]',
     isFeatured: true,
   },
   {
     id: 'fullstack',
     title: 'Full-Stack Web & SaaS',
-    description: 'Production-ready Next.js architectures, type-safe API gateways, resilient microservices, and serverless database integration.',
+    description:
+      'Production-ready Next.js architectures, type-safe API gateways, relational databases, and commercial authentication flows.',
     category: 'Web Development',
     icon: Code2,
-    tags: ['Next.js 16', 'FastAPI', 'PostgreSQL', 'Tailwind CSS'],
+    tags: ['Next.js 16', 'FastAPI', 'PostgreSQL'],
+    accentColor: '#ED1C24',
+    softBg: 'bg-[#FEF2F2]',
   },
   {
     id: 'vision',
-    title: 'Computer Vision & AI',
-    description: 'Real-time object detection, segmentation masks, video analytics pipelines, and neural network inference acceleration.',
-    category: 'Computer Vision',
+    title: 'Computer Vision & ML',
+    description:
+      'Object detection, segmentation masks, predictive analytics pipelines, and real-time model inference services.',
+    category: 'Machine Learning',
     icon: Eye,
-    tags: ['PyTorch', 'OpenCV', 'YOLOv10', 'ONNX Runtime'],
+    tags: ['PyTorch', 'OpenCV', 'ONNX Runtime'],
+    accentColor: '#D97706',
+    softBg: 'bg-[#FFFBEB]',
   },
   {
     id: 'cloud',
     title: 'Cloud & Microservices',
-    description: 'Containerized deployment pipelines, asynchronous message queues, Docker environments, and high-throughput REST/gRPC endpoints.',
+    description:
+      'Containerized deployment templates, async task workers, Docker environments, and high-throughput REST/gRPC backends.',
     category: 'Cloud Computing',
     icon: Cloud,
-    tags: ['Docker', 'Kubernetes', 'Redis', 'Kafka'],
+    tags: ['Docker', 'Kubernetes', 'Redis'],
+    accentColor: '#008C44',
+    softBg: 'bg-[#F0FDF4]',
   },
   {
     id: 'edge-iot',
     title: 'Edge AI & IoT Systems',
-    description: 'Embedded machine learning runtimes, microcontroller firmware, smart sensor telemetry, and MQTT device communication.',
+    description:
+      'Embedded machine learning runtimes, microcontroller firmware, smart sensor telemetry, and MQTT pipelines.',
     category: 'IoT',
     icon: Radio,
-    tags: ['ESP32', 'ROS2', 'MQTT', 'Edge Computing'],
+    tags: ['ESP32', 'MQTT', 'Edge AI'],
+    accentColor: '#0089CF',
+    softBg: 'bg-[#F0F9FF]',
   },
 ];
 
@@ -73,145 +90,156 @@ export default function CapabilitiesBento({ showStats = true }: { showStats?: bo
   const supporting = CAPABILITIES.filter((c) => !c.isFeatured);
 
   return (
-    <section
-      id="capabilities"
-      className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-        {/* Left Column: Editorial Introduction */}
-        <div className="lg:col-span-4 lg:sticky lg:top-28 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-[11px] font-mono font-bold tracking-wider uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-            ZIVO AI / CAPABILITIES
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.08]">
-              Intelligence, engineered.
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-              From generative AI to full-stack systems, explore the technologies behind what we build.
-            </p>
-          </div>
-
-          <div className="pt-2">
-            <Link
-              href="/projects"
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all duration-200 group"
-            >
-              <span>Explore capabilities</span>
-              <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-white group-hover:translate-x-1 transition-all" />
-            </Link>
-          </div>
-
-          {/* Factual Platform Capabilities Callout (ZAI-058 — replaces unsupported 100%/1-3h claims) */}
-          {showStats && (
-            <div className="pt-6 border-t border-slate-200/80 grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-xl font-black text-slate-900 font-mono">Private R2</div>
-                <div className="text-xs text-slate-500 font-medium mt-0.5">Signed Dashboard Delivery</div>
-              </div>
-              <div>
-                <div className="text-xl font-black text-indigo-600 font-mono">8-Stage</div>
-                <div className="text-xs text-slate-500 font-medium mt-0.5">Custom Build Tracking</div>
-              </div>
+    <section id="capabilities" className="border-y border-[#E5E7EB] bg-[#F9FAFB] py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-12">
+          {/* Left Column: Editorial Introduction */}
+          <div className="space-y-6 lg:col-span-4 lg:sticky lg:top-28">
+            <div className="inline-flex items-center gap-2 text-[11px] font-heading font-bold uppercase tracking-[0.12em] text-[#0089CF]">
+              <span className="h-[2px] w-6 bg-[#0089CF]" aria-hidden="true" />
+              AI Solutions &amp; Categories
             </div>
-          )}
-        </div>
 
-        {/* Right Column: Asymmetric Bento Grid */}
-        <div className="lg:col-span-8 space-y-4 sm:space-y-5">
-          {/* 1. Prominent Feature Card (Generative AI & LLMs) */}
-          <Link
-            href={`/projects?category=${encodeURIComponent(featured.category)}`}
-            className="group block relative p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-xs hover:border-indigo-400/90 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-200 overflow-hidden"
-          >
-            {/* Subtle Top Accent Ribbon */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-600" />
+            <div className="space-y-3">
+              <h2 className="font-heading text-3xl font-extrabold leading-[1.13] tracking-[-0.03em] text-[#0A0A0A] sm:text-4xl">
+                Intelligence, engineered for real delivery.
+              </h2>
+              <p className="text-sm leading-relaxed text-[#4B5563]">
+                Explore ready-made software categories and AI/ML solution stacks — each structured with clean repositories, environment guides, and clear deliverables.
+              </p>
+            </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200 shrink-0">
-                  <featured.icon className="w-6 h-6" />
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Link
+                href="/projects"
+                className="inline-flex h-11 items-center gap-2 rounded-sm bg-[#ED1C24] px-6 font-heading text-[11px] font-bold uppercase tracking-[0.09em] text-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#D1171F] hover:shadow-md"
+              >
+                <span>Explore Categories</span>
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/projects/finder"
+                className="inline-flex h-11 items-center gap-2 rounded-sm border border-[#0A0A0A] px-5 font-heading text-[11px] font-bold uppercase tracking-[0.09em] text-[#0A0A0A] transition-colors hover:bg-[#0A0A0A] hover:text-white"
+              >
+                <span>AI Finder</span>
+              </Link>
+            </div>
+
+            {/* Factual Platform Pillars (Quad-Accent Styled) */}
+            {showStats && (
+              <div className="grid grid-cols-2 gap-4 border-t border-[#E5E7EB] pt-6">
+                <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
+                  <div className="font-heading text-lg font-extrabold text-[#0089CF]">Private R2</div>
+                  <div className="mt-0.5 text-[11px] font-medium text-[#6B7280]">Signed Cloud Delivery</div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
+                  <div className="font-heading text-lg font-extrabold text-[#008C44]">8-Stage</div>
+                  <div className="mt-0.5 text-[11px] font-medium text-[#6B7280]">Custom Build Tracking</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Clean Editorial Cards */}
+          <div className="space-y-4 lg:col-span-8 sm:space-y-5">
+            {/* Flagship Featured Card */}
+            <Link
+              href={`/projects?category=${encodeURIComponent(featured.category)}`}
+              className="group relative block overflow-hidden rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0089CF] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0089CF] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:transform-none sm:p-7"
+            >
+              <div className="absolute top-0 left-0 right-0 zivo-quad-bar zivo-quad-bar-thin" aria-hidden="true">
+                <span className="bg-[#0089CF]" />
+                <span className="bg-[#ED1C24]" />
+                <span className="bg-[#FDB913]" />
+                <span className="bg-[#008C44]" />
+              </div>
+
+              <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                <div className="flex items-center gap-3.5">
+                  <div
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent text-[#0089CF] transition-colors duration-200"
+                  >
+                    <featured.icon className="h-6 w-6 text-current transition-colors duration-200" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <span className="inline-block rounded bg-[#F0F9FF] px-2 py-0.5 font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-[#0089CF]">
                       {featured.highlight}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium hidden sm:inline">•</span>
-                    <span className="text-xs text-slate-500 font-medium hidden sm:inline">Production Core</span>
+                    <h3 className="mt-1 font-heading text-xl font-extrabold text-[#0A0A0A] transition-colors duration-200 group-hover:text-[#0089CF] sm:text-2xl">
+                      {featured.title}
+                    </h3>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 group-hover:text-indigo-600 transition-colors">
-                    {featured.title}
-                  </h3>
+                </div>
+
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] text-[#6B7280] transition-all duration-200 group-hover:border-[#0089CF] group-hover:text-[#0089CF]">
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                 </div>
               </div>
 
-              <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0">
-                <ArrowUpRight className="w-4 h-4" />
+              <p className="mb-5 max-w-2xl text-sm leading-relaxed text-[#4B5563]">
+                {featured.description}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2 border-t border-[#F3F4F6] pt-4">
+                {featured.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-xs font-semibold text-[#374151]"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
-            </div>
+            </Link>
 
-            <p className="text-sm text-slate-600 leading-relaxed font-normal mb-6 max-w-2xl">
-              {featured.description}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100">
-              {featured.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs font-semibold px-3 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80 group-hover:border-indigo-200 group-hover:bg-indigo-50/50 transition-colors"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </Link>
-
-          {/* 2x2 Supporting Bento Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-            {supporting.map((card) => {
-              const Icon = card.icon;
-              return (
-                <Link
-                  key={card.id}
-                  href={`/projects?category=${encodeURIComponent(card.category)}`}
-                  className="group flex flex-col justify-between p-5 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-200"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-700 group-hover:bg-indigo-50 group-hover:border-indigo-200 group-hover:text-indigo-600 transition-colors shrink-0">
-                        <Icon className="w-5 h-5" />
+            {/* 2x2 Supporting Cards Grid */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+              {supporting.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <Link
+                    key={card.id}
+                    href={`/projects?category=${encodeURIComponent(card.category)}`}
+                    className="group flex flex-col justify-between rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0089CF] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0089CF] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:transform-none sm:p-6"
+                  >
+                    <div className="space-y-3.5">
+                      <div className="flex items-center justify-between">
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent transition-colors duration-200"
+                          style={{ color: card.accentColor }}
+                        >
+                          <Icon className="h-5 w-5 text-current transition-colors duration-200" aria-hidden="true" />
+                        </div>
+                        <ArrowUpRight
+                          className="h-4 w-4 text-[#9CA3AF] transition-colors duration-200 group-hover:text-[#0089CF]"
+                          aria-hidden="true"
+                        />
                       </div>
-                      <div className="w-7 h-7 rounded-full border border-transparent group-hover:border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all">
-                        <ArrowUpRight className="w-3.5 h-3.5" />
+
+                      <div>
+                        <h4 className="font-heading text-base font-bold text-[#0A0A0A] transition-colors duration-200 group-hover:text-[#0089CF]">
+                          {card.title}
+                        </h4>
+                        <p className="mt-1.5 text-xs leading-relaxed text-[#4B5563] line-clamp-3">
+                          {card.description}
+                        </p>
                       </div>
                     </div>
 
-                    <div>
-                      <h4 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                        {card.title}
-                      </h4>
-                      <p className="text-xs text-slate-600 leading-relaxed mt-1.5 font-normal line-clamp-3">
-                        {card.description}
-                      </p>
+                    <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-[#F3F4F6] pt-3.5">
+                      {card.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-0.5 text-[11px] font-medium text-[#4B5563]"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-1.5 pt-4 mt-4 border-t border-slate-100">
-                    {card.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200/70"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </Link>
-              );
-            })}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

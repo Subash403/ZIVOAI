@@ -681,4 +681,49 @@ test('Phase 6 & 7 (ZAI-044/054/114/116/119): Static UI, branding, accessibility,
   assert.doesNotMatch(css, /\.zivo-page::before\s*\{/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(read('src/app/layout.tsx'), /Skip to main content/i);
+
+  // Brand, Auth & Hero regressions: Login CTA, Google OAuth UI, viewport-aware Hero, centralized brand assets
+  const navbar = read('src/components/Navbar.tsx');
+  assert.match(navbar, /href="\/login"/);
+  assert.match(navbar, />Login</);
+  assert.match(navbar, /BrandLogo/);
+
+  const loginPage = read('src/app/login/page.tsx');
+  assert.match(loginPage, /Continue with Google/);
+  assert.match(loginPage, />\s*OR\s*</);
+  assert.match(loginPage, /BrandLogo/);
+
+  assert.match(hero, /lg:min-h-\[calc\(100svh-4\.25rem\)\]/);
+
+  for (const assetRel of [
+    'public/brand/zivo-logo-horizontal.png',
+    'public/brand/zivo-logo-horizontal-dark.png',
+    'public/brand/zivo-mark.png',
+    'public/brand/zivo-og.png',
+    'src/app/icon.png',
+  ]) {
+    assert.equal(fs.existsSync(path.join(process.cwd(), assetRel)), true, `Brand asset missing: ${assetRel}`);
+  }
+
+  // Footer logo container ONLY + demo/dummy data cleanup regressions
+  const footer = read('src/components/Footer.tsx');
+  assert.match(footer, /bg-\[#FAFAFA\][\s\S]{0,250}BrandLogo[\s\S]{0,180}tone="light"/);
+  assert.doesNotMatch(navbar, /bg-\[#FAFAFA\]/);
+
+  const seedFile = read('prisma/seed.ts');
+  assert.doesNotMatch(seedFile, /sampleProjects/);
+  assert.doesNotMatch(seedFile, /unsplash\.com/i);
+  assert.doesNotMatch(seedFile, /rzp_test_sample/i);
+
+  assert.doesNotMatch(read('src/components/ProjectForm.tsx'), /unsplash\.com/i);
+  assert.doesNotMatch(read('src/app/admin/projects/page.tsx'), /unsplash\.com/i);
+  for (const uiFile of [
+    'src/app/orders/confirmation/[orderId]/page.tsx',
+    'src/app/projects/custom/page.tsx',
+    'src/app/orders/track/page.tsx',
+    'src/app/account/page.tsx',
+    'src/app/page.tsx',
+  ]) {
+    assert.doesNotMatch(read(uiFile), /wa\.me\/918220303164/, `Hardcoded WhatsApp link found in ${uiFile}`);
+  }
 });

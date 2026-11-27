@@ -229,7 +229,7 @@ export default function AdminEnquiriesPage() {
 
         <button
           onClick={fetchEnquiries}
-          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl glass-panel hover:bg-white text-slate-700 border border-slate-200/80 text-xs font-bold shadow-xs transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs transition-colors"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Leads
         </button>
@@ -245,7 +245,7 @@ export default function AdminEnquiriesPage() {
       )}
 
       {/* Filter Toolbar */}
-      <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -256,7 +256,7 @@ export default function AdminEnquiriesPage() {
               setSearch(e.target.value);
             }}
             placeholder="Search by Lead ID, Student, Phone, College..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium"
           />
         </div>
 
@@ -283,7 +283,7 @@ export default function AdminEnquiriesPage() {
               setPage(1);
               setStatusFilter(e.target.value);
             }}
-            className="px-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+            className="px-3 py-2 rounded-xl bg-white/70 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium"
           >
             <option value="ALL">All Statuses</option>
             {statuses.map((st) => (
@@ -296,16 +296,21 @@ export default function AdminEnquiriesPage() {
       </div>
 
       {/* Data Table */}
-      <div className="glass-panel rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+            <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
             <p className="text-xs text-slate-500 font-medium">Loading enquiries...</p>
           </div>
         ) : enquiries.length === 0 ? (
           <div className="py-16 text-center space-y-3">
-            <MessageSquareText className="w-10 h-10 text-slate-400 mx-auto" />
-            <p className="text-sm text-slate-500 font-medium">No enquiries found matching filter.</p>
+            <MessageSquareText className="w-10 h-10 text-slate-300 mx-auto" />
+            <p className="text-sm font-bold text-slate-800">No client enquiries found</p>
+            <p className="text-xs text-slate-500">
+              {search || statusFilter !== 'ALL' || archivedFilter !== 'false'
+                ? 'Try adjusting your search criteria or resetting filters.'
+                : 'Custom project requests and inbound leads will appear here once submitted.'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -329,7 +334,7 @@ export default function AdminEnquiriesPage() {
                     {/* Lead ID & Date */}
                     <td className="p-4">
                       <div className="space-y-0.5">
-                        <span className="font-mono font-bold text-indigo-600 text-sm block">
+                        <span className="font-mono font-bold text-[#0089CF] text-sm block">
                           {enquiry.leadId}
                         </span>
                         <span className="text-[10px] text-slate-500 block font-medium">{formatDate(enquiry.createdAt)}</span>
@@ -341,11 +346,11 @@ export default function AdminEnquiriesPage() {
                       <div className="space-y-1">
                         <span className="font-bold text-slate-900 block">{enquiry.studentName}</span>
                         <div className="text-[11px] text-slate-600 space-y-0.5 font-medium">
-                          <a href={`tel:${enquiry.phone}`} className="hover:text-indigo-600 flex items-center gap-1">
+                          <a href={`tel:${enquiry.phone}`} className="hover:text-[#0089CF] flex items-center gap-1">
                             <PhoneCall className="w-3 h-3 text-emerald-600" /> {enquiry.phone}
                           </a>
-                          <a href={`mailto:${enquiry.email}`} className="hover:text-indigo-600 flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-indigo-600" /> {enquiry.email}
+                          <a href={`mailto:${enquiry.email}`} className="hover:text-[#0089CF] flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-[#0089CF]" /> {enquiry.email}
                           </a>
                         </div>
                       </div>
@@ -362,7 +367,7 @@ export default function AdminEnquiriesPage() {
                     {/* Interested Project / Scope */}
                     <td className="p-4 max-w-xs">
                       <div className="space-y-1">
-                        <span className="font-bold text-indigo-700 block line-clamp-1">
+                        <span className="font-bold text-[#0073B0] block line-clamp-1">
                           {enquiry.projectName || 'Custom Requirement'}
                         </span>
                         <p className="text-[11px] text-slate-600 line-clamp-2">{enquiry.requirements}</p>
@@ -371,7 +376,7 @@ export default function AdminEnquiriesPage() {
 
                     {/* Dev Stage */}
                     <td className="p-4">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 block text-center whitespace-nowrap">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#F0F9FF] text-[#0073B0] border border-[#0089CF]/30 block text-center whitespace-nowrap">
                         {enquiry.currentStage || 'Request Received'}
                       </span>
                     </td>
@@ -381,7 +386,7 @@ export default function AdminEnquiriesPage() {
                       <select
                         value={enquiry.status}
                         onChange={(e) => handleStatusChange(enquiry.id, e.target.value as LeadStatus)}
-                        className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-300 text-slate-900 text-[11px] font-bold focus:outline-none focus:border-indigo-600"
+                        className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-300 text-slate-900 text-[11px] font-bold focus:outline-none focus:border-[#0089CF]"
                       >
                         {statuses.map((st) => (
                           <option key={st} value={st}>
@@ -433,7 +438,7 @@ export default function AdminEnquiriesPage() {
                             setStageUpdateError(null);
                             setStageSuccessNotice(null);
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[11px] transition-colors whitespace-nowrap"
+                          className="px-3 py-1.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0073B0] border border-[#0089CF]/30 font-bold text-[11px] transition-colors whitespace-nowrap"
                         >
                           Manage Stage &amp; Notes
                         </button>
@@ -483,17 +488,17 @@ export default function AdminEnquiriesPage() {
 
       {/* Enquiry Detail & Development Stage Tracking Modal */}
       {selectedEnquiry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
-          <div className="relative w-full max-w-3xl glass-panel bg-white/95 border border-slate-200/80 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="relative w-full max-w-3xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-mono text-indigo-600 font-bold bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                <span className="text-xs font-mono text-[#0089CF] font-bold bg-[#F0F9FF] border border-[#0089CF]/30 px-2 py-0.5 rounded">
                   {selectedEnquiry.leadId}
                 </span>
                 <h3 className="text-lg font-bold text-slate-900">{selectedEnquiry.studentName}</h3>
-                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#005E91]">
                   {selectedEnquiry.currentStage || 'Request Received'}
                 </span>
               </div>
@@ -538,7 +543,7 @@ export default function AdminEnquiriesPage() {
 
               <div>
                 <span className="text-slate-500 font-bold block uppercase tracking-wider mb-1">Attached Project / Title</span>
-                <p className="text-sm font-bold text-indigo-600">{selectedEnquiry.projectName || 'Custom Project Request'}</p>
+                <p className="text-sm font-bold text-[#0089CF]">{selectedEnquiry.projectName || 'Custom Project Request'}</p>
               </div>
 
               <div>
@@ -549,12 +554,12 @@ export default function AdminEnquiriesPage() {
               </div>
 
               {/* 3. CUSTOM PROJECT DEVELOPMENT STAGE TRACKER (ADMIN CONTROL) */}
-              <div className="p-5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-4">
+              <div className="p-5 rounded-2xl bg-[#F0F9FF] border border-[#0089CF]/30 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A] block">
                     Custom Project Development Stage & Customer Updates
                   </span>
-                  <span className="text-[10px] text-indigo-700 font-medium">
+                  <span className="text-[10px] text-[#0073B0] font-medium">
                     Updates reflect directly on Customer&apos;s Track Order Page
                   </span>
                 </div>
@@ -581,7 +586,7 @@ export default function AdminEnquiriesPage() {
                     <select
                       value={stageInput}
                       onChange={(e) => setStageInput(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-indigo-600"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-[#0089CF]"
                     >
                       {allStages.map((st) => (
                         <option key={st} value={st}>
@@ -600,7 +605,7 @@ export default function AdminEnquiriesPage() {
                       value={estimatedDateInput}
                       onChange={(e) => setEstimatedDateInput(e.target.value)}
                       placeholder="e.g. 25 Oct 2026 or Next 3 Days"
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-indigo-600"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF]"
                     />
                   </div>
                 </div>
@@ -617,7 +622,7 @@ export default function AdminEnquiriesPage() {
                         type="checkbox"
                         checked={confirmDelivered}
                         onChange={(e) => setConfirmDelivered(e.target.checked)}
-                        className="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500"
+                        className="mt-0.5 rounded text-[#0089CF] focus:ring-[#0089CF]"
                       />
                       <span>
                         I confirm that the full project materials, source code, and documentation have been delivered to the customer.
@@ -635,7 +640,7 @@ export default function AdminEnquiriesPage() {
                     value={customerMessageInput}
                     onChange={(e) => setCustomerMessageInput(e.target.value)}
                     placeholder="Enter the message displayed to client on their tracking timeline..."
-                    className="w-full p-3 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+                    className="w-full p-3 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium"
                   />
                   <span className="text-[10px] text-slate-500">
                     This message is shown to the customer on their live tracking dashboard and emailed as a progress update.
@@ -659,7 +664,7 @@ export default function AdminEnquiriesPage() {
                   <button
                     onClick={handleSaveStageUpdate}
                     disabled={savingStage}
-                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md hover:opacity-95 transition-all disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#ED1C24] hover:bg-[#D1171F] text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     {savingStage ? (
                       <>
@@ -687,7 +692,7 @@ export default function AdminEnquiriesPage() {
                     {selectedEnquiry.timeline.map((item, idx) => (
                       <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-indigo-700">{item.stage}</span>
+                          <span className="font-bold text-[#0073B0]">{item.stage}</span>
                           <span className="text-[10px] text-slate-400">{formatDate(item.createdAt)}</span>
                         </div>
                         {item.statusMessage && (
@@ -740,7 +745,7 @@ export default function AdminEnquiriesPage() {
                   value={adminNoteInput}
                   onChange={(e) => setAdminNoteInput(e.target.value)}
                   placeholder="General notes regarding pricing, client calls, WhatsApp conversations..."
-                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium"
                 />
 
                 <div className="flex justify-end">

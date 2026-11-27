@@ -11,15 +11,40 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect Admin Dashboard Routes
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const token = request.cookies.get(ADMIN_TOKEN_COOKIE_NAME)?.value;
-    const session = token ? verifyAdminToken(token) : null;
+  if (pathname.startsWith('/admin')) {
+    const adminToken = request.cookies.get(ADMIN_TOKEN_COOKIE_NAME)?.value;
+    const adminSession = adminToken ? verifyAdminToken(adminToken) : null;
+    const customerToken = request.cookies.get(CUSTOMER_TOKEN_COOKIE_NAME)?.value;
+    const customerSession = customerToken ? verifyAuthToken(customerToken) : null;
 
-    if (!session || session.role !== 'ADMIN') {
+    // Handle /admin/login specifically
+    if (pathname === '/admin/login') {
+      // Authenticated administrators are redirected straight to /admin
+      if (adminSession && adminSession.role === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
+      // Authenticated customers without admin role are redirected away from admin login
+      if (customerSession && customerSession.role === 'CUSTOMER') {
+        const accountUrl = new URL('/account', request.url);
+        accountUrl.searchParams.set('notice', 'admin_access_restricted');
+        return NextResponse.redirect(accountUrl);
+      }
+      return NextResponse.next();
+    }
+
+    // For all other /admin routes (/admin, /admin/projects, /admin/orders, etc.):
+    if (!adminSession || adminSession.role !== 'ADMIN') {
+      // Authenticated customers without admin role are redirected away to their account
+      if (customerSession && customerSession.role === 'CUSTOMER') {
+        const accountUrl = new URL('/account', request.url);
+        accountUrl.searchParams.set('notice', 'admin_access_restricted');
+        return NextResponse.redirect(accountUrl);
+      }
+      // Unauthenticated visitors are redirected to /admin/login
       const loginUrl = new URL('/admin/login', request.url);
       loginUrl.searchParams.set('from', pathname);
       const response = NextResponse.redirect(loginUrl);
-      if (token && !session) {
+      if (adminToken && !adminSession) {
         response.cookies.delete(ADMIN_TOKEN_COOKIE_NAME);
       }
       return response;

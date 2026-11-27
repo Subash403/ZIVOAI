@@ -28,7 +28,7 @@ export default function PoliciesPage() {
         {/* Header */}
         <div className="zivo-reveal space-y-3 text-center">
           <div className="zivo-eyebrow">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <Sparkles className="w-3.5 h-3.5 text-[#0089CF]" />
             <span>Transparency & Trust</span>
           </div>
           <h1 className="zivo-display text-4xl font-extrabold text-slate-900 sm:text-5xl tracking-tight">
@@ -55,7 +55,7 @@ export default function PoliciesPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-[#0089CF] text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
               >
@@ -99,7 +99,7 @@ export default function PoliciesPage() {
           {activeTab === 'delivery' && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+                <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] border border-[#0089CF]/30 flex items-center justify-center text-[#0089CF]">
                   <Truck className="w-5 h-5" />
                 </div>
                 <div>
@@ -128,7 +128,7 @@ export default function PoliciesPage() {
           {activeTab === 'terms' && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
+                <div className="w-10 h-10 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] flex items-center justify-center text-[#D97706]">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
@@ -188,7 +188,7 @@ export default function PoliciesPage() {
             Have questions about our policies? Contact our support team at{' '}
             <a
               href={`mailto:${settings?.supportEmail || 'support@zivo.ai'}`}
-              className="text-indigo-600 font-semibold hover:underline"
+              className="text-[#0089CF] font-semibold hover:underline"
             >
               {settings?.supportEmail || 'support@zivo.ai'}
             </a>

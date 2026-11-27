@@ -287,7 +287,7 @@ export default function AdminOrdersPage() {
               setSearch(e.target.value);
             }}
             placeholder="Search Order ID, Buyer, Email, Razorpay ID..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 font-medium"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium"
           />
         </div>
 
@@ -298,7 +298,7 @@ export default function AdminOrdersPage() {
             setPage(1);
             setStatusFilter(e.target.value);
           }}
-          className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-indigo-600"
+          className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-[#0089CF]"
         >
           <option value="ALL">All Payment Statuses</option>
           {statuses.map((st) => (
@@ -349,13 +349,18 @@ export default function AdminOrdersPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+            <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
             <p className="text-xs text-slate-500 font-medium">Loading orders...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="py-16 text-center space-y-3">
-            <ShoppingBag className="w-10 h-10 text-slate-400 mx-auto" />
-            <p className="text-sm text-slate-500 font-medium">No orders found matching current filters.</p>
+            <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto" />
+            <p className="text-sm font-bold text-slate-800">No orders found</p>
+            <p className="text-xs text-slate-500">
+              {search || statusFilter !== 'ALL' || dateFrom || dateTo || reconciliationOnly
+                ? 'Try adjusting your search criteria or resetting filters.'
+                : 'Customer orders and transactions will appear here once placed.'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -375,7 +380,7 @@ export default function AdminOrdersPage() {
                 {orders.map((order) => (
                   <tr key={order.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
-                      <span className="font-mono font-bold text-indigo-600 text-xs block">{order.orderId}</span>
+                      <span className="font-mono font-bold text-[#0089CF] text-xs block">{order.orderId}</span>
                       <span className="text-[10px] text-slate-500 block font-medium">{formatDate(order.createdAt)}</span>
                     </td>
                     <td className="p-4">
@@ -428,7 +433,7 @@ export default function AdminOrdersPage() {
                       <button
                         type="button"
                         onClick={() => handleOpenOrderModal(order)}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold flex items-center gap-1.5"
+                        className="px-3 py-1.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0073B0] border border-[#0089CF]/30 text-xs font-semibold flex items-center gap-1.5"
                       >
                         <Eye className="w-3.5 h-3.5" /> Manage
                       </button>
@@ -479,7 +484,7 @@ export default function AdminOrdersPage() {
           <div className="relative w-full max-w-xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-white sticky top-0 z-10">
               <div className="flex items-center gap-2">
-                <PackageCheck className="w-5 h-5 text-indigo-600" />
+                <PackageCheck className="w-5 h-5 text-[#0089CF]" />
                 <h2 id="manage-order-title" className="text-base font-bold text-slate-900">
                   Manage Order &amp; Reconciliation
                 </h2>
@@ -511,7 +516,7 @@ export default function AdminOrdersPage() {
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-semibold">Order ID:</span>
-                  <span className="font-mono text-indigo-600 font-bold">{selectedOrder.orderId}</span>
+                  <span className="font-mono text-[#0089CF] font-bold">{selectedOrder.orderId}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-semibold">Payment Status (Webhook Controlled):</span>
@@ -544,7 +549,7 @@ export default function AdminOrdersPage() {
                     type="button"
                     disabled={resendingEmail}
                     onClick={handleResendEmail}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0073B0] border border-[#0089CF]/30 font-bold disabled:opacity-50"
                   >
                     {resendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
                     Resend Confirmation Email
@@ -661,7 +666,7 @@ export default function AdminOrdersPage() {
                   type="button"
                   disabled={savingOrder}
                   onClick={handleSaveOrderDelivery}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#ED1C24] hover:bg-[#D1171F] text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {savingOrder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                   Save Changes

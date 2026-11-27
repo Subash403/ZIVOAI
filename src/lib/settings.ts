@@ -1,3 +1,5 @@
+import { resolveBrandFaviconUrl, resolveBrandLogoUrl } from '@/lib/brand';
+
 export const ALLOWED_SETTING_KEYS = [
   'businessName',
   'logoUrl',
@@ -106,60 +108,54 @@ export function filterPublicSettings(settingsObj: Record<string, string>): Publi
 
   return {
     businessName: settingsObj.businessName || 'Zivo AI',
-    logoUrl:
-      configuredLogoUrl && configuredLogoUrl !== '/logo.svg'
-        ? configuredLogoUrl
-        : '/images/zivoai-logo.png',
-    faviconUrl:
-      configuredFaviconUrl && configuredFaviconUrl !== '/favicon.ico'
-        ? configuredFaviconUrl
-        : '/images/zivoai-logo.png',
-    themeColor: settingsObj.themeColor || '#4f46e5',
+    logoUrl: resolveBrandLogoUrl(configuredLogoUrl, 'light'),
+    faviconUrl: resolveBrandFaviconUrl(configuredFaviconUrl),
+    themeColor: settingsObj.themeColor || '#ED1C24',
     fontFamily: settingsObj.fontFamily || 'Inter',
-    phoneNumber: settingsObj.phoneNumber || '+91 8220303164',
-    whatsappNumber: settingsObj.whatsappNumber || '918220303164',
+    phoneNumber: settingsObj.phoneNumber ?? '+91 8220303164',
+    whatsappNumber: settingsObj.whatsappNumber ?? '918220303164',
     supportEmail: settingsObj.supportEmail || 'support@zivo.ai',
     footerDescription:
       settingsObj.footerDescription ||
-      'Modern project discovery and digital delivery platform. Verified production AI, full-stack architectures, computer vision pipelines, and custom software systems with instant automated delivery.',
+      'Engineering marketplace for ready-to-run AI pipelines, full-stack web software, and custom architectures with documented source code and secure dashboard delivery.',
     footerCopyright:
       settingsObj.footerCopyright || 'Engineering the future with modern AI, cloud architectures, and developer-first digital assets.',
     announcementNotice:
       settingsObj.announcementNotice ||
-      '🔥 Production-Ready AI & Full-Stack Architectures with Instant Automated Delivery',
+      'Verified AI & Full-Stack Software Projects with Secure Dashboard Delivery',
 
     heroHeading:
-      settingsObj.heroHeading || 'Production-Ready AI & Full-Stack Projects with Instant Delivery',
+      settingsObj.heroHeading || 'Production-Ready AI & Full-Stack Projects Built to Run',
     heroSubheading:
       settingsObj.heroSubheading ||
-      'Discover, benchmark, and deploy verified AI agents, machine learning pipelines, full-stack web applications, and software architectures with complete source code & live documentation.',
-    heroBadgeText: settingsObj.heroBadgeText || '⚡ Modern AI & Software Engineering Platform',
+      'Discover, compare, and deploy documented AI pipelines, machine learning systems, full-stack web applications, and custom software architectures with complete source code.',
+    heroBadgeText: settingsObj.heroBadgeText || 'Modern AI & Software Engineering Platform',
     heroPrimaryButtonText: settingsObj.heroPrimaryButtonText || 'Explore Project Catalog',
     heroSecondaryButtonText: settingsObj.heroSecondaryButtonText || 'Request Custom Architecture',
     heroBannerActive: settingsObj.heroBannerActive !== 'false',
 
     showFeaturedSection: settingsObj.showFeaturedSection !== 'false',
     showHowItWorksSection: settingsObj.showHowItWorksSection !== 'false',
-    showTestimonialsSection: settingsObj.showTestimonialsSection !== 'false',
+    showTestimonialsSection: settingsObj.showTestimonialsSection === 'true',
     showFaqSection: settingsObj.showFaqSection !== 'false',
     showStatsSection: settingsObj.showStatsSection !== 'false',
 
-    githubUrl: settingsObj.githubUrl || 'https://github.com',
-    linkedinUrl: settingsObj.linkedinUrl || 'https://linkedin.com',
-    instagramUrl: settingsObj.instagramUrl || 'https://instagram.com',
-    youtubeUrl: settingsObj.youtubeUrl || 'https://youtube.com',
+    githubUrl: settingsObj.githubUrl || '',
+    linkedinUrl: settingsObj.linkedinUrl || '',
+    instagramUrl: settingsObj.instagramUrl || '',
+    youtubeUrl: settingsObj.youtubeUrl || '',
     showGithub: settingsObj.showGithub === 'true',
     showLinkedin: settingsObj.showLinkedin === 'true',
     showInstagram: settingsObj.showInstagram !== 'false',
     showYoutube: settingsObj.showYoutube === 'true',
-    address: settingsObj.address || 'Chennai / Bangalore, India',
+    address: settingsObj.address || '',
 
     refundPolicy:
       settingsObj.refundPolicy ||
       'We provide replacement or full refund if source code execution fails our verified specifications and cannot be resolved by our technical setup engineers within 48 hours.',
     deliveryPolicy:
       settingsObj.deliveryPolicy ||
-      'Automated digital delivery for fixed-price packages occurs immediately following payment confirmation. Custom projects follow agreed milestone reviews.',
+      'Fixed-price packages unlock in your Customer Dashboard immediately once Razorpay payment verification completes. Custom projects follow agreed milestone reviews.',
     termsConditions:
       settingsObj.termsConditions ||
       'Projects are provided with complete source code, architecture documentation, and setup guides for software engineers, founders, researchers, and technical builders.',

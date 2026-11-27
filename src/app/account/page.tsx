@@ -152,6 +152,17 @@ export default function AccountPage() {
   const [newPassword, setNewPassword] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [supportWhatsapp, setSupportWhatsapp] = useState('');
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const clean = String(data?.settings?.whatsappNumber || '').replace(/\D/g, '');
+        if (clean) setSupportWhatsapp(clean);
+      })
+      .catch(() => {});
+  }, []);
 
   const loadAccountData = useCallback(async () => {
     setLoading(true);
@@ -272,7 +283,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-3 pt-28 sm:pt-32">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin" />
         <p className="text-xs text-slate-500 font-medium">Loading your dashboard...</p>
       </div>
     );
@@ -289,7 +300,7 @@ export default function AccountPage() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">{user?.name}</h1>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#F0F9FF] text-[#0073B0] border border-[#0089CF]/30">
                 {user?.role === 'ADMIN' ? 'Administrator' : 'Customer Account'}
               </span>
             </div>
@@ -321,7 +332,7 @@ export default function AccountPage() {
           </button>
           <Link
             href="/projects"
-            className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all"
+            className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-[#ED1C24]/20 hover:opacity-95 transition-all"
           >
             Browse Projects
           </Link>
@@ -354,9 +365,9 @@ export default function AccountPage() {
           role="tab"
           aria-selected={activeTab === 'orders'}
           onClick={() => setActiveTab('orders')}
-          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0089CF] ${
             activeTab === 'orders'
-              ? 'border-indigo-600 text-indigo-600'
+              ? 'border-[#0089CF] text-[#0089CF]'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -368,9 +379,9 @@ export default function AccountPage() {
           role="tab"
           aria-selected={activeTab === 'custom'}
           onClick={() => setActiveTab('custom')}
-          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0089CF] ${
             activeTab === 'custom'
-              ? 'border-indigo-600 text-indigo-600'
+              ? 'border-[#0089CF] text-[#0089CF]'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -382,9 +393,9 @@ export default function AccountPage() {
           role="tab"
           aria-selected={activeTab === 'profile'}
           onClick={() => setActiveTab('profile')}
-          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0089CF] ${
             activeTab === 'profile'
-              ? 'border-indigo-600 text-indigo-600'
+              ? 'border-[#0089CF] text-[#0089CF]'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -398,7 +409,7 @@ export default function AccountPage() {
         <div className="space-y-4">
           {orders.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-full bg-[#F0F9FF] text-[#0089CF] flex items-center justify-center mx-auto">
                 <ShoppingBag className="w-6 h-6" />
               </div>
               <div>
@@ -427,7 +438,7 @@ export default function AccountPage() {
                 return (
                   <article
                     key={order.id}
-                    className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:border-indigo-200 transition-all overflow-hidden"
+                    className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:border-[#0089CF]/30 transition-all overflow-hidden"
                   >
                     <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
                       <div className="flex items-start gap-4">
@@ -450,7 +461,7 @@ export default function AccountPage() {
 
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                            <span className="font-mono text-xs font-bold text-[#0073B0] bg-[#F0F9FF] px-2 py-0.5 rounded-md border border-[#BAE6FD]">
                               {order.orderId}
                             </span>
                             <span
@@ -514,7 +525,7 @@ export default function AccountPage() {
                           aria-expanded={isExpanded}
                           className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-xs transition-all"
                         >
-                          <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+                          <Receipt className="w-3.5 h-3.5 text-[#0089CF]" />
                           {isExpanded ? 'Hide Receipt Details' : 'View Receipt & Status'}
                           {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                         </button>
@@ -615,7 +626,7 @@ export default function AccountPage() {
                           {order.project?.slug && (
                             <Link
                               href={`/projects/${order.project.slug}`}
-                              className="text-xs font-bold text-indigo-600 hover:underline"
+                              className="text-xs font-bold text-[#0089CF] hover:underline"
                             >
                               View Project Specs
                             </Link>
@@ -636,7 +647,7 @@ export default function AccountPage() {
         <div className="space-y-4">
           {customProjects.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-full bg-[#F0F9FF] text-[#0089CF] flex items-center justify-center mx-auto">
                 <Layers className="w-6 h-6" />
               </div>
               <div>
@@ -665,11 +676,11 @@ export default function AccountPage() {
                 return (
                   <article
                     key={cp.id}
-                    className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:border-indigo-200 transition-all space-y-5"
+                    className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:border-[#0089CF]/30 transition-all space-y-5"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">
+                        <span className="font-mono text-xs font-bold text-[#0073B0] bg-[#F0F9FF] px-2.5 py-1 rounded-md border border-[#BAE6FD]">
                           {cp.leadId}
                         </span>
                         <span
@@ -680,7 +691,7 @@ export default function AccountPage() {
                               ? 'bg-red-50 text-red-800 border border-red-200'
                               : isOnHold
                               ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                              : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              : 'bg-[#F0F9FF] text-[#0073B0] border border-[#0089CF]/30'
                           }`}
                         >
                           Stage: {currentStage}
@@ -697,7 +708,7 @@ export default function AccountPage() {
                         {cp.projectName || cp.domain || 'Custom Project Development'}
                       </h3>
                       {cp.domain && (
-                        <p className="text-xs font-semibold text-indigo-600">
+                        <p className="text-xs font-semibold text-[#0089CF]">
                           Domain: {cp.domain} {cp.technology ? `• Stack: ${cp.technology}` : ''}
                         </p>
                       )}
@@ -707,12 +718,12 @@ export default function AccountPage() {
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs text-slate-700">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                          <Sparkles className="w-3.5 h-3.5 text-[#0089CF]" />
                           Latest Development Progress
                         </span>
                         {cp.estimatedCompletionDate && (
                           <span className="text-slate-600 flex items-center gap-1 text-[11px] font-medium bg-white px-2.5 py-0.5 rounded border border-slate-200">
-                            <Calendar className="w-3 h-3 text-indigo-600" />
+                            <Calendar className="w-3 h-3 text-[#0089CF]" />
                             Target: <strong>{cp.estimatedCompletionDate}</strong>
                           </span>
                         )}
@@ -732,7 +743,7 @@ export default function AccountPage() {
                             setExpandedCustomIds((prev) => ({ ...prev, [cp.id]: !prev[cp.id] }))
                           }
                           aria-expanded={isExpanded}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-[#0089CF] hover:text-[#005E91]"
                         >
                           <Clock className="w-3.5 h-3.5" />
                           {isExpanded ? 'Hide Activity Log' : `Show Activity Log (${cp.timeline?.length || 0})`}
@@ -750,7 +761,7 @@ export default function AccountPage() {
                               key={stage}
                               className={`flex flex-col items-center text-center p-2.5 rounded-xl border text-[11px] ${
                                 isCurrent
-                                  ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-500/20'
+                                  ? 'bg-[#F0F9FF] border-[#0089CF]/50 ring-2 ring-[#0089CF]/20'
                                   : isCompleted
                                   ? 'bg-emerald-50/60 border-emerald-200'
                                   : 'bg-slate-50 border-slate-200/70 opacity-75'
@@ -761,7 +772,7 @@ export default function AccountPage() {
                                   isCompleted
                                     ? 'bg-emerald-600 text-white'
                                     : isCurrent
-                                    ? 'bg-indigo-600 text-white'
+                                    ? 'bg-[#0089CF] text-white'
                                     : 'bg-slate-200 text-slate-600'
                                 }`}
                               >
@@ -770,7 +781,7 @@ export default function AccountPage() {
                               <span
                                 className={`font-bold leading-tight ${
                                   isCurrent
-                                    ? 'text-indigo-900'
+                                    ? 'text-[#0A0A0A]'
                                     : isCompleted
                                     ? 'text-emerald-900'
                                     : 'text-slate-600'
@@ -796,7 +807,7 @@ export default function AccountPage() {
                                   className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-1"
                                 >
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="font-bold text-indigo-700">{item.stage}</span>
+                                    <span className="font-bold text-[#0073B0]">{item.stage}</span>
                                     <span className="text-[10px] text-slate-400">{formatDate(item.createdAt)}</span>
                                   </div>
                                   {item.statusMessage && (
@@ -822,17 +833,19 @@ export default function AccountPage() {
                         Reference: <strong className="font-mono text-slate-700">{cp.leadId}</strong>
                       </span>
 
-                      <a
-                        href={`https://wa.me/918220303164?text=${encodeURIComponent(
-                          `Hi, I am checking on my custom project order #${cp.leadId}.`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all"
-                      >
-                        <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
-                        WhatsApp Support
-                      </a>
+                      {supportWhatsapp && (
+                        <a
+                          href={`https://wa.me/${supportWhatsapp}?text=${encodeURIComponent(
+                            `Hi, I am checking on my custom project order #${cp.leadId}.`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all"
+                        >
+                          <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+                          WhatsApp Support
+                        </a>
+                      )}
                     </div>
                   </article>
                 );
@@ -882,7 +895,7 @@ export default function AccountPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 />
               </div>
 
@@ -911,7 +924,7 @@ export default function AccountPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 />
               </div>
 
@@ -923,7 +936,7 @@ export default function AccountPage() {
                   id="profile-year"
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 >
                   <option value="Individual / Professional">Individual / Professional</option>
                   <option value="Final Year">Final Year</option>
@@ -945,7 +958,7 @@ export default function AccountPage() {
                   value={college}
                   onChange={(e) => setCollege(e.target.value)}
                   placeholder="Optional"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 />
               </div>
 
@@ -959,14 +972,14 @@ export default function AccountPage() {
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   placeholder="Optional"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 />
               </div>
             </div>
 
             <div className="pt-4 border-t border-slate-100">
               <h3 className="text-xs font-bold text-slate-900 mb-3 flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-indigo-600" />
+                <Key className="w-3.5 h-3.5 text-[#0089CF]" />
                 Password Update
               </h3>
 
@@ -981,7 +994,7 @@ export default function AccountPage() {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                   />
                 </div>
 
@@ -995,7 +1008,7 @@ export default function AccountPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Minimum 8 characters"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                   />
                 </div>
               </div>
@@ -1005,7 +1018,7 @@ export default function AccountPage() {
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-[#ED1C24]/20 hover:opacity-95 transition-all disabled:opacity-50"
               >
                 {savingProfile ? (
                   <>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Menu } from 'lucide-react';
+import { LogOut, UserRound, Menu, ShieldCheck } from 'lucide-react';
 import { notifyAuthStateChanged } from '@/lib/auth-client';
 
 interface AdminHeaderProps {
@@ -40,39 +40,41 @@ export default function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps)
   };
 
   return (
-    <header className="h-16 bg-white/85 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-2xs">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#E5E7EB] bg-white/95 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-3">
         {onToggleMobileSidebar && (
           <button
+            type="button"
             onClick={onToggleMobileSidebar}
-            aria-label="Open mobile menu"
-            className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200"
+            aria-label="Open admin menu"
+            className="cursor-pointer rounded-lg border border-[#E5E7EB] p-2 text-[#4B5563] transition-colors hover:bg-[#F9FAFB] hover:text-[#0A0A0A] lg:hidden"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="h-5 w-5" />
           </button>
         )}
-        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-          <span className="hidden sm:inline">Super Admin</span> Live
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-1 text-xs font-semibold text-[#008C44]">
+          <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="hidden sm:inline">Admin Session</span> Verified
         </span>
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        <div className="flex items-center gap-2 text-xs text-slate-700 font-semibold">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold shrink-0">
-            <User className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-xs font-semibold text-[#374151]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#0089CF]/30 bg-[#F0F9FF] text-[#0089CF]">
+            <UserRound className="h-4 w-4" aria-hidden="true" />
           </div>
-          <span className="text-slate-900 hidden md:inline">
+          <span className="hidden text-[#0A0A0A] md:inline">
             {adminUser?.email || adminUser?.name || 'Administrator'}
           </span>
         </div>
 
         <button
+          type="button"
           onClick={handleLogout}
           disabled={loggingOut}
-          className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 transition-colors"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-xs font-bold text-[#374151] transition-colors hover:border-[#FECACA] hover:bg-[#FEF2F2] hover:text-[#ED1C24] disabled:opacity-50"
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
           <span className="hidden sm:inline">Logout</span>
         </button>
       </div>

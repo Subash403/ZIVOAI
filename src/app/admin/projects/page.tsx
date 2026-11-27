@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Project } from '@/types';
 import { formatCurrency } from '@/lib/utils';
+import { BRAND_ASSETS } from '@/lib/brand';
 
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -184,7 +185,7 @@ export default function AdminProjectsPage() {
 
         <Link
           href="/admin/projects/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md hover:scale-105 transition-all"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#ED1C24] hover:bg-[#D1171F] text-white text-xs font-bold shadow-xs transition-colors"
         >
           <PlusCircle className="w-4 h-4" /> Add Project
         </Link>
@@ -202,10 +203,10 @@ export default function AdminProjectsPage() {
 
       {/* Bulk Action Bar (ZAI-086) */}
       {selectedIds.length > 0 && (
-        <div className="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <span className="font-bold text-indigo-900">{selectedIds.length} project(s) selected</span>
+        <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#0089CF]/30 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span className="font-bold text-[#0A0A0A]">{selectedIds.length} project(s) selected</span>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('publish')} className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 font-bold text-indigo-700 hover:bg-indigo-100">Publish</button>
+            <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('publish')} className="px-3 py-1.5 rounded-lg bg-white border border-[#0089CF]/30 font-bold text-[#0073B0] hover:bg-[#E0F2FE]">Publish</button>
             <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('unpublish')} className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 font-bold text-slate-700 hover:bg-slate-100">Unpublish</button>
             <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('available')} className="px-3 py-1.5 rounded-lg bg-emerald-600 font-bold text-white hover:bg-emerald-700">Mark Available</button>
             <button type="button" disabled={bulkWorking} onClick={() => handleBulkAction('unavailable')} className="px-3 py-1.5 rounded-lg bg-rose-600 font-bold text-white hover:bg-rose-700">Mark Unavailable</button>
@@ -215,7 +216,7 @@ export default function AdminProjectsPage() {
       )}
 
       {/* Filter Controls */}
-      <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -226,7 +227,7 @@ export default function AdminProjectsPage() {
               setSearch(e.target.value);
             }}
             placeholder="Search projects..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium shadow-2xs"
           />
         </div>
 
@@ -254,7 +255,7 @@ export default function AdminProjectsPage() {
               setPage(1);
               setCategoryFilter(e.target.value);
             }}
-            className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium shadow-2xs cursor-pointer"
           >
             <option value="All">All Categories</option>
             <option value="Artificial Intelligence">Artificial Intelligence</option>
@@ -268,7 +269,7 @@ export default function AdminProjectsPage() {
           <select
             value={salesTypeFilter}
             onChange={(e) => setSalesTypeFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 font-medium shadow-2xs cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-[#0089CF] font-medium shadow-2xs cursor-pointer"
           >
             <option value="All">All Sales Types</option>
             <option value="fixed">Fixed Price</option>
@@ -278,16 +279,32 @@ export default function AdminProjectsPage() {
       </div>
 
       {/* Data Table */}
-      <div className="glass-panel rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+            <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
             <p className="text-xs text-slate-500 font-medium">Fetching projects...</p>
           </div>
         ) : filteredProjects.length === 0 ? (
           <div className="py-16 text-center space-y-3">
-            <FolderKanban className="w-10 h-10 text-slate-400 mx-auto" />
-            <p className="text-sm text-slate-500 font-medium">No projects found matching query.</p>
+            <FolderKanban className="w-10 h-10 text-slate-300 mx-auto" />
+            {projects.length === 0 ? (
+              <div className="space-y-3">
+                <p className="text-sm font-bold text-slate-800">No projects in catalog yet</p>
+                <p className="text-xs text-slate-500">Publish your first AI pipeline, full-stack application, or custom software codebase.</p>
+                <Link
+                  href="/admin/projects/new"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ED1C24] text-white text-xs font-bold hover:bg-[#D1171F] transition-colors shadow-xs"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" /> Add Project Now
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-slate-800">No projects found matching query</p>
+                <p className="text-xs text-slate-500">Try adjusting your search query or reset category/sales type filters.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -333,7 +350,7 @@ export default function AdminProjectsPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <Image
-                          src={project.mainImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80'}
+                          src={project.mainImage || BRAND_ASSETS.ogImage}
                           alt={project.title}
                           width={48}
                           height={48}
@@ -345,7 +362,7 @@ export default function AdminProjectsPage() {
                           <Link
                             href={`/projects/${project.slug}`}
                             target="_blank"
-                            className="font-bold text-slate-900 hover:text-indigo-600 flex items-center gap-1 line-clamp-1 max-w-xs"
+                            className="font-bold text-slate-900 hover:text-[#0089CF] flex items-center gap-1 line-clamp-1 max-w-xs"
                           >
                             {project.title} <ExternalLink className="w-3 h-3 text-slate-400" />
                           </Link>
@@ -357,7 +374,7 @@ export default function AdminProjectsPage() {
                     {/* Category & Tech */}
                     <td className="p-4">
                       <div className="space-y-1">
-                        <span className="font-bold text-indigo-700 block">{project.category}</span>
+                        <span className="font-bold text-[#0073B0] block">{project.category}</span>
                         <div className="flex flex-wrap gap-1">
                           {project.technologies.slice(0, 2).map((t, idx) => (
                             <span key={idx} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold border border-slate-200">
@@ -430,7 +447,7 @@ export default function AdminProjectsPage() {
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/admin/projects/${project.id}/edit`}
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 text-slate-700 border border-slate-200 transition-colors"
+                          className="p-2 rounded-lg bg-slate-100 hover:bg-[#E0F2FE] hover:text-[#0073B0] text-slate-700 border border-slate-200 transition-colors"
                           title="Edit Project"
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -438,7 +455,7 @@ export default function AdminProjectsPage() {
 
                         <button
                           onClick={() => handleDuplicate(project)}
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 border border-slate-200 transition-colors"
+                          className="p-2 rounded-lg bg-slate-100 hover:bg-[#FEF3C7] hover:text-[#B45309] text-slate-700 border border-slate-200 transition-colors"
                           title="Duplicate Project"
                         >
                           <Copy className="w-3.5 h-3.5" />

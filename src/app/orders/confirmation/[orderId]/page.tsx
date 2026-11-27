@@ -44,6 +44,17 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [supportWhatsapp, setSupportWhatsapp] = useState('');
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const clean = String(data?.settings?.whatsappNumber || '').replace(/\D/g, '');
+        if (clean) setSupportWhatsapp(clean);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -100,7 +111,7 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center pt-20">
         <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+          <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
           <p className="text-xs text-slate-500 font-medium">Verifying order confirmation receipt...</p>
         </div>
       </main>
@@ -169,17 +180,17 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
             </p>
           </div>
 
-          {/* 11. 1-3 HOUR DELIVERY PROMINENT NOTICE BANNER */}
-          <div className="p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-left space-y-2">
-            <div className="flex items-center gap-2 text-sm font-extrabold text-amber-900">
-              <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-              <span>Project Delivery Notice</span>
+          {/* Verified Digital Delivery Notice */}
+          <div className="p-5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] text-left space-y-2">
+            <div className="flex items-center gap-2 text-sm font-extrabold text-[#005E91]">
+              <Clock className="w-5 h-5 text-[#0089CF] shrink-0" />
+              <span>Digital Delivery Status</span>
             </div>
-            <p className="text-sm font-bold text-amber-950 leading-relaxed">
-              Your project will be delivered to your email ID within 1 to 3 hours.
+            <p className="text-sm font-bold text-slate-900 leading-relaxed">
+              Your verified payment unlocks secure download access below and in your Customer Dashboard.
             </p>
-            <p className="text-xs text-amber-800 font-medium">
-              Please check your email inbox (<strong>{order.email}</strong>) and your spam/junk folder.
+            <p className="text-xs text-slate-600 font-medium">
+              Order confirmation notifications are dispatched to <strong>{order.email}</strong>. Save your Order ID for support or future lookups.
             </p>
           </div>
 
@@ -188,7 +199,7 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <span className="text-slate-500 font-bold uppercase tracking-wider">Order ID:</span>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-indigo-600 font-bold text-base">{order.orderId}</span>
+                <span className="font-mono text-[#0089CF] font-bold text-base">{order.orderId}</span>
                 <button
                   onClick={() => copyToClipboard(order.orderId)}
                   className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
@@ -232,11 +243,11 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
           </div>
 
           {/* Customer Support Notice */}
-          <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 text-left text-xs text-indigo-900 space-y-1">
+          <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-left text-xs text-[#0A0A0A] space-y-1">
             <span className="font-bold block flex items-center gap-1.5">
-              <HelpCircle className="w-4 h-4 text-indigo-600" /> Need Help or Remote Setup Support?
+              <HelpCircle className="w-4 h-4 text-[#0089CF]" /> Need Help or Remote Setup Support?
             </span>
-            <p className="text-indigo-800">
+            <p className="text-[#005E91]">
               Please save your Order ID (<strong>{order.orderId}</strong>) for any support inquiries. You can also chat
               directly with our senior engineer on WhatsApp for 1-on-1 remote installation assistance.
             </p>
@@ -247,20 +258,22 @@ function OrderConfirmationContent({ orderId }: { orderId: string }) {
             {order.paymentStatus === 'PAID' && (
               <a
                 href={`/api/orders/download/${encodeURIComponent(order.orderId)}${token ? `?token=${encodeURIComponent(token)}` : ''}`}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl glow-gradient text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 hover:opacity-95 transition-all"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl glow-gradient text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#ED1C24]/20 hover:opacity-95 transition-all"
               >
                 <Download className="w-4 h-4" /> Download Project Materials
               </a>
             )}
 
-            <a
-              href={`https://wa.me/918220303164?text=Hi%2C%20I%20have%20completed%20payment%20for%20Order%20${order.orderId}%20(${encodeURIComponent(order.projectName)}).%20Please%20assist.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-all"
-            >
-              <MessageSquare className="w-4 h-4" /> Support on WhatsApp (8220303164)
-            </a>
+            {supportWhatsapp && (
+              <a
+                href={`https://wa.me/${supportWhatsapp}?text=Hi%2C%20I%20have%20completed%20payment%20for%20Order%20${order.orderId}%20(${encodeURIComponent(order.projectName)}).%20Please%20assist.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-all"
+              >
+                <MessageSquare className="w-4 h-4" /> Support on WhatsApp
+              </a>
+            )}
 
             <Link
               href="/projects"
@@ -283,7 +296,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
       fallback={
         <main className="min-h-screen bg-slate-50 flex items-center justify-center pt-20">
           <div className="text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+            <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
             <p className="text-xs text-slate-500 font-medium">Loading receipt confirmation...</p>
           </div>
         </main>

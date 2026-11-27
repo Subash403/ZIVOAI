@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return rateLimitExceededResponse(ipLimit, 'Too many login attempts. Please wait and try again.');
     }
 
-    const { email, password } = await request.json();
+    const { email, password, adminOnly } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -105,6 +105,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
+      );
+    }
+
+    if (adminOnly && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Access denied: Administrator privileges required.' },
+        { status: 403 }
       );
     }
 

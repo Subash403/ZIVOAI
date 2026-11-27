@@ -38,9 +38,18 @@ export default function CustomProjectPage() {
   const [loading, setLoading] = useState(false);
   const [successLeadId, setSuccessLeadId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [supportWhatsapp, setSupportWhatsapp] = useState('');
 
-  // Auto-prefill if user is logged in
+  // Auto-prefill if user is logged in & load public support WhatsApp
   useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const clean = String(data?.settings?.whatsappNumber || '').replace(/\D/g, '');
+        if (clean) setSupportWhatsapp(clean);
+      })
+      .catch(() => {});
+
     fetch('/api/auth/me')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -126,7 +135,7 @@ export default function CustomProjectPage() {
         {/* Back Link */}
         <Link
           href="/projects"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-[#0089CF] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Zivo AI Projects
         </Link>
@@ -134,7 +143,7 @@ export default function CustomProjectPage() {
         {/* Page Header */}
         <div className="zivo-reveal mx-auto max-w-2xl space-y-3 text-center">
           <div className="zivo-eyebrow">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
+            <Sparkles className="w-4 h-4 text-[#0089CF]" />
             <span>Bespoke Engineering & Custom AI Systems</span>
           </div>
           <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">Build a Custom Software Architecture</h1>
@@ -150,7 +159,7 @@ export default function CustomProjectPage() {
             <div className="flex items-center justify-between relative">
               <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 w-full bg-slate-200 z-0" />
               <div
-                className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 transition-all duration-300 z-0"
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-[#0089CF] transition-all duration-300 z-0"
                 style={{ width: currentStep === 1 ? '50%' : '100%' }}
               />
 
@@ -160,7 +169,7 @@ export default function CustomProjectPage() {
                 onClick={() => setCurrentStep(1)}
                 className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
                   currentStep === 1
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
+                    ? 'bg-[#0089CF] text-white shadow-md shadow-[#ED1C24]/20'
                     : 'bg-emerald-600 text-white'
                 }`}
               >
@@ -176,7 +185,7 @@ export default function CustomProjectPage() {
                 }}
                 className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
                   currentStep === 2
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
+                    ? 'bg-[#0089CF] text-white shadow-md shadow-[#ED1C24]/20'
                     : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                 }`}
               >
@@ -197,8 +206,8 @@ export default function CustomProjectPage() {
 
               <div className="space-y-2">
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Custom Project Request Received!</h2>
-                <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-200 max-w-lg mx-auto text-center space-y-1.5">
-                  <p className="text-xs font-mono font-bold text-indigo-700">Reference / Lead ID: {successLeadId}</p>
+                <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#0089CF]/30 max-w-lg mx-auto text-center space-y-1.5">
+                  <p className="text-xs font-mono font-bold text-[#0073B0]">Reference / Lead ID: {successLeadId}</p>
                   <p className="text-sm font-semibold text-slate-800 leading-relaxed">
                     “Your custom project request has been received. Our team will review your requirements and update your project progress here.”
                   </p>
@@ -207,9 +216,9 @@ export default function CustomProjectPage() {
 
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 max-w-md mx-auto text-left text-xs text-slate-700 space-y-2">
                 <div className="flex items-center gap-2 text-slate-900 font-bold">
-                  <PhoneCall className="w-4 h-4 text-indigo-600" /> What Happens Next:
+                  <PhoneCall className="w-4 h-4 text-[#0089CF]" /> What Happens Next:
                 </div>
-                <p>1. Our technical lead reviews your requirements against IEEE / industry standards.</p>
+                <p>1. Our technical lead reviews your requirements and architectural constraints.</p>
                 <p>2. We will outline the system architecture, modules, and estimated completion timeline.</p>
                 <p>3. You can monitor every milestone stage in real time on the Track Project page.</p>
               </div>
@@ -222,16 +231,18 @@ export default function CustomProjectPage() {
                   Track Project Development Progress
                 </Link>
 
-                <a
-                  href={`https://wa.me/918220303164?text=${encodeURIComponent(
-                    `Hi, I just submitted my custom project requirement (#${successLeadId}). Please connect with me.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md hover:bg-emerald-700 transition-all text-center"
-                >
-                  <MessageSquare className="w-4 h-4" /> WhatsApp Team
-                </a>
+                {supportWhatsapp && (
+                  <a
+                    href={`https://wa.me/${supportWhatsapp}?text=${encodeURIComponent(
+                      `Hi, I just submitted my custom project requirement (#${successLeadId}). Please connect with me.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md hover:bg-emerald-700 transition-all text-center"
+                  >
+                    <MessageSquare className="w-4 h-4" /> WhatsApp Team
+                  </a>
+                )}
               </div>
             </div>
           ) : (
@@ -248,7 +259,7 @@ export default function CustomProjectPage() {
                 <form onSubmit={handleNextStep} className="space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-2">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-[#0089CF] flex items-center gap-2">
                         <User className="w-4 h-4" /> 1. Contact & Scope Details
                       </h3>
                       <span className="text-xs text-slate-500 font-semibold">Step 1 of 2</span>
@@ -267,9 +278,9 @@ export default function CustomProjectPage() {
                             setFormData({ ...formData, studentName: e.target.value });
                             if (step1Errors.studentName) setStep1Errors({ ...step1Errors, studentName: '' });
                           }}
-                          placeholder="e.g. Priyanshu Das"
+                          placeholder="Enter your full name"
                           className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border text-slate-900 text-sm focus:outline-none focus:bg-white transition-colors ${
-                            step1Errors.studentName ? 'border-red-500 bg-red-50/20' : 'border-slate-300 focus:border-indigo-600'
+                            step1Errors.studentName ? 'border-red-500 bg-red-50/20' : 'border-slate-300 focus:border-[#0089CF]'
                           }`}
                         />
                         {step1Errors.studentName && (
@@ -289,7 +300,7 @@ export default function CustomProjectPage() {
                             if (step1Errors.college) setStep1Errors({ ...step1Errors, college: '' });
                           }}
                           placeholder="e.g. Tech Startup / University / Self-Builder"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         />
                       </div>
 
@@ -305,7 +316,7 @@ export default function CustomProjectPage() {
                             if (step1Errors.department) setStep1Errors({ ...step1Errors, department: '' });
                           }}
                           placeholder="e.g. Generative AI / Full-Stack / Robotics"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         />
                       </div>
 
@@ -314,7 +325,7 @@ export default function CustomProjectPage() {
                         <select
                           value={formData.year}
                           onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         >
                           <option value="Enterprise / Startup Production">Enterprise / Startup Production</option>
                           <option value="Research / Thesis Implementation">Research / Thesis Implementation</option>
@@ -336,9 +347,9 @@ export default function CustomProjectPage() {
                             setFormData({ ...formData, phone: e.target.value });
                             if (step1Errors.phone) setStep1Errors({ ...step1Errors, phone: '' });
                           }}
-                          placeholder="+91 9876543210"
+                          placeholder="Enter your phone number"
                           className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border text-slate-900 text-sm focus:outline-none focus:bg-white transition-colors ${
-                            step1Errors.phone ? 'border-red-500 bg-red-50/20' : 'border-slate-300 focus:border-indigo-600'
+                            step1Errors.phone ? 'border-red-500 bg-red-50/20' : 'border-slate-300 focus:border-[#0089CF]'
                           }`}
                         />
                         {step1Errors.phone && (
@@ -353,7 +364,7 @@ export default function CustomProjectPage() {
                           value={formData.whatsapp}
                           onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                           placeholder="Same as phone if left blank"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         />
                       </div>
                     </div>
@@ -370,9 +381,9 @@ export default function CustomProjectPage() {
                           setFormData({ ...formData, email: e.target.value });
                           if (step1Errors.email) setStep1Errors({ ...step1Errors, email: '' });
                         }}
-                        placeholder="student@example.com"
+                        placeholder="Enter your email address"
                         className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border text-slate-900 text-sm focus:outline-none focus:bg-white transition-colors ${
-                          step1Errors.email ? 'border-red-500 bg-red-50/20' : 'border-slate-300 focus:border-indigo-600'
+                          step1Errors.email ? 'border-red-500 bg-red-50/20' : 'border-slate-300 focus:border-[#0089CF]'
                         }`}
                       />
                       {step1Errors.email && (
@@ -398,7 +409,7 @@ export default function CustomProjectPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-2">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-[#0089CF] flex items-center gap-2">
                         <Code2 className="w-4 h-4" /> 2. Project Specifications & Requirements
                       </h3>
                       <span className="text-xs text-slate-500 font-semibold">Step 2 of 2</span>
@@ -410,7 +421,7 @@ export default function CustomProjectPage() {
                         <select
                           value={formData.domain}
                           onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         >
                           <option value="Artificial Intelligence / Machine Learning">Artificial Intelligence / Machine Learning</option>
                           <option value="Computer Vision / Deep Learning">Computer Vision / Deep Learning</option>
@@ -431,7 +442,7 @@ export default function CustomProjectPage() {
                           value={formData.technology}
                           onChange={(e) => setFormData({ ...formData, technology: e.target.value })}
                           placeholder="e.g. Python, PyTorch, YOLOv8, ESP32, React"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         />
                       </div>
 
@@ -440,7 +451,7 @@ export default function CustomProjectPage() {
                         <select
                           value={formData.projectType}
                           onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         >
                           <option value="Major Project">Major Project</option>
                           <option value="Minor Project">Minor Project</option>
@@ -455,7 +466,7 @@ export default function CustomProjectPage() {
                           type="date"
                           value={formData.deadline}
                           onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                         />
                       </div>
                     </div>
@@ -470,7 +481,7 @@ export default function CustomProjectPage() {
                         value={formData.requirements}
                         onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
                         placeholder="Describe your project idea, problem statement, required datasets, specific modules, or paste your base IEEE paper reference link..."
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                       />
                     </div>
 
@@ -479,7 +490,7 @@ export default function CustomProjectPage() {
                       <select
                         value={formData.callbackTime}
                         onChange={(e) => setFormData({ ...formData, callbackTime: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition-colors"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#0089CF] focus:bg-white transition-colors"
                       >
                         <option value="Anytime (9 AM - 8 PM)">Anytime (9 AM - 8 PM)</option>
                         <option value="Morning (9 AM - 12 PM)">Morning (9 AM - 12 PM)</option>

@@ -31,7 +31,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
     shortDescription: initialData?.shortDescription || '',
     fullDescription: initialData?.fullDescription || '',
     category: initialData?.category || 'Artificial Intelligence',
-    technologies: initialData?.technologies?.join(', ') || 'Python, PyTorch, React',
+    technologies: initialData?.technologies?.join(', ') || '',
     difficulty: initialData?.difficulty || 'Intermediate',
     projectType: initialData?.projectType || 'Major',
     problemStatement: initialData?.problemStatement || '',
@@ -44,9 +44,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
     prerequisites: initialData?.prerequisites || '',
     setupInstructions: initialData?.setupInstructions || '',
     documentation: initialData?.documentation || '',
-    mainImage:
-      initialData?.mainImage ||
-      'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
+    mainImage: initialData?.mainImage || '',
     gallery: Array.isArray(initialData?.gallery) ? initialData.gallery : [],
     architectureImage: initialData?.architectureImage || '',
     demoVideo: initialData?.demoVideo || '',
@@ -215,15 +213,15 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         )}
 
         {/* 1. Basic Information */}
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-[#0089CF]">
               1. Basic Project Metadata
             </h3>
             <button
               type="button"
               onClick={() => setShowPreview(true)}
-              className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800"
+              className="flex items-center gap-1.5 text-xs font-bold text-[#0089CF] hover:text-[#005E91]"
             >
               <Eye className="w-4 h-4" /> Preview
             </button>
@@ -240,7 +238,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g. AI-Powered Autonomous Disease Predictor"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               />
             </div>
 
@@ -254,7 +252,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 value={formData.shortDescription}
                 onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
                 placeholder="Brief 1-2 sentence overview for catalog cards..."
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               />
             </div>
 
@@ -265,7 +263,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 value={formData.fullDescription}
                 onChange={(e) => setFormData({ ...formData, fullDescription: e.target.value })}
                 placeholder="Complete project synopsis, methodology, architecture, and academic scope..."
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               />
             </div>
 
@@ -276,7 +274,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               >
                 <option value="Artificial Intelligence">Artificial Intelligence</option>
                 <option value="Machine Learning">Machine Learning</option>
@@ -298,7 +296,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 value={formData.technologies}
                 onChange={(e) => setFormData({ ...formData, technologies: e.target.value })}
                 placeholder="Python, PyTorch, React, PostgreSQL"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               />
             </div>
 
@@ -307,7 +305,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
               <select
                 value={formData.difficulty}
                 onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               >
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate">Intermediate</option>
@@ -320,7 +318,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
               <select
                 value={formData.projectType}
                 onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               >
                 <option value="Major">Major Final Year</option>
                 <option value="Minor">Minor Semester</option>
@@ -332,8 +330,8 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         </div>
 
         {/* 2. Availability, Pricing & Purchase Controls */}
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600 pb-3 border-b border-slate-100">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-[#0089CF] pb-3 border-b border-slate-100">
             2. Availability, Pricing & Status Controls
           </h3>
 
@@ -347,7 +345,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 type="checkbox"
                 checked={formData.published}
                 onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                className="w-5 h-5 rounded-md text-indigo-600 cursor-pointer"
+                className="w-5 h-5 rounded-md text-[#0089CF] cursor-pointer"
               />
             </div>
 
@@ -360,7 +358,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 type="checkbox"
                 checked={formData.available}
                 onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
-                className="w-5 h-5 rounded-md text-indigo-600 cursor-pointer"
+                className="w-5 h-5 rounded-md text-[#0089CF] cursor-pointer"
               />
             </div>
 
@@ -373,7 +371,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 type="checkbox"
                 checked={formData.featured}
                 onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="w-5 h-5 rounded-md text-indigo-600 cursor-pointer"
+                className="w-5 h-5 rounded-md text-[#0089CF] cursor-pointer"
               />
             </div>
           </div>
@@ -384,7 +382,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
               <select
                 value={formData.salesType}
                 onChange={(e) => setFormData({ ...formData, salesType: e.target.value as 'fixed' | 'call' })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               >
                 <option value="fixed">Fixed Price (Instant Online Purchase)</option>
                 <option value="call">Call-Based (Price on Discussion)</option>
@@ -400,7 +398,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                   step="1"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 />
               </div>
             )}
@@ -415,15 +413,15 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 placeholder="Leave blank for unlimited"
                 value={formData.stockLimit}
                 onChange={(e) => setFormData({ ...formData, stockLimit: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
               />
             </div>
           </div>
         </div>
 
         {/* 3. Digital Asset Upload & Download Delivery */}
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600 pb-3 border-b border-slate-100 flex items-center gap-2">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-[#0089CF] pb-3 border-b border-slate-100 flex items-center gap-2">
             <Package className="w-4 h-4" />
             3. Downloadable Project Assets (Private Storage)
           </h3>
@@ -433,9 +431,9 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
           </p>
 
           <div className="p-5 rounded-2xl border-2 border-dashed border-slate-200/80 bg-slate-50/50 flex flex-col items-center justify-center text-center space-y-3">
-            <Upload className="w-8 h-8 text-indigo-600" />
+            <Upload className="w-8 h-8 text-[#0089CF]" />
             <div>
-              <label className="cursor-pointer text-xs font-bold text-indigo-600 hover:underline">
+              <label className="cursor-pointer text-xs font-bold text-[#0089CF] hover:underline">
                 <span>Upload Project Archive (.zip, .tar.gz, .rar, .7z, .pdf, .docx, .txt)</span>
                 <input
                   type="file"
@@ -447,7 +445,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
               <p className="text-[11px] text-slate-400 mt-0.5">Secure direct upload to private storage. Maximum file size: 2GB.</p>
             </div>
             {uploadingFile && (
-              <div className="flex items-center gap-2 text-xs text-indigo-600 font-semibold">
+              <div className="flex items-center gap-2 text-xs text-[#0089CF] font-semibold">
                 <Loader2 className="w-4 h-4 animate-spin" /> Uploading to secure storage{uploadProgress !== null ? `: ${uploadProgress}%` : '...'}
               </div>
             )}
@@ -483,8 +481,8 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         </div>
 
         {/* 4. Setup, Prerequisites & Technical Deliverables */}
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-6 shadow-xs">
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600 pb-3 border-b border-slate-100 flex items-center gap-2">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-6 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-[#0089CF] pb-3 border-b border-slate-100 flex items-center gap-2">
             <Wrench className="w-4 h-4" />
             4. Execution Setup & Prerequisites
           </h3>
@@ -545,9 +543,9 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
         </div>
 
         {/* 5. Media & Visual Assets */}
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 space-y-8 shadow-xs">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-8 shadow-xs">
           <div className="pb-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-indigo-600">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-[#0089CF]">
               5. Media & Visual Assets
             </h3>
             <span className="text-[11px] text-slate-400">
@@ -590,7 +588,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
               value={formData.demoVideo}
               onChange={(e) => setFormData({ ...formData, demoVideo: e.target.value })}
               placeholder="https://www.youtube-nocookie.com/embed/..."
-              className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF] bg-white"
             />
             <p className="text-[11px] text-slate-400 mt-1">
               Optional YouTube embed or video link for customer demonstration.
@@ -609,7 +607,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                     onClick={() => handleMaterialToggle(mat)}
                     className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all ${
                       isSelected
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        ? 'border-[#0089CF] bg-[#F0F9FF] text-[#0073B0]'
                         : 'border-slate-200 bg-white text-slate-500'
                     }`}
                   >
@@ -634,7 +632,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#ED1C24] hover:bg-[#D1171F] text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <>
@@ -669,7 +667,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#F0F9FF] text-[#0073B0]">
                   {formData.category}
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
@@ -679,10 +677,12 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
               <h4 className="text-base font-bold text-slate-900">{formData.title || 'Untitled Project'}</h4>
               <p className="text-xs text-slate-500 line-clamp-2">{formData.shortDescription || 'No description'}</p>
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-base font-black text-indigo-600">
+                <span className="text-base font-black text-[#0089CF]">
                   {formData.salesType === 'call' ? 'Price on Call' : `₹${formData.price}`}
                 </span>
-                <span className="text-xs text-emerald-600 font-bold">100% Verified</span>
+                <span className="text-xs text-emerald-600 font-bold">
+                  {formData.available ? 'Available' : 'Unavailable'}
+                </span>
               </div>
             </div>
           </div>

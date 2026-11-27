@@ -59,7 +59,7 @@ export default function ProjectComparePage() {
   if (loading) {
     return (
       <main className="zivo-page min-h-screen pt-24 sm:pt-28 pb-20 text-center flex flex-col items-center justify-center space-y-3">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+        <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
         <p className="text-xs text-slate-500 font-mono">Loading project comparison tool...</p>
       </main>
     );
@@ -72,7 +72,7 @@ export default function ProjectComparePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
           <div>
             <div className="zivo-eyebrow mb-2">
-              <Scale className="w-3.5 h-3.5 text-indigo-600" />
+              <Scale className="w-3.5 h-3.5 text-[#0089CF]" />
               <span>Side-by-Side Evaluation</span>
             </div>
             <h1 className="zivo-display text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
@@ -100,6 +100,32 @@ export default function ProjectComparePage() {
         )}
 
         {/* Comparison Grid */}
+        {allProjects.length === 0 && !errorMsg ? (
+          <div className="glass-panel rounded-3xl border border-slate-200/80 p-12 text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#F0F9FF] text-[#0089CF] flex items-center justify-center mx-auto">
+              <Scale className="w-7 h-7" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">No projects available to compare yet</h2>
+            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+              Once projects are published to the catalog, you can compare up to 3 architectures side-by-side here.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <Link
+                href="/projects"
+                className="inline-flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl glow-gradient text-white shadow-md hover:opacity-95 transition-all"
+              >
+                Explore Projects
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <Link
+                href="/projects/custom"
+                className="inline-flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                Request Custom Build
+              </Link>
+            </div>
+          </div>
+        ) : (
         <div className="glass-panel rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs overflow-x-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100 min-w-[700px] md:min-w-0">
           {/* Attributes Column */}
@@ -125,7 +151,7 @@ export default function ProjectComparePage() {
                   key={index}
                   className="p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[350px] bg-slate-50/30"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F0F9FF] text-[#0089CF] flex items-center justify-center">
                     <Plus className="w-6 h-6" />
                   </div>
                   <div>
@@ -134,7 +160,7 @@ export default function ProjectComparePage() {
                   </div>
                   <button
                     onClick={() => setPickerSlot(index)}
-                    className="text-xs font-bold px-4 py-2 rounded-xl border border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50 transition-all shadow-xs"
+                    className="text-xs font-bold px-4 py-2 rounded-xl border border-[#0089CF]/30 bg-white text-[#0089CF] hover:bg-[#F0F9FF] transition-all shadow-xs"
                   >
                     Select Project
                   </button>
@@ -165,7 +191,7 @@ export default function ProjectComparePage() {
                   </div>
                   <Link
                     href={`/projects/${project.slug}`}
-                    className="block font-bold text-sm text-slate-900 hover:text-indigo-600 line-clamp-2 transition-colors"
+                    className="block font-bold text-sm text-slate-900 hover:text-[#0089CF] line-clamp-2 transition-colors"
                   >
                     {project.title}
                   </Link>
@@ -195,7 +221,7 @@ export default function ProjectComparePage() {
                       project.difficulty === 'Beginner'
                         ? 'bg-emerald-50 text-emerald-700'
                         : project.difficulty === 'Intermediate'
-                        ? 'bg-indigo-50 text-indigo-700'
+                        ? 'bg-[#F0F9FF] text-[#0073B0]'
                         : 'bg-amber-50 text-amber-700'
                     }`}
                   >
@@ -259,7 +285,7 @@ export default function ProjectComparePage() {
                 <div className="py-4 border-t border-slate-100">
                   <Link
                     href={`/projects/${project.slug}`}
-                    className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 px-4 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all"
+                    className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 px-4 rounded-xl glow-gradient text-white shadow-md shadow-[#ED1C24]/20 hover:opacity-95 transition-all"
                   >
                     View Project
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -270,6 +296,7 @@ export default function ProjectComparePage() {
           })}
         </div>
       </div>
+        )}
 
       {/* Project Selector Modal */}
       {pickerSlot !== null && (
@@ -292,13 +319,13 @@ export default function ProjectComparePage() {
                   <button
                     key={p.id}
                     onClick={() => addProject(p)}
-                    className="w-full p-3 rounded-xl border border-slate-200 hover:border-indigo-600 hover:bg-indigo-50/50 flex items-center gap-3 text-left transition-all group"
+                    className="w-full p-3 rounded-xl border border-slate-200 hover:border-[#0089CF] hover:bg-[#F0F9FF] flex items-center gap-3 text-left transition-all group"
                   >
                     <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-slate-100">
                       <Image src={p.mainImage} alt={p.title} fill className="object-cover" sizes="48px" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 truncate">
+                      <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#0089CF] truncate">
                         {p.title}
                       </h4>
                       <p className="text-[11px] text-slate-500">
@@ -306,7 +333,7 @@ export default function ProjectComparePage() {
                         {p.salesType === 'call' ? 'Call for pricing' : formatCurrency(p.price)}
                       </p>
                     </div>
-                    <Plus className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 shrink-0" />
+                    <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#0089CF] shrink-0" />
                   </button>
                 ))}
             </div>

@@ -210,39 +210,41 @@ test('Automated Delivery & Payment Fulfillment Idempotency', async (t) => {
       },
     });
 
-    const receiptToken = createReceiptToken(paidOrder.orderId);
+    try {
+      const receiptToken = createReceiptToken(paidOrder.orderId);
 
-    // 1. Download via exact lowercase hex orderId
-    const reqExact = new Request(
-      `http://localhost:3000/api/orders/download/${lowercaseHexOrderId}?token=${receiptToken}`
-    );
-    const resExact = await downloadRoute(reqExact, {
-      params: Promise.resolve({ orderId: lowercaseHexOrderId }),
-    });
-    // Should NOT be 404
-    assert.notEqual(resExact.status, 404);
+      // 1. Download via exact lowercase hex orderId
+      const reqExact = new Request(
+        `http://localhost:3000/api/orders/download/${lowercaseHexOrderId}?token=${receiptToken}`
+      );
+      const resExact = await downloadRoute(reqExact, {
+        params: Promise.resolve({ orderId: lowercaseHexOrderId }),
+      });
+      // Should NOT be 404
+      assert.notEqual(resExact.status, 404);
 
-    // 2. Download via uppercase transformed orderId
-    const reqUpper = new Request(
-      `http://localhost:3000/api/orders/download/${lowercaseHexOrderId.toUpperCase()}?token=${receiptToken}`
-    );
-    const resUpper = await downloadRoute(reqUpper, {
-      params: Promise.resolve({ orderId: lowercaseHexOrderId.toUpperCase() }),
-    });
-    assert.notEqual(resUpper.status, 404);
+      // 2. Download via uppercase transformed orderId
+      const reqUpper = new Request(
+        `http://localhost:3000/api/orders/download/${lowercaseHexOrderId.toUpperCase()}?token=${receiptToken}`
+      );
+      const resUpper = await downloadRoute(reqUpper, {
+        params: Promise.resolve({ orderId: lowercaseHexOrderId.toUpperCase() }),
+      });
+      assert.notEqual(resUpper.status, 404);
 
-    // 3. Download via database cuid id
-    const reqId = new Request(
-      `http://localhost:3000/api/orders/download/${paidOrder.id}?token=${receiptToken}`
-    );
-    const resId = await downloadRoute(reqId, {
-      params: Promise.resolve({ orderId: paidOrder.id }),
-    });
-    assert.notEqual(resId.status, 404);
-
-    // Clean up
-    await prisma.order.delete({ where: { id: paidOrder.id } });
-    await prisma.project.delete({ where: { id: dlProject.id } });
+      // 3. Download via database cuid id
+      const reqId = new Request(
+        `http://localhost:3000/api/orders/download/${paidOrder.id}?token=${receiptToken}`
+      );
+      const resId = await downloadRoute(reqId, {
+        params: Promise.resolve({ orderId: paidOrder.id }),
+      });
+      assert.notEqual(resId.status, 404);
+    } finally {
+      // Clean up
+      await prisma.order.delete({ where: { id: paidOrder.id } }).catch(() => {});
+      await prisma.project.delete({ where: { id: dlProject.id } }).catch(() => {});
+    }
   });
 });
 

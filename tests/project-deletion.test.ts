@@ -116,6 +116,9 @@ test('Admin Project Deletion & Safe Retirement Lifecycle', async (t) => {
     // Confirm private asset was deleted
     const checkPrivate = await privateAssetExists(privateAsset.key);
     assert.equal(checkPrivate, false);
+
+    // Clean up audit log entry from test
+    await prisma.adminAuditLog.deleteMany({ where: { resourceId: project.id } }).catch(() => {});
   });
 
   await t.test('Safely archives project with historical orders to protect customer downloads', async () => {
@@ -154,38 +157,41 @@ test('Admin Project Deletion & Safe Retirement Lifecycle', async (t) => {
       },
     });
 
-    const req = new Request(`http://localhost:3000/api/projects/${project.id}`, {
-      method: 'DELETE',
-      headers: {
-        cookie: `${ADMIN_TOKEN_COOKIE_NAME}=${adminToken}`,
-      },
-    });
+    try {
+      const req = new Request(`http://localhost:3000/api/projects/${project.id}`, {
+        method: 'DELETE',
+        headers: {
+          cookie: `${ADMIN_TOKEN_COOKIE_NAME}=${adminToken}`,
+        },
+      });
 
-    const res = await DELETE(req, { params: Promise.resolve({ id: project.id }) });
-    assert.equal(res.status, 200);
+      const res = await DELETE(req, { params: Promise.resolve({ id: project.id }) });
+      assert.equal(res.status, 200);
 
-    const body = await res.json();
-    assert.equal(body.success, true);
-    assert.equal(body.action, 'archived');
-    assert.ok(body.message.includes('customer order'));
+      const body = await res.json();
+      assert.equal(body.success, true);
+      assert.equal(body.action, 'archived');
+      assert.ok(body.message.includes('customer order'));
 
-    // Verify row still exists in DB so the order is NOT broken
-    const updatedProject = await prisma.project.findUnique({ where: { id: project.id } });
-    assert.ok(updatedProject);
-    assert.equal(updatedProject?.available, false);
-    assert.equal(updatedProject?.published, false);
-    assert.equal(updatedProject?.featured, false);
+      // Verify row still exists in DB so the order is NOT broken
+      const updatedProject = await prisma.project.findUnique({ where: { id: project.id } });
+      assert.ok(updatedProject);
+      assert.equal(updatedProject?.available, false);
+      assert.equal(updatedProject?.published, false);
+      assert.equal(updatedProject?.featured, false);
 
-    // Verify order is intact
-    const checkOrder = await prisma.order.findUnique({
-      where: { id: order.id },
-      include: { project: true },
-    });
-    assert.ok(checkOrder);
-    assert.equal(checkOrder?.project.downloadFileUrl, 'deliverables/protected.zip');
-
-    // Clean up test order and project
-    await prisma.order.delete({ where: { id: order.id } });
-    await prisma.project.delete({ where: { id: project.id } });
+      // Verify order is intact
+      const checkOrder = await prisma.order.findUnique({
+        where: { id: order.id },
+        include: { project: true },
+      });
+      assert.ok(checkOrder);
+      assert.equal(checkOrder?.project.downloadFileUrl, 'deliverables/protected.zip');
+    } finally {
+      // Clean up test order, project and audit log
+      await prisma.adminAuditLog.deleteMany({ where: { resourceId: project.id } }).catch(() => {});
+      await prisma.order.delete({ where: { id: order.id } }).catch(() => {});
+      await prisma.project.delete({ where: { id: project.id } }).catch(() => {});
+    }
   });
 });

@@ -4,9 +4,19 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { PhoneCall, ShoppingCart, Star, AlertCircle, Heart, ArrowRight, CheckCircle2, FileCode2 } from 'lucide-react';
+import {
+  PhoneCall,
+  ShoppingCart,
+  Star,
+  AlertCircle,
+  Heart,
+  ArrowRight,
+  CheckCircle2,
+  FileCode2,
+} from 'lucide-react';
 import { Project } from '@/types';
 import { formatCurrency } from '@/lib/utils';
+import { BRAND_ASSETS } from '@/lib/brand';
 
 interface ProjectCardProps {
   project: Project;
@@ -17,7 +27,11 @@ interface ProjectCardProps {
 export default function ProjectCard({ project, onDiscussClick, onBuyClick }: ProjectCardProps) {
   const router = useRouter();
   const isFixed = project.salesType === 'fixed';
-  const isAvailable = project.available && project.published && (project.stockLimit === null || project.stockLimit === undefined || project.stockLimit > 0);
+  const isAvailable =
+    project.available &&
+    project.published &&
+    (project.stockLimit === null || project.stockLimit === undefined || project.stockLimit > 0);
+
   const [isWishlisted, setIsWishlisted] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -88,23 +102,26 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
   const materialsCount = project.includedMaterials?.length ?? 0;
 
   return (
-    <article className="group zivo-card relative flex h-full flex-col overflow-hidden rounded-3xl bg-white">
+    <article className="group zivo-card relative flex h-full flex-col overflow-hidden rounded-xl bg-white">
       {/* Top Image Banner */}
-      <Link href={`/projects/${project.slug}`} className="relative block aspect-[16/10] w-full overflow-hidden bg-slate-100">
+      <Link
+        href={`/projects/${project.slug}`}
+        className="relative block aspect-[16/10] w-full overflow-hidden bg-[#F3F4F6]"
+      >
         <Image
-          src={project.mainImage || '/images/zivoai-logo.png'}
+          src={project.mainImage || BRAND_ASSETS.ogImage}
           alt={project.title}
           fill
           unoptimized
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
 
         {/* Top Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-md bg-white/95 text-slate-800 border border-slate-200/80 shadow-xs">
+        <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between gap-2">
+          <span className="rounded bg-white/95 px-2.5 py-1 font-heading text-[10px] font-bold uppercase tracking-[0.06em] text-[#0A0A0A] shadow-xs">
             {project.category}
           </span>
 
@@ -114,32 +131,32 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
               onClick={toggleWishlist}
               aria-pressed={isWishlisted}
               aria-label={isWishlisted ? `Remove ${project.title} from wishlist` : `Save ${project.title} to wishlist`}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors cursor-pointer ${
                 isWishlisted
-                  ? 'bg-pink-600 text-white border-pink-500 shadow-xs'
-                  : 'bg-white/95 hover:bg-white text-slate-600 hover:text-pink-600 border-slate-200'
+                  ? 'border-[#ED1C24] bg-[#ED1C24] text-white shadow-xs'
+                  : 'border-white/80 bg-white/95 text-[#4B5563] hover:border-[#ED1C24] hover:text-[#ED1C24]'
               }`}
               title={isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
             >
-              <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-white' : ''}`} />
+              <Heart className={`h-3.5 w-3.5 ${isWishlisted ? 'fill-white' : ''}`} />
             </button>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-900/85 text-white">
+            <span className="rounded bg-[#0A0A0A]/85 px-2 py-1 font-heading text-[10px] font-bold uppercase tracking-wider text-white">
               {project.projectType}
             </span>
           </div>
         </div>
 
-        {/* Bottom Availability Indicator (ZAI-097 — factual status without conflicting SLA claims) */}
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between gap-2 z-10">
+        {/* Bottom Availability Indicator */}
+        <div className="absolute bottom-2.5 left-3 right-3 z-10 flex items-center justify-between gap-2">
           <div>
             {isAvailable ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-emerald-600 text-white shadow-xs">
-                <CheckCircle2 className="w-3 h-3 text-white" />
-                {isFixed ? 'Available • Digital Download' : 'Available • Custom Scope'}
+              <span className="inline-flex items-center gap-1 rounded bg-[#008C44] px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-xs">
+                <CheckCircle2 className="h-3 w-3 text-white" aria-hidden="true" />
+                {isFixed ? 'Ready Download' : 'Custom Scope'}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-rose-600 text-white shadow-xs">
-                <AlertCircle className="w-3 h-3 text-white" />
+              <span className="inline-flex items-center gap-1 rounded bg-[#ED1C24] px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-xs">
+                <AlertCircle className="h-3 w-3 text-white" aria-hidden="true" />
                 {project.stockLimit !== null && project.stockLimit !== undefined && project.stockLimit <= 0
                   ? 'Out of Stock'
                   : 'Unavailable'}
@@ -148,33 +165,34 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
           </div>
 
           {project.featured && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500 text-white flex items-center gap-1 shadow-xs">
-              <Star className="w-3 h-3 fill-white text-white" /> Featured
+            <span className="inline-flex items-center gap-1 rounded bg-[#FDB913] px-2 py-0.5 font-heading text-[10px] font-extrabold uppercase tracking-wider text-[#0A0A0A] shadow-xs">
+              <Star className="h-3 w-3 fill-[#0A0A0A] text-[#0A0A0A]" aria-hidden="true" />
+              Featured
             </span>
           )}
         </div>
       </Link>
 
       {/* Content Area */}
-      <div className="flex flex-grow flex-col justify-between space-y-4 p-5 sm:p-6">
+      <div className="flex flex-grow flex-col justify-between space-y-4 p-5">
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 font-semibold">
+          <div className="flex items-center justify-between gap-2 text-[11px] font-semibold text-[#6B7280]">
             <span>{project.difficulty} Level</span>
             {materialsCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-indigo-700">
-                <FileCode2 className="w-3 h-3" />
-                {materialsCount} deliverable{materialsCount !== 1 ? 's' : ''} listed
+              <span className="inline-flex items-center gap-1 text-[#0089CF]">
+                <FileCode2 className="h-3.5 w-3.5" aria-hidden="true" />
+                {materialsCount} deliverable{materialsCount !== 1 ? 's' : ''}
               </span>
             )}
           </div>
 
-          <Link href={`/projects/${project.slug}`} className="block group-hover:text-indigo-600 transition-colors">
-            <h3 className="text-base font-bold leading-snug text-slate-900 line-clamp-2 sm:text-lg">
+          <Link href={`/projects/${project.slug}`} className="block">
+            <h3 className="font-heading text-base font-bold leading-snug text-[#0A0A0A] line-clamp-2 transition-colors group-hover:text-[#0089CF]">
               {project.title}
             </h3>
           </Link>
 
-          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+          <p className="text-xs leading-relaxed text-[#4B5563] line-clamp-2">
             {project.shortDescription}
           </p>
 
@@ -182,32 +200,32 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
             {project.technologies.slice(0, 4).map((tech, idx) => (
               <span
                 key={idx}
-                className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200"
+                className="rounded border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-0.5 text-[10px] font-semibold text-[#374151]"
               >
                 {tech}
               </span>
             ))}
             {project.technologies.length > 4 && (
-              <span className="text-[10px] text-slate-500 font-medium px-1 py-0.5">
+              <span className="px-1 py-0.5 text-[10px] font-semibold text-[#6B7280]">
                 +{project.technologies.length - 4}
               </span>
             )}
           </div>
         </div>
 
-        {/* Commercial Section & Unambiguous Primary CTA (ZAI-102) */}
-        <div className="pt-3 border-t border-slate-100 space-y-3">
+        {/* Commercial Footer & CTA */}
+        <div className="space-y-3 border-t border-[#F3F4F6] pt-3.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#6B7280]">
                 {isFixed ? 'Fixed Price' : 'Engagement'}
               </span>
               {isFixed ? (
-                <span className="text-xl font-black text-slate-900">
+                <span className="font-heading text-xl font-extrabold text-[#0A0A0A]">
                   {formatCurrency(project.price)}
                 </span>
               ) : (
-                <span className="text-xs font-bold text-slate-800">
+                <span className="font-heading text-xs font-bold text-[#0A0A0A]">
                   Custom Quote on Call
                 </span>
               )}
@@ -215,9 +233,10 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
 
             <Link
               href={`/projects/${project.slug}`}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-bold text-[#0089CF] transition-colors hover:text-[#0073B0]"
             >
-              View Specs <ArrowRight className="w-3 h-3" />
+              <span>View Specs</span>
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
           </div>
 
@@ -226,18 +245,18 @@ export default function ProjectCard({ project, onDiscussClick, onBuyClick }: Pro
               type="button"
               disabled={!isAvailable}
               onClick={handlePrimaryAction}
-              className="w-full flex items-center justify-center gap-2 text-xs font-bold py-3 px-4 rounded-xl glow-gradient text-white shadow-sm hover:opacity-95 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#ED1C24] px-4 font-heading text-xs font-bold uppercase tracking-[0.06em] text-white shadow-xs transition-all duration-200 hover:bg-[#D1171F] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
             >
-              <ShoppingCart className="w-4 h-4 text-white" />
+              <ShoppingCart className="h-4 w-4 text-white" aria-hidden="true" />
               <span>{isAvailable ? `Buy Now — ${formatCurrency(project.price)}` : 'Temporarily Unavailable'}</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={handlePrimaryAction}
-              className="w-full flex items-center justify-center gap-2 text-xs font-bold py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-colors cursor-pointer"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#0A0A0A] px-4 font-heading text-xs font-bold uppercase tracking-[0.06em] text-white shadow-xs transition-all duration-200 hover:bg-[#1F2937] cursor-pointer"
             >
-              <PhoneCall className="w-4 h-4 text-indigo-300" />
+              <PhoneCall className="h-4 w-4 text-[#FDB913]" aria-hidden="true" />
               <span>Request Custom Quote</span>
             </button>
           )}

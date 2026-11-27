@@ -64,6 +64,17 @@ function OrderTrackContent() {
   const [error, setError] = useState<string | null>(null);
 
   const [trackedCustomProject, setTrackedCustomProject] = useState<CustomProjectData | null>(null);
+  const [supportWhatsapp, setSupportWhatsapp] = useState('');
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const clean = String(data?.settings?.whatsappNumber || '').replace(/\D/g, '');
+        if (clean) setSupportWhatsapp(clean);
+      })
+      .catch(() => {});
+  }, []);
 
   const trackReference = useCallback(
     async (idToTrack: string, emailToTrack: string, otpCode?: string) => {
@@ -197,11 +208,7 @@ function OrderTrackContent() {
   };
 
   return (
-    <main className="zivo-page relative isolate mx-auto min-h-screen max-w-5xl overflow-hidden px-4 pt-28 sm:pt-32 pb-20 sm:px-6 lg:px-8 text-slate-900">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(99,102,241,0.11),transparent_34%),radial-gradient(circle_at_84%_72%,rgba(16,185,129,0.08),transparent_30%)]" />
-        <div className="tracking-orb absolute -right-20 top-24 h-56 w-56 rounded-full bg-indigo-300/20 blur-3xl" />
-      </div>
+    <main className="zivo-page relative isolate mx-auto min-h-screen max-w-5xl overflow-hidden px-4 pt-28 sm:pt-32 pb-20 sm:px-6 lg:px-8 text-[#0A0A0A]">
       <div className="relative z-10 space-y-8">
         {/* If custom project details loaded, show rich tracker view */}
         {trackedCustomProject ? (
@@ -213,12 +220,12 @@ function OrderTrackContent() {
                 setTrackedCustomProject(null);
                 setOrderId('');
               }}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#0089CF] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" /> Track Another Reference
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700">
+              <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#0089CF]/30 text-[#0073B0]">
                 {trackedCustomProject.leadId}
               </span>
             </div>
@@ -228,7 +235,7 @@ function OrderTrackContent() {
           <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200 bg-white/95 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0089CF] block">
                   Custom Project Development Tracker
                 </span>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
@@ -252,7 +259,7 @@ function OrderTrackContent() {
                       ? 'bg-red-50 text-red-800 border border-red-300'
                       : trackedCustomProject.currentStage === 'On Hold'
                       ? 'bg-amber-50 text-amber-800 border border-amber-300'
-                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      : 'bg-[#F0F9FF] text-[#0073B0] border border-[#0089CF]/30'
                   }`}
                 >
                   <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
@@ -262,15 +269,15 @@ function OrderTrackContent() {
             </div>
 
             {/* Current Status Message Callout */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-emerald-50/70 border border-indigo-200/80 space-y-2">
+            <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#0089CF]/30 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-indigo-600" />
+                <span className="text-xs font-bold text-[#0A0A0A] flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-[#0089CF]" />
                   Latest Development Update
                 </span>
                 {trackedCustomProject.estimatedCompletionDate && (
                   <span className="text-xs font-semibold text-slate-700 flex items-center gap-1 bg-white/80 px-2.5 py-0.5 rounded-lg border border-slate-200/60">
-                    <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                    <Calendar className="w-3.5 h-3.5 text-[#0089CF]" />
                     Target Delivery: <strong>{trackedCustomProject.estimatedCompletionDate}</strong>
                   </span>
                 )}
@@ -308,7 +315,7 @@ function OrderTrackContent() {
                       key={idx}
                       className={`relative flex flex-col items-center text-center p-3 rounded-2xl border transition-all ${
                         isCurrent
-                          ? 'bg-indigo-50/90 border-indigo-300 shadow-md ring-2 ring-indigo-500/20'
+                          ? 'bg-[#F0F9FF] border-[#0089CF]/50 shadow-md ring-2 ring-[#0089CF]/20'
                           : isCompleted
                           ? 'bg-emerald-50/50 border-emerald-200 text-slate-800'
                           : 'bg-slate-50 border-slate-200/70 text-slate-400 opacity-70'
@@ -319,7 +326,7 @@ function OrderTrackContent() {
                           isCompleted
                             ? 'bg-emerald-600 text-white shadow-xs'
                             : isCurrent
-                            ? 'bg-indigo-600 text-white shadow-md ring-4 ring-indigo-100 animate-pulse'
+                            ? 'bg-[#0089CF] text-white shadow-md ring-4 ring-[#E0F2FE]'
                             : 'bg-slate-200 text-slate-600'
                         }`}
                       >
@@ -329,7 +336,7 @@ function OrderTrackContent() {
                       <span
                         className={`text-[11px] font-bold leading-tight ${
                           isCurrent
-                            ? 'text-indigo-900'
+                            ? 'text-[#0A0A0A]'
                             : isCompleted
                             ? 'text-emerald-900'
                             : 'text-slate-600'
@@ -340,7 +347,7 @@ function OrderTrackContent() {
 
                       <span className="text-[10px] mt-1 font-semibold">
                         {isCompleted && <span className="text-emerald-600">Completed</span>}
-                        {isCurrent && <span className="text-indigo-600 font-bold">In Progress</span>}
+                        {isCurrent && <span className="text-[#0089CF] font-bold">In Progress</span>}
                         {!isCompleted && !isCurrent && <span className="text-slate-400">Upcoming</span>}
                       </span>
                     </div>
@@ -353,7 +360,7 @@ function OrderTrackContent() {
           {/* Timeline History Log */}
           <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200 bg-white/95 shadow-xl space-y-6">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-indigo-600" />
+              <Clock className="w-5 h-5 text-[#0089CF]" />
               <h3 className="text-base font-bold text-slate-900">Milestone Activity Log</h3>
             </div>
 
@@ -361,10 +368,10 @@ function OrderTrackContent() {
               <div className="space-y-4 relative before:absolute before:inset-0 before:left-3 before:w-0.5 before:bg-slate-200">
                 {trackedCustomProject.timeline.map((item, idx) => (
                   <div key={idx} className="relative flex items-start gap-4 pl-8">
-                    <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-indigo-600 border-2 border-white shadow-xs" />
+                    <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-[#0089CF] border-2 border-white shadow-xs" />
                     <div className="flex-1 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                        <span className="text-xs font-bold text-indigo-600">{item.stage}</span>
+                        <span className="text-xs font-bold text-[#0089CF]">{item.stage}</span>
                         <span className="text-[11px] text-slate-400 font-medium">
                           {formatDate(item.createdAt)}
                         </span>
@@ -392,17 +399,19 @@ function OrderTrackContent() {
               <div className="text-xs text-slate-600">
                 <span>Have questions about your project scope or timeline?</span>
               </div>
-              <a
-                href={`https://wa.me/918220303164?text=${encodeURIComponent(
-                  `Hi, I am tracking my custom project requirement (#${trackedCustomProject.leadId}). Could you please share an update?`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md transition-all"
-              >
-                <PhoneCall className="w-3.5 h-3.5" />
-                Chat on WhatsApp Support
-              </a>
+              {supportWhatsapp && (
+                <a
+                  href={`https://wa.me/${supportWhatsapp}?text=${encodeURIComponent(
+                    `Hi, I am tracking my custom project requirement (#${trackedCustomProject.leadId}). Could you please share an update?`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md transition-all"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  Chat on WhatsApp Support
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -410,7 +419,7 @@ function OrderTrackContent() {
         /* Tracker Search Box */
         <div className="max-w-md mx-auto space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-[#F0F9FF] text-[#0089CF] flex items-center justify-center mx-auto shadow-xs">
               <Search className="w-6 h-6" />
             </div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Track Your Project Order</h1>
@@ -420,8 +429,8 @@ function OrderTrackContent() {
           </div>
 
           {otpNotice && (
-            <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-800 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-[#F0F9FF] border border-[#0089CF]/30 rounded-xl text-xs text-[#005E91] flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#0089CF] shrink-0 mt-0.5" />
               <span>{otpNotice}</span>
             </div>
           )}
@@ -447,7 +456,7 @@ function OrderTrackContent() {
                     value={orderId}
                     onChange={(e) => setOrderId(e.target.value.toUpperCase())}
                     placeholder="e.g. ORD-10001 or LD-1001"
-                    className="w-full pl-9 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase"
+                    className="w-full pl-9 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF] focus:border-transparent uppercase"
                   />
                 </div>
               </div>
@@ -463,8 +472,8 @@ function OrderTrackContent() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="Enter your billing email address"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF] focus:border-transparent"
                   />
                 </div>
               </div>
@@ -483,7 +492,7 @@ function OrderTrackContent() {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                     placeholder="Enter 6-digit code"
-                    className="w-full px-3 py-2 text-xs font-mono tracking-widest rounded-xl border border-indigo-300 bg-indigo-50/40 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-xs font-mono tracking-widest rounded-xl border border-[#0089CF]/50 bg-[#F0F9FF] focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                   />
                 </div>
               )}
@@ -491,7 +500,7 @@ function OrderTrackContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl glow-gradient text-white text-xs font-bold shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl glow-gradient text-white text-xs font-bold shadow-md shadow-[#ED1C24]/20 hover:opacity-95 transition-all disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -512,7 +521,7 @@ function OrderTrackContent() {
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <p className="text-[11px] leading-relaxed">
               Already have an account?{' '}
-              <Link href="/login?from=/account" className="font-bold text-indigo-600 hover:underline">
+              <Link href="/login?from=/account" className="font-bold text-[#0089CF] hover:underline">
                 Sign in to your customer dashboard
               </Link>{' '}
               to view all your fixed purchases and custom project enquiries in one place.
@@ -530,7 +539,7 @@ export default function OrderTrackPage() {
     <Suspense
       fallback={
         <div className="min-h-[75vh] flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin" />
         </div>
       }
     >

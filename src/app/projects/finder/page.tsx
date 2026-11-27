@@ -133,7 +133,7 @@ export default function ProjectFinderPage() {
       {/* Header */}
       <div className="zivo-reveal mx-auto max-w-2xl space-y-3 text-center">
         <div className="zivo-eyebrow">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <Sparkles className="w-3.5 h-3.5 text-[#0089CF]" />
           <span>AI-Powered Project & Architecture Advisor</span>
         </div>
         <h1 className="zivo-display text-4xl font-bold text-slate-900 sm:text-5xl">
@@ -165,7 +165,7 @@ export default function ProjectFinderPage() {
                 </div>
                 <span
                   className={`text-[11px] font-semibold hidden sm:inline ${
-                    isCurrent ? 'text-indigo-600' : 'text-slate-500'
+                    isCurrent ? 'text-[#0089CF]' : 'text-slate-500'
                   }`}
                 >
                   {s.title}
@@ -180,7 +180,7 @@ export default function ProjectFinderPage() {
       {!hasSearched ? (
         <div className="zivo-surface mx-auto max-w-3xl space-y-8 rounded-3xl p-6 sm:p-10">
           <div>
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+            <span className="text-xs font-bold text-[#0089CF] uppercase tracking-wider">
               Step {step} of 5
             </span>
             <h2 className="zivo-display mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -198,12 +198,12 @@ export default function ProjectFinderPage() {
                   onClick={() => setDepartment(dept)}
                   className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${
                     department === dept
-                      ? 'border-indigo-600 bg-indigo-50/50 shadow-xs ring-2 ring-indigo-600/20'
+                      ? 'border-[#0089CF] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0089CF]/20'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
                   <span className="text-sm font-bold text-slate-800">{dept}</span>
-                  {department === dept && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
+                  {department === dept && <CheckCircle2 className="w-5 h-5 text-[#0089CF]" />}
                 </button>
               ))}
             </div>
@@ -219,12 +219,12 @@ export default function ProjectFinderPage() {
                   onClick={() => setDomain(dom)}
                   className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${
                     domain === dom
-                      ? 'border-indigo-600 bg-indigo-50/50 shadow-xs ring-2 ring-indigo-600/20'
+                      ? 'border-[#0089CF] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0089CF]/20'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
                   <span className="text-sm font-bold text-slate-800">{dom}</span>
-                  {domain === dom && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
+                  {domain === dom && <CheckCircle2 className="w-5 h-5 text-[#0089CF]" />}
                 </button>
               ))}
             </div>
@@ -240,12 +240,12 @@ export default function ProjectFinderPage() {
                   onClick={() => setTechnology(tech)}
                   className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${
                     technology === tech
-                      ? 'border-indigo-600 bg-indigo-50/50 shadow-xs ring-2 ring-indigo-600/20'
+                      ? 'border-[#0089CF] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0089CF]/20'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
                   <span className="text-sm font-bold text-slate-800">{tech}</span>
-                  {technology === tech && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
+                  {technology === tech && <CheckCircle2 className="w-5 h-5 text-[#0089CF]" />}
                 </button>
               ))}
             </div>
@@ -261,15 +261,15 @@ export default function ProjectFinderPage() {
                   onClick={() => setDifficulty(diff)}
                   className={`p-5 rounded-2xl border text-left flex flex-col gap-1 transition-all ${
                     difficulty === diff
-                      ? 'border-indigo-600 bg-indigo-50/50 shadow-xs ring-2 ring-indigo-600/20'
+                      ? 'border-[#0089CF] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0089CF]/20'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
                   <span className="text-base font-bold text-slate-900">{diff}</span>
                   <span className="text-xs text-slate-500">
-                    {diff === 'Beginner' && 'Simple algorithms, quick setup, ideal for Mini Projects.'}
-                    {diff === 'Intermediate' && 'Standard ML/Full-Stack architecture, IEEE approved.'}
-                    {diff === 'Advanced' && 'Novel research, distributed architectures, high viva score.'}
+                    {diff === 'Beginner' && 'Focused architecture with straightforward setup, ideal for mini projects.'}
+                    {diff === 'Intermediate' && 'Multi-module ML or full-stack architecture with full documentation.'}
+                    {diff === 'Advanced' && 'Deep learning, distributed, or research-grade multi-component system.'}
                     {diff === 'Any' && 'Show all difficulty levels in catalog.'}
                   </span>
                 </button>
@@ -287,12 +287,12 @@ export default function ProjectFinderPage() {
                   onClick={() => setBudgetMax(opt.max)}
                   className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${
                     budgetMax === opt.max
-                      ? 'border-indigo-600 bg-indigo-50/50 shadow-xs ring-2 ring-indigo-600/20'
+                      ? 'border-[#0089CF] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0089CF]/20'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
                   <span className="text-sm font-bold text-slate-800">{opt.label}</span>
-                  {budgetMax === opt.max && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
+                  {budgetMax === opt.max && <CheckCircle2 className="w-5 h-5 text-[#0089CF]" />}
                 </button>
               ))}
             </div>
@@ -313,7 +313,7 @@ export default function ProjectFinderPage() {
             <button
               type="button"
               onClick={nextStep}
-              className="flex items-center gap-2 text-xs font-bold px-6 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all"
+              className="flex items-center gap-2 text-xs font-bold px-6 py-2.5 rounded-xl glow-gradient text-white shadow-md shadow-[#ED1C24]/20 hover:opacity-95 transition-all"
             >
               {step === 5 ? 'Find Matching Projects' : 'Next Step'}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -340,14 +340,14 @@ export default function ProjectFinderPage() {
               }}
               className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
             >
-              <Compass className="w-4 h-4 text-indigo-600" />
+              <Compass className="w-4 h-4 text-[#0089CF]" />
               Restart Finder
             </button>
           </div>
 
           {searching ? (
             <div className="py-20 text-center space-y-3">
-              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+              <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
               <p className="text-xs text-slate-500 font-medium">Scanning catalog for matching projects...</p>
             </div>
           ) : searchError ? (
@@ -378,7 +378,7 @@ export default function ProjectFinderPage() {
             </div>
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-2xl mx-auto space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-[#F0F9FF] text-[#0089CF] flex items-center justify-center mx-auto shadow-xs">
                 <Search className="w-7 h-7" />
               </div>
               <div className="space-y-2">
@@ -394,7 +394,7 @@ export default function ProjectFinderPage() {
                 href={`/projects/custom?domain=${encodeURIComponent(domain)}&tech=${encodeURIComponent(
                   technology
                 )}&dept=${encodeURIComponent(department)}`}
-                className="inline-flex items-center gap-2 text-xs font-bold px-6 py-3 rounded-xl glow-gradient text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all"
+                className="inline-flex items-center gap-2 text-xs font-bold px-6 py-3 rounded-xl glow-gradient text-white shadow-md shadow-[#ED1C24]/20 hover:opacity-95 transition-all"
               >
                 Request Custom Project for {domain}
                 <ArrowRight className="w-4 h-4" />

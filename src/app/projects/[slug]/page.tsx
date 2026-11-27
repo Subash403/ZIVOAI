@@ -112,7 +112,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center pt-20">
         <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+          <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
           <p className="text-xs text-slate-500">Loading project details...</p>
         </div>
       </main>
@@ -170,7 +170,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
         <div className="flex items-center justify-between">
           <Link
             href="/projects"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-[#0089CF] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Back to All Projects
           </Link>
@@ -193,7 +193,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
               href="/projects/compare"
               className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-xs transition-all"
             >
-              <Scale className="w-3.5 h-3.5 text-indigo-600" />
+              <Scale className="w-3.5 h-3.5 text-[#0089CF]" />
               Compare
             </Link>
           </div>
@@ -206,7 +206,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
             {/* Title & Badges */}
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#F0F9FF] text-[#0073B0] border border-[#0089CF]/30">
                   {project.category}
                 </span>
 
@@ -214,7 +214,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                   {project.projectType}
                 </span>
 
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]">
                   {project.difficulty} Level
                 </span>
 
@@ -259,7 +259,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                   <button
                     onClick={() => setSelectedImage(project.mainImage)}
                     className={`relative w-20 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
-                      selectedImage === project.mainImage ? 'border-indigo-600 scale-105 shadow-md' : 'border-slate-200 opacity-70'
+                      selectedImage === project.mainImage ? 'border-[#0089CF] scale-105 shadow-md' : 'border-slate-200 opacity-70'
                     }`}
                   >
                     <Image src={project.mainImage} alt="Main" fill unoptimized sizes="80px" className="object-cover" />
@@ -270,7 +270,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                       key={idx}
                       onClick={() => setSelectedImage(imgUrl)}
                       className={`relative w-20 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
-                        selectedImage === imgUrl ? 'border-indigo-600 scale-105 shadow-md' : 'border-slate-200 opacity-70'
+                        selectedImage === imgUrl ? 'border-[#0089CF] scale-105 shadow-md' : 'border-slate-200 opacity-70'
                       }`}
                     >
                       <Image src={imgUrl} alt={`Gallery ${idx}`} fill unoptimized sizes="80px" className="object-cover" />
@@ -285,7 +285,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
               {/* Full Description */}
               <div className="space-y-3">
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-indigo-600" /> Project Description
+                  <FileText className="w-5 h-5 text-[#0089CF]" /> Project Description
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
                   {project.fullDescription}
@@ -315,7 +315,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
               {project.features && project.features.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-indigo-600" /> Key Features & Capabilities
+                    <Sparkles className="w-5 h-5 text-[#0089CF]" /> Key Features & Capabilities
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {project.features.map((feat, idx) => (
@@ -332,12 +332,12 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
               {project.modules && project.modules.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-purple-600" /> System Modules Architecture
+                    <Layers className="w-5 h-5 text-[#D97706]" /> System Modules Architecture
                   </h3>
                   <div className="space-y-2">
                     {project.modules.map((mod, idx) => (
                       <div key={idx} className="p-3.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 font-medium flex items-center gap-3 shadow-xs">
-                        <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-mono font-bold flex items-center justify-center text-[11px]">
+                        <span className="w-6 h-6 rounded-lg bg-[#E0F2FE] text-[#0073B0] font-mono font-bold flex items-center justify-center text-[11px]">
                           {idx + 1}
                         </span>
                         <span>{mod}</span>
@@ -353,7 +353,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                   {project.prerequisites && (
                     <div className="p-5 rounded-2xl bg-slate-100 border border-slate-200 space-y-2">
                       <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                        <Wrench className="w-4 h-4 text-indigo-600" /> Prerequisites & Environment
+                        <Wrench className="w-4 h-4 text-[#0089CF]" /> Prerequisites & Environment
                       </h4>
                       <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
                         {project.prerequisites}
@@ -362,9 +362,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                   )}
 
                   {project.setupInstructions && (
-                    <div className="p-5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2">
-                      <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-1.5">
-                        <Terminal className="w-4 h-4 text-indigo-600" /> Setup & Execution Guide
+                    <div className="p-5 rounded-2xl bg-[#F0F9FF] border border-[#0089CF]/30 space-y-2">
+                      <h4 className="text-sm font-bold text-[#0A0A0A] flex items-center gap-1.5">
+                        <Terminal className="w-4 h-4 text-[#0089CF]" /> Setup & Execution Guide
                       </h4>
                       <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-mono text-[11px]">
                         {project.setupInstructions}
@@ -378,7 +378,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
               {project.architectureImage && (
                 <div className="space-y-3">
                   <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-indigo-600" /> Architecture Diagram
+                    <Layers className="w-5 h-5 text-[#0089CF]" /> Architecture Diagram
                   </h3>
                   <div className="w-full rounded-2xl overflow-hidden border border-slate-200 bg-white p-2 shadow-xs">
                     <Image
@@ -443,7 +443,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                 
                 {isFixed ? (
                   <div>
-                    <div className="text-3xl font-black text-indigo-600">
+                    <div className="text-3xl font-black text-[#0089CF]">
                       {formatCurrency(project.price)}
                     </div>
                     {isPurchasable ? (
@@ -468,7 +468,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                   <button
                     onClick={() => setIsBuyOpen(true)}
                     disabled={!isPurchasable}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl glow-gradient text-white text-sm font-bold shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl glow-gradient text-white text-sm font-bold shadow-lg shadow-[#ED1C24]/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShoppingCart className="w-4 h-4" />
                     {isPurchasable ? 'Buy Now with Razorpay' : 'Currently Unavailable'}
@@ -518,7 +518,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
               </div>
 
               {/* Trust, License & Support Boundaries (ZAI-047, ZAI-065, ZAI-097) */}
-              <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-xs text-slate-700 space-y-2.5">
+              <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] text-xs text-slate-700 space-y-2.5">
                 <div className="flex items-center gap-2 text-emerald-700 font-bold">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   Deliverables, License &amp; Support
@@ -526,9 +526,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ slug:
                 <p className="text-[11px] text-slate-600 leading-relaxed">
                   Only the items highlighted in green above are included with this project package. After Razorpay payment verification, download links become available in your Customer Dashboard (1-hour private signed cloud URLs, up to 5 link issuances).
                 </p>
-                <div className="pt-1.5 border-t border-indigo-100/80 flex items-center justify-between text-[11px] text-indigo-700 font-semibold">
+                <div className="pt-1.5 border-t border-[#BAE6FD]/80 flex items-center justify-between text-[11px] text-[#0073B0] font-semibold">
                   <span>Server-Verified Razorpay</span>
-                  <Link href="/policies" className="underline hover:text-indigo-900">
+                  <Link href="/policies" className="underline hover:text-[#0A0A0A]">
                     License &amp; Refund Policy
                   </Link>
                 </div>

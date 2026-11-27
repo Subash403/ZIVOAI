@@ -30,7 +30,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   if (loading) {
     return (
       <div className="py-20 text-center space-y-3">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+        <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
         <p className="text-xs text-slate-500">Loading project details for edit...</p>
       </div>
     );

@@ -116,7 +116,7 @@ export default function GalleryUploadManager({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-            <Images className="w-4 h-4 text-indigo-600" />
+            <Images className="w-4 h-4 text-[#0089CF]" />
             Project Gallery Showcase
           </label>
           <p className="text-[11px] text-slate-500">
@@ -137,7 +137,7 @@ export default function GalleryUploadManager({
             type="button"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#0089CF]/30 bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0073B0] text-xs font-bold transition-all shadow-2xs"
           >
             {uploading ? (
               <>
@@ -176,8 +176,8 @@ export default function GalleryUploadManager({
             type="url"
             value={customUrl}
             onChange={(e) => setCustomUrl(e.target.value)}
-            placeholder="https://example.com/gallery-screenshot.jpg"
-            className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Enter a public image URL"
+            className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -188,7 +188,7 @@ export default function GalleryUploadManager({
           <button
             type="button"
             onClick={handleAddUrl}
-            className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all"
+            className="px-3 py-1.5 rounded-lg bg-[#0089CF] text-white text-xs font-bold hover:bg-[#0073B0] transition-all"
           >
             Add
           </button>

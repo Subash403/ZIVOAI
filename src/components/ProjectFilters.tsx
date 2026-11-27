@@ -1,7 +1,6 @@
 'use client';
 
-import { Search, RotateCcw, Sparkles } from 'lucide-react';
-
+import { Search, RotateCcw, Star } from 'lucide-react';
 
 interface ProjectFiltersProps {
   searchQuery: string;
@@ -62,10 +61,10 @@ export default function ProjectFilters({
     featuredOnly;
 
   return (
-    <div className="glass-panel space-y-4 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+    <div className="space-y-4 rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-xs sm:p-6">
       {/* Search Input Bar */}
       <div className="relative">
-        <Search aria-hidden="true" className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]" />
         <input
           id="catalog-search-input"
           type="search"
@@ -73,14 +72,14 @@ export default function ProjectFilters({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by project title, architecture, tech stack, or domain..."
-          className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-white/90 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 shadow-2xs transition-all"
+          className="w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] py-2.5 pl-10 pr-16 text-xs text-[#0A0A0A] placeholder-[#9CA3AF] transition-colors focus:border-[#0089CF] focus:bg-white focus:outline-none sm:text-sm"
         />
         {searchQuery && (
           <button
             type="button"
             onClick={() => setSearchQuery('')}
             aria-label="Clear search query"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-md transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded bg-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#374151] transition-colors hover:bg-[#D1D5DB] cursor-pointer"
           >
             Clear
           </button>
@@ -88,17 +87,16 @@ export default function ProjectFilters({
       </div>
 
       {/* Filter Select Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        {/* Category */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
-          <label htmlFor="filter-category" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-category" className="mb-1.5 block font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-[#6B7280]">
             Category
           </label>
           <select
             id="filter-category"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
+            className="w-full cursor-pointer rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-xs font-semibold text-[#0A0A0A] transition-colors focus:border-[#0089CF] focus:bg-white focus:outline-none"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -108,16 +106,15 @@ export default function ProjectFilters({
           </select>
         </div>
 
-        {/* Project Type */}
         <div>
-          <label htmlFor="filter-project-type" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-project-type" className="mb-1.5 block font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-[#6B7280]">
             Project Type
           </label>
           <select
             id="filter-project-type"
             value={selectedProjectType}
             onChange={(e) => setSelectedProjectType(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
+            className="w-full cursor-pointer rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-xs font-semibold text-[#0A0A0A] transition-colors focus:border-[#0089CF] focus:bg-white focus:outline-none"
           >
             {projectTypes.map((type) => (
               <option key={type} value={type}>
@@ -127,16 +124,15 @@ export default function ProjectFilters({
           </select>
         </div>
 
-        {/* Difficulty */}
         <div>
-          <label htmlFor="filter-difficulty" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-difficulty" className="mb-1.5 block font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-[#6B7280]">
             Complexity Level
           </label>
           <select
             id="filter-difficulty"
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
+            className="w-full cursor-pointer rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-xs font-semibold text-[#0A0A0A] transition-colors focus:border-[#0089CF] focus:bg-white focus:outline-none"
           >
             {difficulties.map((diff) => (
               <option key={diff} value={diff}>
@@ -146,16 +142,15 @@ export default function ProjectFilters({
           </select>
         </div>
 
-        {/* Purchase Type */}
         <div>
-          <label htmlFor="filter-sales-type" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label htmlFor="filter-sales-type" className="mb-1.5 block font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-[#6B7280]">
             Purchase Type
           </label>
           <select
             id="filter-sales-type"
             value={selectedSalesType}
             onChange={(e) => setSelectedSalesType(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 font-semibold shadow-2xs transition-all cursor-pointer"
+            className="w-full cursor-pointer rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-xs font-semibold text-[#0A0A0A] transition-colors focus:border-[#0089CF] focus:bg-white focus:outline-none"
           >
             {salesTypes.map((st) => (
               <option key={st.value} value={st.value}>
@@ -165,18 +160,24 @@ export default function ProjectFilters({
           </select>
         </div>
 
-        {/* Featured Toggle & Reset */}
         <div className="flex items-end gap-2">
-          <label htmlFor="filter-featured-only" className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/90 border border-slate-200 text-xs text-slate-700 font-semibold cursor-pointer hover:border-indigo-300 w-full justify-center shadow-2xs transition-colors">
+          <label
+            htmlFor="filter-featured-only"
+            className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+              featuredOnly
+                ? 'border-[#FDB913] bg-[#FFFBEB] text-[#0A0A0A]'
+                : 'border-[#E5E7EB] bg-[#F9FAFB] text-[#374151] hover:border-[#0089CF]'
+            }`}
+          >
             <input
               id="filter-featured-only"
               type="checkbox"
               checked={featuredOnly}
               onChange={(e) => setFeaturedOnly(e.target.checked)}
-              className="accent-indigo-600 w-3.5 h-3.5 rounded"
+              className="h-3.5 w-3.5 rounded accent-[#ED1C24]"
             />
-            <Sparkles aria-hidden="true" className="w-3.5 h-3.5 text-amber-500" />
-            <span>Featured Only</span>
+            <Star aria-hidden="true" className="h-3.5 w-3.5 text-[#FDB913] fill-[#FDB913]" />
+            <span>Featured</span>
           </label>
 
           {hasActiveFilters && (
@@ -185,9 +186,9 @@ export default function ProjectFilters({
               onClick={onReset}
               title="Reset Filters"
               aria-label="Reset all catalog filters"
-              className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors shrink-0"
+              className="shrink-0 cursor-pointer rounded-lg border border-[#FECACA] bg-[#FEF2F2] p-2 text-[#ED1C24] transition-colors hover:bg-[#FEE2E2]"
             >
-              <RotateCcw aria-hidden="true" className="w-4 h-4" />
+              <RotateCcw aria-hidden="true" className="h-4 w-4" />
             </button>
           )}
         </div>

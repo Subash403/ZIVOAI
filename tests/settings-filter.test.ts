@@ -41,7 +41,8 @@ test('Public Settings Filtering & Sensitive Data Exposure Prevention', async (t)
     const publicSettings = filterPublicSettings({});
 
     assert.equal(publicSettings.businessName, 'Zivo AI');
-    assert.equal(publicSettings.logoUrl, '/images/zivoai-logo.png');
+    assert.equal(publicSettings.logoUrl, '/brand/zivo-logo-horizontal.png');
+    assert.equal(publicSettings.faviconUrl, '/brand/zivo-mark.png');
     assert.ok(publicSettings.phoneNumber.length > 5);
     assert.ok(publicSettings.whatsappNumber.length > 5);
     assert.ok(publicSettings.supportEmail.includes('@'));

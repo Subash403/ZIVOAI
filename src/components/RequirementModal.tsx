@@ -132,17 +132,23 @@ export default function RequirementModal({ isOpen, onClose, project }: Requireme
       aria-labelledby="enquiry-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
     >
-      <div className="relative w-full max-w-xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-white">
+      <div className="relative flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-2xl">
+        <div className="zivo-quad-bar zivo-quad-bar-thin shrink-0" aria-hidden="true">
+          <span className="bg-[#0089CF]" />
+          <span className="bg-[#ED1C24]" />
+          <span className="bg-[#FDB913]" />
+          <span className="bg-[#008C44]" />
+        </div>
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] bg-white p-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700">
-              <PhoneCall className="w-5 h-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F0F9FF] text-[#0089CF]">
+              <PhoneCall className="h-5 w-5" />
             </div>
             <div>
-              <h2 id="enquiry-modal-title" className="text-base font-bold text-slate-900">
+              <h2 id="enquiry-modal-title" className="font-heading text-base font-bold text-[#0A0A0A]">
                 {project ? 'Project Consultation & Quote' : 'Custom Project Enquiry'}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#6B7280]">
                 {successLeadId ? 'Request confirmed' : `Step ${step} of 2 — Response within 1 business day`}
               </p>
             </div>
@@ -151,37 +157,37 @@ export default function RequirementModal({ isOpen, onClose, project }: Requireme
             type="button"
             onClick={handleResetAndClose}
             aria-label="Close enquiry dialog"
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            className="cursor-pointer rounded-lg p-2 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#0A0A0A]"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-5 flex-grow">
+        <div className="flex-grow space-y-5 overflow-y-auto p-6">
           {successLeadId ? (
-            <div className="text-center py-4 space-y-4">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto">
-                <CheckCircle2 className="w-8 h-8" />
+            <div className="space-y-4 py-4 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] text-[#008C44]">
+                <CheckCircle2 className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-extrabold text-slate-900">Enquiry Received</h3>
-              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 max-w-md mx-auto space-y-1.5">
-                <p className="text-xs font-mono font-bold text-indigo-700">Reference: {successLeadId}</p>
-                <p className="text-xs text-slate-700 leading-relaxed">
+              <h3 className="font-heading text-xl font-extrabold text-[#0A0A0A]">Enquiry Received</h3>
+              <div className="mx-auto max-w-md space-y-1.5 rounded-xl border border-[#0089CF]/25 bg-[#F0F9FF] p-4">
+                <p className="font-mono text-xs font-bold text-[#0073B0]">Reference: {successLeadId}</p>
+                <p className="text-xs leading-relaxed text-[#374151]">
                   Our engineering team reviews custom enquiries within <strong>1 business day</strong>. Track all 8 development stages inside your Customer Dashboard.
                 </p>
               </div>
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
                 <Link
                   href="/account"
                   onClick={handleResetAndClose}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md text-center"
+                  className="w-full rounded-md bg-[#ED1C24] px-6 py-2.5 text-center font-heading text-xs font-bold uppercase tracking-[0.05em] text-white shadow-sm hover:bg-[#D1171F] sm:w-auto"
                 >
                   Open Customer Dashboard
                 </Link>
                 <button
                   type="button"
                   onClick={handleResetAndClose}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                  className="w-full cursor-pointer rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-5 py-2.5 text-xs font-bold text-[#374151] hover:bg-[#F3F4F6] sm:w-auto"
                 >
                   Close
                 </button>
@@ -194,10 +200,10 @@ export default function RequirementModal({ isOpen, onClose, project }: Requireme
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className={`py-2 px-3 rounded-xl font-bold border text-left ${
+                  className={`cursor-pointer rounded-lg border px-3 py-2 text-left font-heading font-bold transition-colors ${
                     step === 1
-                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                      : 'bg-slate-50 border-slate-200 text-slate-500'
+                      ? 'border-[#0089CF] bg-[#F0F9FF] text-[#0073B0]'
+                      : 'border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]'
                   }`}
                 >
                   1. Contact Details
@@ -205,10 +211,10 @@ export default function RequirementModal({ isOpen, onClose, project }: Requireme
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className={`py-2 px-3 rounded-xl font-bold border text-left ${
+                  className={`cursor-pointer rounded-lg border px-3 py-2 text-left font-heading font-bold transition-colors ${
                     step === 2
-                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                      : 'bg-slate-50 border-slate-200 text-slate-500'
+                      ? 'border-[#0089CF] bg-[#F0F9FF] text-[#0073B0]'
+                      : 'border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]'
                   }`}
                 >
                   2. Project Brief
@@ -225,7 +231,7 @@ export default function RequirementModal({ isOpen, onClose, project }: Requireme
               {project && (
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2">
                   <span className="font-bold text-slate-900 truncate">{project.title}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 shrink-0">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#F0F9FF] text-[#0073B0] shrink-0">
                     Selected Project
                   </span>
                 </div>
@@ -258,7 +264,7 @@ export default function RequirementModal({ isOpen, onClose, project }: Requireme
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="you@example.com"
+                      placeholder="Enter your email address"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm focus:bg-white"
                     />
                   </div>
@@ -274,7 +280,7 @@ export default function RequirementModal({ isOpen, onClose, project }: Requireme
                         required
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+91 9876543210"
+                        placeholder="Enter your phone or WhatsApp number"
                         className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm focus:bg-white"
                       />
                       <p className="text-[10px] text-slate-500 mt-1">Used only for scoping calls &amp; project updates.</p>

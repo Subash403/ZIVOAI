@@ -125,7 +125,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="py-20 text-center space-y-3">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+        <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
         <p className="text-xs text-slate-500 font-medium">Loading admin metrics...</p>
       </div>
     );
@@ -183,8 +183,8 @@ export default function AdminDashboardPage() {
       subtitle: 'Gross Paid minus Processed Refunds',
       value: formatCurrency(netSales),
       icon: ShieldCheck,
-      color: 'text-indigo-800',
-      bg: 'bg-indigo-50 border-indigo-200',
+      color: 'text-[#005E91]',
+      bg: 'bg-[#F0F9FF] border-[#0089CF]/30',
       href: '/admin/orders',
     },
     {
@@ -210,7 +210,7 @@ export default function AdminDashboardPage() {
       subtitle: `${stats.newEnquiries} new`,
       value: stats.totalEnquiries,
       icon: MessageSquareText,
-      color: 'text-purple-700',
+      color: 'text-[#B45309]',
       bg: 'bg-white border-slate-200',
       href: '/admin/enquiries',
     },
@@ -219,7 +219,7 @@ export default function AdminDashboardPage() {
       subtitle: `${stats.availableProjects} live & public`,
       value: stats.totalProjects,
       icon: FolderKanban,
-      color: 'text-indigo-700',
+      color: 'text-[#0073B0]',
       bg: 'bg-white border-slate-200',
       href: '/admin/projects',
     },
@@ -272,7 +272,7 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/admin/projects/new"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glow-gradient text-white text-xs font-bold shadow-md hover:opacity-95 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#ED1C24] hover:bg-[#D1171F] text-white text-xs font-bold shadow-xs transition-colors"
           >
             <PlusCircle className="w-4 h-4" /> Add New Project
           </Link>
@@ -329,7 +329,7 @@ export default function AdminDashboardPage() {
             <Link
               key={idx}
               href={card.href}
-              className={`p-5 rounded-2xl border ${card.bg} flex items-center justify-between shadow-2xs hover:border-indigo-300 transition-all`}
+              className={`p-5 rounded-2xl border ${card.bg} flex items-center justify-between shadow-2xs hover:border-[#0089CF]/50 transition-all`}
             >
               <div className="space-y-1">
                 <span className="text-xs font-bold text-slate-600 block">{card.title}</span>
@@ -349,15 +349,19 @@ export default function AdminDashboardPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <MessageSquareText className="w-4 h-4 text-purple-600" /> Recent Client Enquiries
+              <MessageSquareText className="w-4 h-4 text-[#D97706]" /> Recent Client Enquiries
             </h2>
-            <Link href="/admin/enquiries" className="text-xs text-indigo-600 font-bold hover:underline flex items-center gap-1">
+            <Link href="/admin/enquiries" className="text-xs text-[#0089CF] font-bold hover:underline flex items-center gap-1">
               View All <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
 
           {!data?.recentEnquiries || data.recentEnquiries.length === 0 ? (
-            <p className="text-xs text-slate-500 py-4 text-center">No enquiries received yet.</p>
+            <div className="py-8 text-center space-y-2">
+              <MessageSquareText className="w-8 h-8 text-slate-300 mx-auto" />
+              <p className="text-xs font-bold text-slate-700">No client enquiries received yet</p>
+              <p className="text-[11px] text-slate-400">Custom build requests and inquiries will appear here.</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {data.recentEnquiries.map((enq) => (
@@ -365,7 +369,7 @@ export default function AdminDashboardPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900">{enq.studentName}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E0F2FE] text-[#005E91] font-bold">
                         {enq.leadId}
                       </span>
                     </div>
@@ -388,13 +392,17 @@ export default function AdminDashboardPage() {
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-emerald-600" /> Recent Orders &amp; Transactions
             </h2>
-            <Link href="/admin/orders" className="text-xs text-indigo-600 font-bold hover:underline flex items-center gap-1">
+            <Link href="/admin/orders" className="text-xs text-[#0089CF] font-bold hover:underline flex items-center gap-1">
               View All <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
 
           {!data?.recentOrders || data.recentOrders.length === 0 ? (
-            <p className="text-xs text-slate-500 py-4 text-center">No orders created yet.</p>
+            <div className="py-8 text-center space-y-2">
+              <ShoppingBag className="w-8 h-8 text-slate-300 mx-auto" />
+              <p className="text-xs font-bold text-slate-700">No orders placed yet</p>
+              <p className="text-[11px] text-slate-400">Verified purchases and transactions will appear here.</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {data.recentOrders.map((ord) => (
@@ -431,13 +439,13 @@ export default function AdminDashboardPage() {
       {data?.recentAuditLogs && data.recentAuditLogs.length > 0 && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-3">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <History className="w-4 h-4 text-indigo-600" /> Recent Admin Activity Audit Log
+            <History className="w-4 h-4 text-[#0089CF]" /> Recent Admin Activity Audit Log
           </h2>
           <div className="divide-y divide-slate-100 text-xs">
             {data.recentAuditLogs.map((log) => (
               <div key={log.id} className="py-2 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
+                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#F0F9FF] text-[#0073B0] border border-[#BAE6FD]">
                     {log.action}
                   </span>
                   <span className="text-slate-700 font-medium">
@@ -471,7 +479,7 @@ export default function AdminDashboardPage() {
                 : `${data.health.missingEnvCount} production env variable(s) not set in this environment`}
             </span>
           </div>
-          <Link href="/admin/settings" className="text-indigo-600 font-bold hover:underline">
+          <Link href="/admin/settings" className="text-[#0089CF] font-bold hover:underline">
             Review Settings
           </Link>
         </div>

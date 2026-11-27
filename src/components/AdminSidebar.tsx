@@ -14,6 +14,8 @@ import {
   ExternalLink,
   X,
 } from 'lucide-react';
+import BrandLogo from '@/components/BrandLogo';
+import { BRAND_ASSETS } from '@/lib/brand';
 
 interface AdminSidebarProps {
   isOpen?: boolean;
@@ -22,7 +24,7 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [logoUrl, setLogoUrl] = useState('/images/zivoai-logo.png');
+  const [logoUrl, setLogoUrl] = useState<string>(BRAND_ASSETS.horizontalLight);
 
   useEffect(() => {
     fetch('/api/settings', { cache: 'no-store' })
@@ -34,76 +36,98 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   }, []);
 
   const navItems = [
-    { name: 'Overview', href: '/admin', icon: LayoutDashboard },
-    { name: 'All Projects', href: '/admin/projects', icon: FolderKanban },
-    { name: 'Add Project', href: '/admin/projects/new', icon: PlusCircle },
-    { name: 'Enquiries / Leads', href: '/admin/enquiries', icon: MessageSquareText },
-    { name: 'Orders & Payments', href: '/admin/orders', icon: ShoppingBag },
-    { name: 'Customers', href: '/admin/customers', icon: Users },
-    { name: 'Admin Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Overview', href: '/admin', icon: LayoutDashboard, accent: '#0089CF' },
+    { name: 'All Projects', href: '/admin/projects', icon: FolderKanban, accent: '#ED1C24' },
+    { name: 'Add Project', href: '/admin/projects/new', icon: PlusCircle, accent: '#008C44' },
+    { name: 'Enquiries / Leads', href: '/admin/enquiries', icon: MessageSquareText, accent: '#D97706' },
+    { name: 'Orders & Payments', href: '/admin/orders', icon: ShoppingBag, accent: '#0089CF' },
+    { name: 'Customers', href: '/admin/customers', icon: Users, accent: '#008C44' },
+    { name: 'Admin Settings', href: '/admin/settings', icon: Settings, accent: '#4B5563' },
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col justify-between h-full">
-      <div className="p-5 space-y-6">
-        {/* Brand Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <Link href="/admin" onClick={onClose} className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={logoUrl}
-              alt="Zivo AI Logo"
-              className="h-11 w-auto shrink-0 object-contain mix-blend-multiply"
-            />
-            <div className="border-l border-slate-200 pl-2.5">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Workspace</span>
-              <span className="text-xs text-indigo-600 font-bold block">Console</span>
-            </div>
-          </Link>
-          {onClose && (
-            <button
-              onClick={onClose}
-              aria-label="Close sidebar"
-              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+    <div className="flex h-full flex-col justify-between bg-white">
+      <div>
+        <div className="zivo-quad-bar zivo-quad-bar-thin" aria-hidden="true">
+          <span className="bg-[#0089CF]" />
+          <span className="bg-[#ED1C24]" />
+          <span className="bg-[#FDB913]" />
+          <span className="bg-[#008C44]" />
         </div>
-
-        {/* Navigation Links */}
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
+        <div className="space-y-6 p-5">
+          {/* Brand Header */}
+          <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-4">
+            <Link href="/admin" onClick={onClose} className="flex items-center gap-2.5">
+              <BrandLogo
+                variant="horizontal"
+                tone="light"
+                size="sm"
+                src={logoUrl}
+                alt="Zivo AI"
+                className="h-8"
+              />
+              <div className="border-l border-[#E5E7EB] pl-2.5">
+                <span className="block font-heading text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">
+                  Admin
+                </span>
+                <span className="block font-heading text-xs font-extrabold text-[#0A0A0A]">
+                  Console
+                </span>
+              </div>
+            </Link>
+            {onClose && (
+              <button
+                type="button"
                 onClick={onClose}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+                aria-label="Close sidebar"
+                className="rounded-lg p-1.5 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#0A0A0A] lg:hidden"
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="space-y-1" aria-label="Admin Navigation">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive =
+                pathname === item.href ||
+                (item.href !== '/admin' && item.href !== '/admin/projects' && pathname.startsWith(item.href)) ||
+                (item.href === '/admin/projects' && pathname === '/admin/projects');
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-colors ${
+                    isActive
+                      ? 'border-l-2 border-[#0089CF] bg-[#F0F9FF] font-bold text-[#0A0A0A]'
+                      : 'text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#0A0A0A]'
+                  }`}
+                >
+                  <Icon
+                    className="h-4 w-4 shrink-0"
+                    style={{ color: isActive ? '#0089CF' : item.accent }}
+                    aria-hidden="true"
+                  />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
-      {/* Footer Link to Public Website */}
-      <div className="p-4 border-t border-slate-100">
+      {/* Footer Link to Public Storefront */}
+      <div className="border-t border-[#F3F4F6] p-4">
         <Link
           href="/"
           target="_blank"
-          className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200 transition-colors"
+          className="flex items-center justify-between rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-2.5 text-xs font-bold text-[#0A0A0A] transition-colors hover:border-[#0089CF] hover:bg-white"
         >
-          <span>View Public Platform</span>
-          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+          <span>View Public Storefront</span>
+          <ExternalLink className="h-3.5 w-3.5 text-[#0089CF]" aria-hidden="true" />
         </Link>
       </div>
     </div>
@@ -111,20 +135,18 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
-      <aside className="w-64 bg-white/90 backdrop-blur-xl border-r border-slate-200/80 hidden lg:flex flex-col justify-between h-screen sticky top-0 shadow-xs shrink-0">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between border-r border-[#E5E7EB] bg-white lg:flex">
         {sidebarContent}
       </aside>
 
-      {/* Mobile Drawer Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
+        <div className="fixed inset-0 z-50 flex lg:hidden">
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
             onClick={onClose}
             aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[80vw] bg-white h-full shadow-2xl flex flex-col z-10 animate-slideRight">
+          <div className="relative z-10 flex h-full w-72 max-w-[80vw] flex-col bg-white shadow-2xl">
             {sidebarContent}
           </div>
         </div>

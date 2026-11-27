@@ -98,7 +98,7 @@ export default function WishlistPage() {
 
         {loading ? (
           <div className="py-24 text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+            <Loader2 className="w-8 h-8 text-[#0089CF] animate-spin mx-auto" />
             <p className="text-xs text-slate-500 font-mono">Loading your saved projects...</p>
           </div>
         ) : errorMsg ? (

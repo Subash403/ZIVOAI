@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   let targetUrl = '/account';
   if (stateRaw) {
     try {
-      const decoded = JSON.parse(Buffer.from(stateRaw, 'base64').toString('utf-8'));
+      const decoded = JSON.parse(Buffer.from(stateRaw, 'base64url').toString('utf-8'));
       if (
         decoded?.from &&
         typeof decoded.from === 'string' &&

@@ -224,26 +224,32 @@ test('Fulfillment cannot overwrite cancelled or refunded orders', async () => {
   const project = await prisma.project.create({ data: { title: 'Race Project', slug: `race-${suffix}`, shortDescription: 'x', fullDescription: 'x', category: 'x', technologies: '[]', difficulty: 'x', projectType: 'x', mainImage: '/x', price: 1, stockLimit: 2 } });
   const cancelled = await prisma.order.create({ data: { orderId: `CANCELLED_${suffix}`, studentName: 'x', email: 'x@example.com', phone: '1', projectId: project.id, projectName: project.title, amount: 1, razorpayOrderId: `order_${suffix}_c` , paymentStatus: 'CANCELLED' } });
   const refunded = await prisma.order.create({ data: { orderId: `REFUNDED_${suffix}`, studentName: 'x', email: 'x@example.com', phone: '1', projectId: project.id, projectName: project.title, amount: 1, razorpayOrderId: `order_${suffix}_r` , paymentStatus: 'REFUNDED' } });
-  await assert.rejects(() => fulfillVerifiedOrder({ internalOrderId: cancelled.orderId, origin: 'https://example.test' }));
-  await assert.rejects(() => fulfillVerifiedOrder({ internalOrderId: refunded.orderId, origin: 'https://example.test' }));
-  const final = await prisma.order.findMany({ where: { id: { in: [cancelled.id, refunded.id] } } });
-  assert.deepEqual(final.map((order) => order.paymentStatus).sort(), ['CANCELLED', 'REFUNDED']);
-  await prisma.order.deleteMany({ where: { id: { in: [cancelled.id, refunded.id] } } });
-  await prisma.project.delete({ where: { id: project.id } });
+  try {
+    await assert.rejects(() => fulfillVerifiedOrder({ internalOrderId: cancelled.orderId, origin: 'https://example.test' }));
+    await assert.rejects(() => fulfillVerifiedOrder({ internalOrderId: refunded.orderId, origin: 'https://example.test' }));
+    const final = await prisma.order.findMany({ where: { id: { in: [cancelled.id, refunded.id] } } });
+    assert.deepEqual(final.map((order) => order.paymentStatus).sort(), ['CANCELLED', 'REFUNDED']);
+  } finally {
+    await prisma.order.deleteMany({ where: { id: { in: [cancelled.id, refunded.id] } } }).catch(() => {});
+    await prisma.project.delete({ where: { id: project.id } }).catch(() => {});
+  }
 });
 
 test('Concurrent fulfillment allocates stock only once per available unit', async () => {
   const suffix = Date.now().toString();
   const project = await prisma.project.create({ data: { title: 'Stock Race', slug: `stock-race-${suffix}`, shortDescription: 'x', fullDescription: 'x', category: 'x', technologies: '[]', difficulty: 'x', projectType: 'x', mainImage: '/x', price: 1, stockLimit: 1 } });
   const orders = await Promise.all([1, 2].map((index) => prisma.order.create({ data: { orderId: `STOCK_${suffix}_${index}`, studentName: 'x', email: `stock${index}@example.com`, phone: '1', projectId: project.id, projectName: project.title, amount: 1, razorpayOrderId: `order_stock_${suffix}_${index}` } })));
-  const results = await Promise.allSettled(orders.map((order) => fulfillVerifiedOrder({ internalOrderId: order.orderId, origin: 'https://example.test' })));
-  assert.equal(results.filter((result) => result.status === 'fulfilled').length, 1);
-  assert.equal((await prisma.project.findUnique({ where: { id: project.id } }))?.stockLimit, 0);
-  assert.equal((await prisma.order.count({ where: { id: { in: orders.map((order) => order.id) }, paymentStatus: 'PAID' } })), 1);
-  assert.equal((await prisma.order.count({ where: { id: { in: orders.map((order) => order.id) }, deliveryStatus: 'FAILED' } })), 1);
-  await prisma.orderNotification.deleteMany({ where: { orderId: { in: orders.map((order) => order.orderId) } } });
-  await prisma.order.deleteMany({ where: { id: { in: orders.map((order) => order.id) } } });
-  await prisma.project.delete({ where: { id: project.id } });
+  try {
+    const results = await Promise.allSettled(orders.map((order) => fulfillVerifiedOrder({ internalOrderId: order.orderId, origin: 'https://example.test' })));
+    assert.equal(results.filter((result) => result.status === 'fulfilled').length, 1);
+    assert.equal((await prisma.project.findUnique({ where: { id: project.id } }))?.stockLimit, 0);
+    assert.equal((await prisma.order.count({ where: { id: { in: orders.map((order) => order.id) }, paymentStatus: 'PAID' } })), 1);
+    assert.equal((await prisma.order.count({ where: { id: { in: orders.map((order) => order.id) }, deliveryStatus: 'FAILED' } })), 1);
+  } finally {
+    await prisma.orderNotification.deleteMany({ where: { orderId: { in: orders.map((order) => order.orderId) } } }).catch(() => {});
+    await prisma.order.deleteMany({ where: { id: { in: orders.map((order) => order.id) } } }).catch(() => {});
+    await prisma.project.delete({ where: { id: project.id } }).catch(() => {});
+  }
 });
 
 test('Payment verification route requires the stored Razorpay order and validates the provider payment', async () => {
