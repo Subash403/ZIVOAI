@@ -595,7 +595,7 @@ export default function Navbar() {
                           className="group flex items-start gap-3.5 rounded-xl p-3 transition-colors hover:bg-[#F9FAFB]"
                         >
                           <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${service.softBg} transition-colors group-hover:bg-[#0089CF] group-hover:text-white`}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${service.softBg} transition-colors`}
                             style={{ color: service.color }}
                           >
                             <Icon className="h-5 w-5 text-current transition-colors" />

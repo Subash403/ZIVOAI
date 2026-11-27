@@ -176,6 +176,10 @@ test('Navbar Services Dropdown & About Navigation Verification', async (t) => {
     assert.match(navbarFile, /e\.key === 'Escape'/);
     assert.match(navbarFile, /mobileServicesOpen/);
   });
+
+  await t.test('Services dropdown icon containers retain soft styling and do not turn blue on hover', () => {
+    assert.doesNotMatch(navbarFile, /group-hover:bg-\[#0089CF\]/);
+  });
 });
 
 test('Generative AI Service Card Stability & Anti-Flicker Verification', async (t) => {
