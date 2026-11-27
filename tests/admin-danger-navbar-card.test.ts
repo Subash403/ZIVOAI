@@ -118,6 +118,28 @@ test('Admin Danger Zone Data Reset API & Security Safeguards', async (t) => {
     const body = await res.json();
     assert.ok(body.error.includes('Incorrect administrator password'));
   });
+
+  await t.test('Successfully executes data reset with valid confirmation and password', async () => {
+    const req = new Request('http://localhost:3000/api/admin/system/reset-data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: `${ADMIN_TOKEN_COOKIE_NAME}=${adminToken}`,
+      },
+      body: JSON.stringify({
+        confirmPhrase: 'DELETE ALL DATA',
+        adminPassword: process.env.ADMIN_PASSWORD || 'zivoai@web',
+        includeProjects: false,
+      }),
+    });
+
+    const res = await resetDataRoute(req);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.ok(body.backupFilename);
+    assert.ok(body.summary);
+  });
 });
 
 test('Navbar Services Dropdown & About Navigation Verification', async (t) => {
