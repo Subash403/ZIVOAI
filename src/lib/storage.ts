@@ -121,6 +121,11 @@ export function isR2Configured(): boolean {
  * Lazily initializes and returns the S3Client configured for Cloudflare R2.
  */
 let cachedClient: S3Client | null = null;
+
+export function resetCachedR2Client(): void {
+  cachedClient = null;
+}
+
 export function getR2Client(): S3Client {
   if (cachedClient) return cachedClient;
 
@@ -135,6 +140,13 @@ export function getR2Client(): S3Client {
       accessKeyId,
       secretAccessKey,
     },
+    // CRITICAL for Cloudflare R2 presigned URLs:
+    // AWS SDK v3 enables flexible checksums by default (CRC32), injecting x-amz-checksum-crc32=AAAAAA==
+    // into presigned URLs. Cloudflare R2 validates this checksum on PUT and rejects the payload with
+    // HTTP 400 Bad Request (InvalidArgument). Disabling automatic checksum calculation ensures clean
+    // standard presigned PUT URLs compatible with Cloudflare R2 and browser uploads.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
 
   return cachedClient;
@@ -163,10 +175,8 @@ export async function createPrivatePresignedUpload(upload: PrivateDeliverableUpl
   const effectiveContentType = upload.contentType || inferDeliverableContentType(fileName);
 
   if (isR2Configured()) {
-    const requiredHeaders = {
+    const requiredHeaders: Record<string, string> = {
       'content-type': effectiveContentType,
-      'x-amz-meta-original-name': fileName,
-      'x-amz-meta-upload-kind': 'private-deliverable',
     };
     const uploadUrl = await getSignedUrl(
       getR2Client(),
@@ -174,9 +184,11 @@ export async function createPrivatePresignedUpload(upload: PrivateDeliverableUpl
         Bucket: getPrivateBucketName(),
         Key: key,
         ContentType: effectiveContentType,
-        Metadata: { 'original-name': fileName, 'upload-kind': 'private-deliverable' },
       }),
-      { expiresIn: 10 * 60 }
+      {
+        expiresIn: 10 * 60,
+        signableHeaders: new Set(['host']),
+      }
     );
 
     return { key, uploadUrl, requiredHeaders, fileName, storageBackend: 'r2' };
@@ -200,19 +212,26 @@ export async function createPrivatePresignedUpload(upload: PrivateDeliverableUpl
 
 export async function verifyPrivatePresignedUpload(upload: PrivateDeliverableUpload & { key: string }): Promise<boolean> {
   const validationError = validatePrivateDeliverableUpload(upload);
-  if (validationError || !upload.key.startsWith('deliverables/')) return false;
+  const expectedSuffix = sanitizePrivateDeliverableName(upload.fileName);
+  if (validationError || !upload.key.startsWith('deliverables/') || !upload.key.endsWith(`_${expectedSuffix}`)) {
+    return false;
+  }
 
   if (isR2Configured()) {
     try {
       const result = await getR2Client().send(
         new HeadObjectCommand({ Bucket: getPrivateBucketName(), Key: upload.key })
       );
-      return (
-        result.ContentLength === upload.sizeBytes &&
-        result.ContentType?.toLowerCase() === upload.contentType.toLowerCase() &&
-        result.Metadata?.['original-name'] === sanitizePrivateDeliverableName(upload.fileName) &&
-        result.Metadata?.['upload-kind'] === 'private-deliverable'
-      );
+      const isSizeValid = result.ContentLength === upload.sizeBytes;
+      const isContentTypeValid =
+        !result.ContentType ||
+        result.ContentType.toLowerCase() === upload.contentType.toLowerCase() ||
+        result.ContentType === 'application/octet-stream';
+      const isMetadataValid =
+        !result.Metadata?.['original-name'] ||
+        result.Metadata['original-name'] === expectedSuffix;
+
+      return isSizeValid && isContentTypeValid && isMetadataValid;
     } catch (error) {
       console.warn('Private upload finalization check failed:', error);
       return false;

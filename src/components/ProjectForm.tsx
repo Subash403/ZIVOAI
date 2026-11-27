@@ -164,7 +164,7 @@ export default function ProjectForm({ initialData, isEdit }: ProjectFormProps) {
             if (isCrossDomain) {
               reject(
                 new Error(
-                  `Upload blocked by browser connecting to ${targetHost}. If using Cloudflare R2, verify bucket CORS allows origin '${window.location.origin}' with method PUT and headers (Content-Type, x-amz-meta-*).`
+                  `Upload blocked or rejected by storage at ${targetHost} (status 0). If using Cloudflare R2, verify bucket CORS allows origin '${window.location.origin}' with method PUT and header Content-Type.`
                 )
               );
             } else {

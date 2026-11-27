@@ -33,6 +33,7 @@ If you prefer applying CORS in the Cloudflare Dashboard:
 [
   {
     "AllowedOrigins": [
+      "https://zivoai.vercel.app",
       "https://zivo.ai",
       "https://www.zivo.ai",
       "http://localhost:3000",
@@ -44,10 +45,7 @@ If you prefer applying CORS in the Cloudflare Dashboard:
       "HEAD"
     ],
     "AllowedHeaders": [
-      "Content-Type",
-      "x-amz-meta-original-name",
-      "x-amz-meta-upload-kind",
-      "x-amz-content-sha256"
+      "*"
     ],
     "ExposeHeaders": [
       "ETag"

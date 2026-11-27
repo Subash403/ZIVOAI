@@ -77,6 +77,8 @@ test('presigned uploads are short-lived and successful object checks require exa
       sizeBytes: validUpload.sizeBytes,
     });
     assert.match(upload.uploadUrl, /X-Amz-Expires=600/);
+    assert.ok(!upload.uploadUrl.includes('x-amz-checksum-crc32'), 'Presigned URL must not include dummy CRC32 checksum');
+    assert.ok(!upload.uploadUrl.includes('x-amz-meta-original-name'), 'Presigned URL must not hoist metadata to query string');
 
     client.send = async () => ({
       ContentLength: validUpload.sizeBytes,

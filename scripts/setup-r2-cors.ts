@@ -40,18 +40,14 @@ async function main() {
   const corsRules = [
     {
       AllowedOrigins: [
+        'https://zivoai.vercel.app',
         'https://zivo.ai',
         'https://www.zivo.ai',
         'http://localhost:3000',
         'http://127.0.0.1:3000',
       ],
       AllowedMethods: ['GET', 'PUT', 'HEAD'],
-      AllowedHeaders: [
-        'Content-Type',
-        'x-amz-meta-original-name',
-        'x-amz-meta-upload-kind',
-        'x-amz-content-sha256',
-      ],
+      AllowedHeaders: ['*'],
       ExposeHeaders: ['ETag'],
       MaxAgeSeconds: 3600,
     },
