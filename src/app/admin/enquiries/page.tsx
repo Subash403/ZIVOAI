@@ -404,7 +404,10 @@ export default function AdminEnquiriesPage() {
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Synced
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                          <span
+                            className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1 cursor-help"
+                            title={enquiry.googleSheetSyncError || 'Sync failed: Click retry icon to re-attempt sync'}
+                          >
                             <AlertCircle className="w-3 h-3 text-amber-600" /> {enquiry.googleSheetSyncStatus}
                           </span>
                         )}
@@ -412,7 +415,7 @@ export default function AdminEnquiriesPage() {
                         <button
                           onClick={() => handleRetrySync(enquiry.id)}
                           disabled={retryingSyncId === enquiry.id}
-                          className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
+                          className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                           title="Retry Google Sheets Sync"
                         >
                           <RefreshCw className={`w-3 h-3 ${retryingSyncId === enquiry.id ? 'animate-spin' : ''}`} />

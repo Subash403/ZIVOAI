@@ -86,6 +86,32 @@ export default function AdminSettingsPage() {
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
+  // Google Sheets Test Connection State
+  const [testingSheets, setTestingSheets] = useState(false);
+  const [sheetsTestResult, setSheetsTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleTestSheetsConnection = async () => {
+    setTestingSheets(true);
+    setSheetsTestResult(null);
+    try {
+      const res = await fetch('/api/admin/settings/google-sheets/test', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      setSheetsTestResult({
+        success: Boolean(res.ok && data.success),
+        message: data.message || (res.ok ? 'Connection successful!' : 'Connection test failed'),
+      });
+    } catch (err: unknown) {
+      setSheetsTestResult({
+        success: false,
+        message: err instanceof Error ? err.message : 'Network error testing connection',
+      });
+    } finally {
+      setTestingSheets(false);
+    }
+  };
+
   const handleExecuteReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (resetConfirmPhrase !== 'DELETE ALL DATA') {
@@ -790,15 +816,41 @@ export default function AdminSettingsPage() {
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Google Sheet ID (Enquiry Sync)
                 </label>
-                <input
-                  type="text"
-                  value={settings.googleSheetId || ''}
-                  onChange={(e) => handleChange('googleSheetId', e.target.value)}
-                  placeholder="Enter your Google Sheet ID"
-                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={settings.googleSheetId || ''}
+                    onChange={(e) => handleChange('googleSheetId', e.target.value)}
+                    placeholder="Enter your Google Sheet ID or URL"
+                    className="flex-1 px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestSheetsConnection}
+                    disabled={testingSheets}
+                    className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                  >
+                    {testingSheets ? 'Testing...' : 'Test Connection'}
+                  </button>
+                </div>
+                {sheetsTestResult && (
+                  <div
+                    className={`mt-2 p-2 rounded-xl text-xs flex items-center gap-2 ${
+                      sheetsTestResult.success
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}
+                  >
+                    {sheetsTestResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                    )}
+                    <span>{sheetsTestResult.message}</span>
+                  </div>
+                )}
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Service Account credentials are encrypted and stored in backend environment configuration.
+                  Service Account credentials are encrypted and stored in backend environment configuration (GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY).
                 </p>
               </div>
             </div>
