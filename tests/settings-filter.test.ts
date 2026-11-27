@@ -104,4 +104,43 @@ test('Public Settings Filtering & Sensitive Data Exposure Prevention', async (t)
     assert.equal(isSafeHttpUrl(publicSettings.githubUrl), true);
     assert.equal(isSafeHttpUrl('javascript:alert(1)'), false);
   });
+
+  await t.test('validateSettingPayload supports all customizable site sections and policies', () => {
+    const payload = validateSettingPayload({
+      businessName: 'Zivo AI Engineering',
+      logoUrl: '/brand/zivo-logo-horizontal.png',
+      faviconUrl: '/brand/zivo-mark.png',
+      fontFamily: 'Plus Jakarta Sans',
+      themeColor: '#ED1C24',
+      announcementNotice: 'Verified Release Available',
+      heroBannerActive: true,
+      heroHeading: 'Tested AI Codebases',
+      heroSubheading: 'Verified software stacks',
+      heroBadgeText: 'Production Marketplace',
+      heroPrimaryButtonText: 'Browse Models',
+      heroSecondaryButtonText: 'Commission Build',
+      showFeaturedSection: true,
+      showHowItWorksSection: true,
+      showTestimonialsSection: false,
+      showFaqSection: true,
+      showStatsSection: true,
+      whatsappNumber: '918220303164',
+      phoneNumber: '+91 8220303164',
+      address: 'Tech Innovation Park, Chennai',
+      refundPolicy: 'Full refund within 48h if verified spec fails',
+      deliveryPolicy: 'Instant dashboard download on paid verification',
+      termsConditions: 'Source code provided under developer license',
+      privacyPolicy: 'Zero data reselling, encrypted auth records',
+      razorpayKeyId: 'rzp_live_custom123',
+      googleSheetId: 'sheet_id_456',
+    });
+
+    assert.equal(payload.businessName, 'Zivo AI Engineering');
+    assert.equal(payload.faviconUrl, '/brand/zivo-mark.png');
+    assert.equal(payload.fontFamily, 'Plus Jakarta Sans');
+    assert.equal(payload.heroBannerActive, 'true');
+    assert.equal(payload.privacyPolicy, 'Zero data reselling, encrypted auth records');
+    assert.equal(payload.razorpayKeyId, 'rzp_live_custom123');
+    assert.equal(payload.googleSheetId, 'sheet_id_456');
+  });
 });

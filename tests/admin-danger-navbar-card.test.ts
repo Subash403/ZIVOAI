@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'fs';
 import path from 'path';
 import { POST as resetDataRoute } from '../src/app/api/admin/system/reset-data/route';
+import { GET as getCustomersRoute } from '../src/app/api/admin/customers/route';
 import { prisma } from '../src/lib/prisma';
 import {
   signAuthToken,
@@ -183,15 +184,13 @@ test('Generative AI Service Card Stability & Anti-Flicker Verification', async (
     'utf8'
   );
 
-  await t.test('Icon container uses text-[#0089CF] and transparent background across all states', () => {
-    // Verified card icon container must not have style={{ color: featured.accentColor }} that overrides colors
+  await t.test('Icon container uses text-[#0089CF] and does not turn blue on hover', () => {
     assert.doesNotMatch(
       bentoFile,
       /style=\{\{\s*color:\s*featured\.accentColor\s*\}\}/,
       'Inline style overriding text color must be removed from featured card'
     );
     assert.match(bentoFile, /text-\[#0089CF\]/);
-    assert.match(bentoFile, /bg-transparent/);
     assert.doesNotMatch(bentoFile, /group-hover:bg-\[#0089CF\]/);
   });
 
@@ -199,5 +198,47 @@ test('Generative AI Service Card Stability & Anti-Flicker Verification', async (
     assert.match(bentoFile, /motion-reduce:transition-none/);
     assert.match(bentoFile, /motion-reduce:hover:transform-none/);
     assert.match(bentoFile, /focus-visible:ring-\[#0089CF\]/);
+  });
+});
+
+test('Customer Accounts Page Admin Exclusion Verification', async (t) => {
+  const realAdmin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  const adminToken = signAuthToken({
+    userId: realAdmin?.id || 'admin_user_789',
+    email: realAdmin?.email || 'admin@zivo.ai',
+    name: realAdmin?.name || 'Super Admin',
+    role: 'ADMIN',
+  });
+
+  await t.test('GET /api/admin/customers strictly filters role CUSTOMER and excludes admin accounts', async () => {
+    const req = new Request('http://localhost:3000/api/admin/customers', {
+      headers: {
+        cookie: `${ADMIN_TOKEN_COOKIE_NAME}=${adminToken}`,
+      },
+    });
+
+    const res = await getCustomersRoute(req);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.ok(Array.isArray(data.customers));
+
+    // Confirm no ADMIN accounts are in the returned customer list
+    const adminInList = data.customers.find((c: { role: string }) => c.role === 'ADMIN');
+    assert.equal(adminInList, undefined, 'Admin accounts must never appear in customer accounts list');
+
+    // Confirm all returned accounts are CUSTOMER
+    for (const c of data.customers) {
+      assert.equal(c.role, 'CUSTOMER');
+    }
+  });
+
+  await t.test('Customer directory frontend does not expose admin role options', () => {
+    const customerPageFile = fs.readFileSync(
+      path.join(process.cwd(), 'src/app/admin/customers/page.tsx'),
+      'utf8'
+    );
+    assert.doesNotMatch(customerPageFile, /<option value="ADMIN">/);
+    assert.doesNotMatch(customerPageFile, /customer\.role === 'ADMIN'/);
   });
 });

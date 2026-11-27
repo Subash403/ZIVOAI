@@ -13,22 +13,25 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.trim() || '';
-    const roleParam = searchParams.get('role')?.toUpperCase() || 'ALL';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20', 10) || 20));
 
-    const whereClause: Prisma.UserWhereInput = {};
-    if (roleParam === 'CUSTOMER' || roleParam === 'ADMIN') {
-      whereClause.role = roleParam;
-    }
+    // Strictly query customer accounts: admins must never appear in customer directory
+    const whereClause: Prisma.UserWhereInput = {
+      role: 'CUSTOMER',
+    };
 
     if (search) {
-      whereClause.OR = [
-        { name: { contains: search } },
-        { email: { contains: search } },
-        { phone: { contains: search } },
-        { college: { contains: search } },
-        { department: { contains: search } },
+      whereClause.AND = [
+        {
+          OR: [
+            { name: { contains: search } },
+            { email: { contains: search } },
+            { phone: { contains: search } },
+            { college: { contains: search } },
+            { department: { contains: search } },
+          ],
+        },
       ];
     }
 

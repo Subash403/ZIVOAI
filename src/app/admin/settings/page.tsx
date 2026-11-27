@@ -145,7 +145,7 @@ export default function AdminSettingsPage() {
   }, []);
 
   const SECTION_KEYS: Record<'branding' | 'hero' | 'sections' | 'social' | 'policies' | 'integrations', (keyof SiteSettings)[]> = {
-    branding: ['businessName', 'logoUrl', 'themeColor', 'supportEmail', 'footerDescription', 'footerCopyright'],
+    branding: ['businessName', 'logoUrl', 'faviconUrl', 'themeColor', 'fontFamily', 'supportEmail', 'footerDescription', 'footerCopyright'],
     hero: ['announcementNotice', 'heroBadgeText', 'heroHeading', 'heroSubheading', 'heroPrimaryButtonText', 'heroSecondaryButtonText', 'heroBannerActive'],
     sections: ['showFeaturedSection', 'showHowItWorksSection', 'showTestimonialsSection', 'showFaqSection', 'showStatsSection'],
     social: ['whatsappNumber', 'phoneNumber', 'githubUrl', 'linkedinUrl', 'instagramUrl', 'youtubeUrl', 'showInstagram', 'showGithub', 'showLinkedin', 'showYoutube', 'address'],
@@ -222,20 +222,22 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={handleSaveCurrentSection}
-            disabled={saving}
-            className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 shadow-xs transition-all disabled:opacity-50"
-          >
-            <Save className="w-3.5 h-3.5 text-[#0089CF]" />
-            Save This Section
-          </button>
+          {activeTab !== 'danger' && (
+            <button
+              type="button"
+              onClick={handleSaveCurrentSection}
+              disabled={saving}
+              className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5 text-[#0089CF]" />
+              Save {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Section
+            </button>
+          )}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl bg-[#ED1C24] hover:bg-[#D1171F] text-white shadow-xs transition-all disabled:opacity-50"
+            className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl bg-[#ED1C24] hover:bg-[#D1171F] text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             {saving ? (
               <>
@@ -254,23 +256,53 @@ export default function AdminSettingsPage() {
 
       {/* Alert Notices */}
       {successMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>{successMsg}</span>
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{successMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessMsg(null)}
+            className="text-emerald-600 hover:text-emerald-800 p-1 rounded-lg cursor-pointer"
+            aria-label="Dismiss notice"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {resetSuccess && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>{resetSuccess}</span>
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{resetSuccess}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setResetSuccess(null)}
+            className="text-emerald-600 hover:text-emerald-800 p-1 rounded-lg cursor-pointer"
+            aria-label="Dismiss reset notice"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {errorMsg && (
-        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-          <span>{errorMsg}</span>
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            className="text-red-600 hover:text-red-800 p-1 rounded-lg cursor-pointer"
+            aria-label="Dismiss error notice"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -335,6 +367,18 @@ export default function AdminSettingsPage() {
                   type="text"
                   value={settings.logoUrl}
                   onChange={(e) => handleChange('logoUrl', e.target.value)}
+                  placeholder="/brand/zivo-logo-horizontal.png"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Favicon URL / Path</label>
+                <input
+                  type="text"
+                  value={settings.faviconUrl || ''}
+                  onChange={(e) => handleChange('faviconUrl', e.target.value)}
+                  placeholder="/brand/zivo-mark.png or /icon.png"
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 />
               </div>
@@ -344,17 +388,32 @@ export default function AdminSettingsPage() {
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
-                    value={settings.themeColor || '#4f46e5'}
+                    value={settings.themeColor || '#ED1C24'}
                     onChange={(e) => handleChange('themeColor', e.target.value)}
                     className="w-10 h-10 rounded-xl cursor-pointer border border-slate-200 p-1"
                   />
                   <input
                     type="text"
-                    value={settings.themeColor || '#4f46e5'}
+                    value={settings.themeColor || '#ED1C24'}
                     onChange={(e) => handleChange('themeColor', e.target.value)}
-                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none"
+                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none font-mono"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Font Family</label>
+                <select
+                  value={settings.fontFamily || 'Inter'}
+                  onChange={(e) => handleChange('fontFamily', e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF] bg-white cursor-pointer"
+                >
+                  <option value="Inter">Inter (Default Clean Sans)</option>
+                  <option value="Plus Jakarta Sans">Plus Jakarta Sans (Modern Geometric)</option>
+                  <option value="Outfit">Outfit (High-Tech Minimal)</option>
+                  <option value="Roboto">Roboto (Google Sans Standard)</option>
+                  <option value="system-ui">System Default</option>
+                </select>
               </div>
 
               <div>
@@ -377,6 +436,18 @@ export default function AdminSettingsPage() {
                 <input type="text" value={settings.footerCopyright} onChange={(e) => handleChange('footerCopyright', e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]" />
               </div>
             </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSaveCurrentSection}
+                disabled={saving}
+                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5 text-[#0089CF]" />
+                Save Branding & Theme
+              </button>
+            </div>
           </div>
         )}
 
@@ -388,6 +459,20 @@ export default function AdminSettingsPage() {
             </h2>
 
             <div className="space-y-4">
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Announcement Bar Active</h4>
+                  <p className="text-[11px] text-slate-500">Show or hide the verified release announcement banner above the hero.</p>
+                </div>
+                <input
+                  type="checkbox"
+                  id="heroBannerActive"
+                  checked={settings.heroBannerActive !== false}
+                  onChange={(e) => handleChange('heroBannerActive', e.target.checked)}
+                  className="w-5 h-5 rounded-md text-[#0089CF] focus:ring-[#0089CF] cursor-pointer"
+                />
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Announcement Bar Notice</label>
                 <input
@@ -450,6 +535,18 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
             </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSaveCurrentSection}
+                disabled={saving}
+                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5 text-[#0089CF]" />
+                Save Hero Section
+              </button>
+            </div>
           </div>
         )}
 
@@ -468,9 +565,9 @@ export default function AdminSettingsPage() {
                 { key: 'showFaqSection', label: 'Frequently Asked Questions (FAQ)', desc: 'Answers to student queries regarding viva & setup' },
                 { key: 'showStatsSection', label: 'Platform Metrics & Statistics', desc: 'Numbers of verified projects and placed students' },
               ].map((sec) => (
-                <div
+                <label
                   key={sec.key}
-                  className="p-4 rounded-2xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-all"
+                  className="p-4 rounded-2xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-all cursor-pointer"
                 >
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">{sec.label}</h4>
@@ -482,8 +579,20 @@ export default function AdminSettingsPage() {
                     onChange={(e) => handleChange(sec.key as keyof SiteSettings, e.target.checked)}
                     className="w-5 h-5 rounded-md text-[#0089CF] focus:ring-[#0089CF] cursor-pointer"
                   />
-                </div>
+                </label>
               ))}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSaveCurrentSection}
+                disabled={saving}
+                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5 text-[#0089CF]" />
+                Save Section Visibility
+              </button>
             </div>
           </div>
         )}
@@ -575,6 +684,18 @@ export default function AdminSettingsPage() {
                 <input type="url" value={settings.youtubeUrl || ''} onChange={(e) => handleChange('youtubeUrl', e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]" />
               </div>
             </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSaveCurrentSection}
+                disabled={saving}
+                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5 text-[#0089CF]" />
+                Save Contact & Social
+              </button>
+            </div>
           </div>
         )}
 
@@ -615,6 +736,28 @@ export default function AdminSettingsPage() {
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Privacy Policy & Data Protection</label>
+                <textarea
+                  rows={3}
+                  value={settings.privacyPolicy || ''}
+                  onChange={(e) => handleChange('privacyPolicy', e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0089CF]"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSaveCurrentSection}
+                disabled={saving}
+                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5 text-[#0089CF]" />
+                Save Policies & Legal
+              </button>
             </div>
           </div>
         )}
@@ -658,6 +801,18 @@ export default function AdminSettingsPage() {
                   Service Account credentials are encrypted and stored in backend environment configuration.
                 </p>
               </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSaveCurrentSection}
+                disabled={saving}
+                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5 text-[#0089CF]" />
+                Save Payment & Integrations
+              </button>
             </div>
           </div>
         )}

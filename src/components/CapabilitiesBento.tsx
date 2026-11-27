@@ -157,7 +157,7 @@ export default function CapabilitiesBento({ showStats = true }: { showStats?: bo
               <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div className="flex items-center gap-3.5">
                   <div
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent text-[#0089CF] transition-colors duration-200"
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${featured.softBg} text-[#0089CF] transition-colors duration-200`}
                   >
                     <featured.icon className="h-6 w-6 text-current transition-colors duration-200" aria-hidden="true" />
                   </div>
@@ -205,7 +205,7 @@ export default function CapabilitiesBento({ showStats = true }: { showStats?: bo
                     <div className="space-y-3.5">
                       <div className="flex items-center justify-between">
                         <div
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent transition-colors duration-200"
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${card.softBg} transition-colors duration-200`}
                           style={{ color: card.accentColor }}
                         >
                           <Icon className="h-5 w-5 text-current transition-colors duration-200" aria-hidden="true" />
